@@ -23,6 +23,5 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
   logging: process.env.NODE_ENV === "development",
   entities: [User, Property, Booking, Vehicle, Review, Image],
-  migrations: ["src/migrations/**/*.ts"],
-  subscribers: ["src/subscribers/**/*.ts"],
+  migrations: [__dirname + "/../migrations/*.js"],
 });
