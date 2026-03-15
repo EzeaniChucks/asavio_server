@@ -102,6 +102,20 @@ const REVIEWER_PERSONAS = [
 ];
 // How many reviews each property index gets (wraps around)
 const REVIEWS_PER_PROPERTY = [5, 4, 3, 5, 4, 3, 4, 3];
+// How many reviews each vehicle index gets (wraps around)
+const REVIEWS_PER_VEHICLE = [4, 3, 5, 3, 4];
+// Vehicle-specific review pool
+const VEHICLE_REVIEW_POOL = [
+    { rating: 5, comment: "Absolutely immaculate vehicle. Arrived spotless and the driver was incredibly professional. Made the whole trip feel first class from start to finish." },
+    { rating: 5, comment: "Best car hire experience I've had in Lagos. The booking process was seamless and the car exceeded our expectations. Will definitely book again." },
+    { rating: 5, comment: "The Range Rover was pristine and the driver knew every back road. Got us to the airport with time to spare even through the Third Mainland traffic." },
+    { rating: 5, comment: "Incredible vehicle, incredibly smooth ride. Perfect for our corporate event — clients were very impressed. Highly recommend for business use." },
+    { rating: 4, comment: "Great experience overall. The car was clean and well-maintained. Minor delay at pickup but the host communicated promptly and resolved it quickly." },
+    { rating: 4, comment: "Excellent value for the quality on offer. The SUV was spacious and comfortable for our family trip to Ibadan. Would book again." },
+    { rating: 4, comment: "Clean, modern car and a responsive host. Everything was as described. Good communication throughout and easy handover process." },
+    { rating: 4, comment: "Really solid experience. The van was perfect for our team retreat — 12 of us travelled in comfort. Driver was punctual and professional." },
+    { rating: 3, comment: "Decent car and friendly host, though the AC could have been colder. Overall a fair experience and good value for the price." },
+];
 // ── Seed data ─────────────────────────────────────────────────────────────────
 const PROPERTIES = [
     {
@@ -420,6 +434,32 @@ async function runSeed(ds) {
             });
             await vehicleRepo.save(vehicle);
             console.log(`  ✓ ${vehicle.year} ${vehicle.make} ${vehicle.model}`);
+        }
+        // ── Vehicle reviews ──────────────────────────────────────────
+        console.log("\n⭐ Seeding vehicle reviews…");
+        const allVehicles = await vehicleRepo.find();
+        for (let vi = 0; vi < allVehicles.length; vi++) {
+            const veh = allVehicles[vi];
+            const count = REVIEWS_PER_VEHICLE[vi % REVIEWS_PER_VEHICLE.length];
+            const pickedReviewers = [...reviewers].sort(() => Math.random() - 0.5).slice(0, count);
+            const pickedContent = [...VEHICLE_REVIEW_POOL].sort(() => Math.random() - 0.5).slice(0, count);
+            for (let ri = 0; ri < count; ri++) {
+                const review = reviewRepo.create({
+                    vehicleId: veh.id,
+                    userId: pickedReviewers[ri].id,
+                    rating: pickedContent[ri].rating,
+                    comment: pickedContent[ri].comment,
+                });
+                await reviewRepo.save(review);
+            }
+            // Recompute averageRating and totalReviews from actual rows
+            const vehicleReviews = await reviewRepo.find({ where: { vehicleId: veh.id } });
+            const avg = vehicleReviews.reduce((s, r) => s + r.rating, 0) / vehicleReviews.length;
+            await vehicleRepo.update(veh.id, {
+                totalReviews: vehicleReviews.length,
+                averageRating: Math.round(avg * 10) / 10,
+            });
+            console.log(`  ✓ ${count} reviews → ${veh.year} ${veh.make} ${veh.model}`);
         }
     }
     console.log("\n✅ Seed complete!");

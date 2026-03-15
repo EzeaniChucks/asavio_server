@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { User } from "./User";
 import { Property } from "./Property";
+import { Vehicle } from "./Vehicle";
 
 @Entity("reviews")
 export class Review {
@@ -31,12 +32,20 @@ export class Review {
 
   @ManyToOne(() => Property, (property) => property.reviews, {
     onDelete: "CASCADE",
+    nullable: true,
   })
   @JoinColumn({ name: "propertyId" })
   property: Property;
 
-  @Column()
+  @Column({ nullable: true })
   propertyId: string;
+
+  @ManyToOne(() => Vehicle, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "vehicleId" })
+  vehicle: Vehicle;
+
+  @Column({ nullable: true })
+  vehicleId: string;
 
   @CreateDateColumn()
   createdAt: Date;

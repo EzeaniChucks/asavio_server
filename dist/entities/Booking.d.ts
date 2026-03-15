@@ -1,6 +1,8 @@
 import { User } from "./User";
 import { Property } from "./Property";
-export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
+export type BookingStatus = "awaiting_payment" | "confirmed" | "cancelled" | "completed";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+export type HostPayoutStatus = "pending" | "processing" | "transferred" | "failed";
 export declare class Booking {
     id: string;
     user: User;
@@ -11,7 +13,15 @@ export declare class Booking {
     checkOut: Date;
     guests: number;
     totalPrice: number;
+    platformCommission: number;
+    hostPayout: number;
     status: BookingStatus;
+    paymentMethod: string;
+    paymentStatus: PaymentStatus;
+    paystackReference: string;
+    hostPayoutStatus: HostPayoutStatus;
+    payoutReference: string;
+    paymentNotes: string;
     specialRequests: string;
     createdAt: Date;
     updatedAt: Date;

@@ -20,7 +20,7 @@ class AdminService {
             database_1.AppDataSource.getRepository(Vehicle_1.Vehicle).count(),
             database_1.AppDataSource.getRepository(Booking_1.Booking).count(),
             database_1.AppDataSource.getRepository(Review_1.Review).count(),
-            database_1.AppDataSource.getRepository(Booking_1.Booking).count({ where: { status: "pending" } }),
+            database_1.AppDataSource.getRepository(Booking_1.Booking).count({ where: { status: "awaiting_payment" } }),
             database_1.AppDataSource.getRepository(Booking_1.Booking)
                 .createQueryBuilder("b")
                 .select("SUM(b.totalPrice)", "total")

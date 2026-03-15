@@ -58,13 +58,53 @@ __decorate([
     __metadata("design:type", Number)
 ], Booking.prototype, "totalPrice", void 0);
 __decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, default: 0 }),
+    __metadata("design:type", Number)
+], Booking.prototype, "platformCommission", void 0);
+__decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, default: 0 }),
+    __metadata("design:type", Number)
+], Booking.prototype, "hostPayout", void 0);
+__decorate([
     (0, typeorm_1.Column)({
         type: "enum",
-        enum: ["pending", "confirmed", "cancelled", "completed"],
-        default: "pending",
+        enum: ["awaiting_payment", "confirmed", "cancelled", "completed"],
+        default: "awaiting_payment",
     }),
     __metadata("design:type", String)
 ], Booking.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: "paystack" }),
+    __metadata("design:type", String)
+], Booking.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: "enum",
+        enum: ["pending", "paid", "failed", "refunded"],
+        default: "pending",
+    }),
+    __metadata("design:type", String)
+], Booking.prototype, "paymentStatus", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Booking.prototype, "paystackReference", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: "enum",
+        enum: ["pending", "processing", "transferred", "failed"],
+        default: "pending",
+    }),
+    __metadata("design:type", String)
+], Booking.prototype, "hostPayoutStatus", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Booking.prototype, "payoutReference", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", String)
+], Booking.prototype, "paymentNotes", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

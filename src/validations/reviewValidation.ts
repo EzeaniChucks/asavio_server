@@ -4,8 +4,13 @@ import { body } from "express-validator";
 export const reviewValidation = {
   create: [
     body("propertyId")
+      .optional()
       .isUUID()
-      .withMessage("Valid property ID required"),
+      .withMessage("propertyId must be a valid UUID"),
+    body("vehicleId")
+      .optional()
+      .isUUID()
+      .withMessage("vehicleId must be a valid UUID"),
     body("rating")
       .isInt({ min: 1, max: 5 })
       .withMessage("Rating must be between 1 and 5"),

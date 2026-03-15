@@ -11,6 +11,8 @@ import bookingRouter from "./routers/bookingRouter";
 import vehicleRouter from "./routers/vehicleRouter";
 import adminRouter from "./routers/adminRouter";
 import reviewRouter from "./routers/reviewRouter";
+import paymentRouter from "./routers/paymentRouter";
+import payoutRouter from "./routers/payoutRouter";
 import { errorHandler } from "./middleware/errorHandler";
 import dotenv from "dotenv";
 
@@ -53,8 +55,15 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-// Body parser
-app.use(express.json({ limit: "10mb" }));
+// Body parser — capture rawBody for Paystack webhook HMAC verification
+app.use(
+  express.json({
+    limit: "10mb",
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Routes
@@ -64,6 +73,8 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/vehicles", vehicleRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/payments", paymentRouter);
+app.use("/api/payouts", payoutRouter);
 
 // Health check
 app.get("/health", (_req, res) => {

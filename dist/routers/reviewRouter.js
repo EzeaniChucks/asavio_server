@@ -9,6 +9,7 @@ const reviewValidation_1 = require("../validations/reviewValidation");
 const router = (0, express_1.Router)();
 // Public
 router.get("/property/:propertyId", reviewController_1.reviewController.getPropertyReviews);
+router.get("/vehicle/:vehicleId", reviewController_1.reviewController.getVehicleReviews);
 // Protected
 router.use(auth_1.protect);
 router.post("/", (0, validation_1.validate)(reviewValidation_1.reviewValidation.create), reviewController_1.reviewController.createReview);

@@ -36,7 +36,7 @@ export class BookingService {
       .createQueryBuilder("booking")
       .where("booking.propertyId = :propertyId", { propertyId })
       .andWhere("booking.status IN (:...statuses)", {
-        statuses: ["pending", "confirmed"],
+        statuses: ["awaiting_payment", "confirmed"],
       })
       // Overlap: existing starts before our end AND existing ends after our start
       .andWhere("booking.checkIn < :checkOut", { checkOut })
@@ -71,6 +71,9 @@ export class BookingService {
 
     const nights = this.nightsBetween(checkIn, checkOut);
     const totalPrice = Number(property.pricePerNight) * nights;
+    const commissionRate = Number(process.env.PLATFORM_COMMISSION_RATE ?? 0.10);
+    const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
+    const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
 
     const booking = this.bookingRepo.create({
       userId,
@@ -79,29 +82,19 @@ export class BookingService {
       checkOut,
       guests,
       totalPrice,
+      platformCommission,
+      hostPayout,
       specialRequests,
-      status: "pending",
+      paymentMethod: "paystack",
+      status: "awaiting_payment",
     });
 
     const saved = await this.bookingRepo.save(booking) as unknown as Booking;
     const full = await this.getBookingById(saved.id, userId);
 
-    // Fire-and-forget email notifications
+    // Notify host of the new booking request (guest confirmation sent after payment succeeds)
     const guest = await AppDataSource.getRepository(User).findOne({ where: { id: userId } });
     const host = await AppDataSource.getRepository(User).findOne({ where: { id: property.hostId } });
-
-    if (guest) {
-      emailService.sendBookingConfirmation({
-        to: guest.email,
-        firstName: guest.firstName,
-        propertyTitle: property.title,
-        checkIn: new Date(checkIn).toLocaleDateString("en-GB"),
-        checkOut: new Date(checkOut).toLocaleDateString("en-GB"),
-        nights,
-        totalPrice,
-        bookingId: saved.id,
-      }).catch(console.error);
-    }
 
     if (host) {
       emailService.sendHostNewBooking({

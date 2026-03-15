@@ -12,6 +12,10 @@ exports.reviewController = {
         const reviews = await reviewService_1.reviewService.getPropertyReviews(req.params.propertyId);
         res.json({ status: "success", data: { reviews } });
     }),
+    getVehicleReviews: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const reviews = await reviewService_1.reviewService.getVehicleReviews(req.params.vehicleId);
+        res.json({ status: "success", data: { reviews } });
+    }),
     getAllReviews: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const page = req.query.page ? Number(req.query.page) : 1;
         const limit = req.query.limit ? Number(req.query.limit) : 20;

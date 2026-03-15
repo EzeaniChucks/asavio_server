@@ -23,6 +23,11 @@ export declare class AuthService {
             profileImage: string;
             role: string;
             isVerified: boolean;
+            bankAccountNumber: string;
+            bankCode: string;
+            bankAccountName: string;
+            bankName: string;
+            paystackRecipientCode: string;
             properties: import("../entities/Property").Property[];
             bookings: import("../entities/Booking").Booking[];
             reviews: import("../entities/Review").Review[];
@@ -41,6 +46,11 @@ export declare class AuthService {
             profileImage: string;
             role: string;
             isVerified: boolean;
+            bankAccountNumber: string;
+            bankCode: string;
+            bankAccountName: string;
+            bankName: string;
+            paystackRecipientCode: string;
             properties: import("../entities/Property").Property[];
             bookings: import("../entities/Booking").Booking[];
             reviews: import("../entities/Review").Review[];
@@ -58,6 +68,11 @@ export declare class AuthService {
         profileImage: string;
         role: string;
         isVerified: boolean;
+        bankAccountNumber: string;
+        bankCode: string;
+        bankAccountName: string;
+        bankName: string;
+        paystackRecipientCode: string;
         properties: import("../entities/Property").Property[];
         bookings: import("../entities/Booking").Booking[];
         reviews: import("../entities/Review").Review[];
@@ -73,6 +88,11 @@ export declare class AuthService {
         profileImage: string;
         role: string;
         isVerified: boolean;
+        bankAccountNumber: string;
+        bankCode: string;
+        bankAccountName: string;
+        bankName: string;
+        paystackRecipientCode: string;
         properties: import("../entities/Property").Property[];
         bookings: import("../entities/Booking").Booking[];
         reviews: import("../entities/Review").Review[];

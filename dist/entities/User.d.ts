@@ -11,6 +11,11 @@ export declare class User {
     profileImage: string;
     role: string;
     isVerified: boolean;
+    bankAccountNumber: string;
+    bankCode: string;
+    bankAccountName: string;
+    bankName: string;
+    paystackRecipientCode: string;
     properties: Property[];
     bookings: Booking[];
     reviews: Review[];

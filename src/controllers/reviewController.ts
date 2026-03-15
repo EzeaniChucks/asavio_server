@@ -14,6 +14,11 @@ export const reviewController = {
     res.json({ status: "success", data: { reviews } });
   }),
 
+  getVehicleReviews: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const reviews = await reviewService.getVehicleReviews(req.params.vehicleId as string);
+    res.json({ status: "success", data: { reviews } });
+  }),
+
   getAllReviews: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const page = req.query.page ? Number(req.query.page) : 1;
     const limit = req.query.limit ? Number(req.query.limit) : 20;

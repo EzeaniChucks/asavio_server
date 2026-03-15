@@ -43,6 +43,22 @@ import {
   
     @Column({ default: false })
     isVerified: boolean;
+
+    // Host payout bank details
+    @Column({ nullable: true })
+    bankAccountNumber: string;
+
+    @Column({ nullable: true })
+    bankCode: string;
+
+    @Column({ nullable: true })
+    bankAccountName: string; // Paystack-verified name
+
+    @Column({ nullable: true })
+    bankName: string; // Human-readable bank name
+
+    @Column({ nullable: true })
+    paystackRecipientCode: string; // For transfers
   
     @OneToMany(() => Property, (property) => property.host)
     properties: Property[];

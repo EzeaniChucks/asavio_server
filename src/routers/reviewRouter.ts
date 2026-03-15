@@ -9,6 +9,7 @@ const router = Router();
 
 // Public
 router.get("/property/:propertyId", reviewController.getPropertyReviews);
+router.get("/vehicle/:vehicleId", reviewController.getVehicleReviews);
 
 // Protected
 router.use(protect);

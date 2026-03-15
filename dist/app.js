@@ -16,6 +16,8 @@ const bookingRouter_1 = __importDefault(require("./routers/bookingRouter"));
 const vehicleRouter_1 = __importDefault(require("./routers/vehicleRouter"));
 const adminRouter_1 = __importDefault(require("./routers/adminRouter"));
 const reviewRouter_1 = __importDefault(require("./routers/reviewRouter"));
+const paymentRouter_1 = __importDefault(require("./routers/paymentRouter"));
+const payoutRouter_1 = __importDefault(require("./routers/payoutRouter"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -50,8 +52,13 @@ const limiter = (0, express_rate_limit_1.default)({
     max: 200,
 });
 app.use("/api", limiter);
-// Body parser
-app.use(express_1.default.json({ limit: "10mb" }));
+// Body parser — capture rawBody for Paystack webhook HMAC verification
+app.use(express_1.default.json({
+    limit: "10mb",
+    verify: (req, _res, buf) => {
+        req.rawBody = buf;
+    },
+}));
 app.use(express_1.default.urlencoded({ extended: true, limit: "10mb" }));
 // Routes
 app.use("/api/auth", authRouter_1.default);
@@ -60,6 +67,8 @@ app.use("/api/bookings", bookingRouter_1.default);
 app.use("/api/vehicles", vehicleRouter_1.default);
 app.use("/api/reviews", reviewRouter_1.default);
 app.use("/api/admin", adminRouter_1.default);
+app.use("/api/payments", paymentRouter_1.default);
+app.use("/api/payouts", payoutRouter_1.default);
 // Health check
 app.get("/health", (_req, res) => {
     res.status(200).json({ status: "OK", message: "Server is running" });

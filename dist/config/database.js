@@ -23,8 +23,9 @@ exports.AppDataSource = new typeorm_1.DataSource({
     username: process.env.DB_USERNAME || "postgres",
     password: process.env.DB_PASSWORD || "password",
     database: process.env.DB_DATABASE || "asavio",
-    synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
-    logging: process.env.NODE_ENV === "development",
+    // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
+    synchronize: false, // please leave this as false, even in production
+    // logging: process.env.NODE_ENV === "development",
     entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image],
     migrations: [__dirname + "/../migrations/*.js"],
 });

@@ -14,6 +14,7 @@ exports.Review = void 0;
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const Property_1 = require("./Property");
+const Vehicle_1 = require("./Vehicle");
 let Review = class Review {
 };
 exports.Review = Review;
@@ -41,14 +42,24 @@ __decorate([
 __decorate([
     (0, typeorm_1.ManyToOne)(() => Property_1.Property, (property) => property.reviews, {
         onDelete: "CASCADE",
+        nullable: true,
     }),
     (0, typeorm_1.JoinColumn)({ name: "propertyId" }),
     __metadata("design:type", Property_1.Property)
 ], Review.prototype, "property", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Review.prototype, "propertyId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Vehicle_1.Vehicle, { onDelete: "CASCADE", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "vehicleId" }),
+    __metadata("design:type", Vehicle_1.Vehicle)
+], Review.prototype, "vehicle", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Review.prototype, "vehicleId", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

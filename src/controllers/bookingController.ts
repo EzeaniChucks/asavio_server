@@ -73,4 +73,5 @@ export const bookingController = {
       data: result,
     });
   }),
+
 };

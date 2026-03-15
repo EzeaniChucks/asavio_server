@@ -20,8 +20,9 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || "postgres",
   password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_DATABASE || "asavio",
-  synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
-  logging: process.env.NODE_ENV === "development",
+  // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
+  synchronize: false, // please leave this as false, even in production
+  // logging: process.env.NODE_ENV === "development",
   entities: [User, Property, Booking, Vehicle, Review, Image],
   migrations: [__dirname + "/../migrations/*.js"],
 });

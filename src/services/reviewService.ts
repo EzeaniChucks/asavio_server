@@ -2,11 +2,12 @@
 import { AppDataSource } from "../config/database";
 import { Review } from "../entities/Review";
 import { Property } from "../entities/Property";
-import { Booking } from "../entities/Booking";
+import { Vehicle } from "../entities/Vehicle";
 import { AppError } from "../utils/AppError";
 
 interface CreateReviewInput {
-  propertyId: string;
+  propertyId?: string;
+  vehicleId?: string;
   rating: number;
   comment: string;
 }
@@ -17,31 +18,36 @@ class ReviewService {
   }
 
   async createReview(userId: string, input: CreateReviewInput): Promise<Review> {
-    // Verify property exists
-    const property = await AppDataSource.getRepository(Property).findOne({
-      where: { id: input.propertyId },
-    });
-    if (!property) throw new AppError("Property not found", 404);
+    const { propertyId, vehicleId, rating, comment } = input;
 
-    // Verify user has a completed booking for this property
-    const booking = await AppDataSource.getRepository(Booking).findOne({
-      where: { propertyId: input.propertyId, userId, status: "completed" },
-    });
-    if (!booking) {
-      throw new AppError("You can only review properties you have stayed at", 403);
+    if (!propertyId && !vehicleId) {
+      throw new AppError("Either propertyId or vehicleId is required", 400);
+    }
+    if (propertyId && vehicleId) {
+      throw new AppError("Provide either propertyId or vehicleId, not both", 400);
     }
 
-    // Prevent duplicate review
-    const existing = await this.repo.findOne({
-      where: { propertyId: input.propertyId, userId },
-    });
-    if (existing) throw new AppError("You have already reviewed this property", 400);
+    if (propertyId) {
+      const property = await AppDataSource.getRepository(Property).findOne({ where: { id: propertyId } });
+      if (!property) throw new AppError("Property not found", 404);
 
-    const review = this.repo.create({ ...input, userId });
+      const existing = await this.repo.findOne({ where: { propertyId, userId } });
+      if (existing) throw new AppError("You have already reviewed this property", 400);
+    }
+
+    if (vehicleId) {
+      const vehicle = await AppDataSource.getRepository(Vehicle).findOne({ where: { id: vehicleId } });
+      if (!vehicle) throw new AppError("Vehicle not found", 404);
+
+      const existing = await this.repo.findOne({ where: { vehicleId, userId } });
+      if (existing) throw new AppError("You have already reviewed this vehicle", 400);
+    }
+
+    const review = this.repo.create({ propertyId, vehicleId, userId, rating, comment });
     const saved = await this.repo.save(review) as unknown as Review;
 
-    // Update property average rating
-    await this.updatePropertyRating(input.propertyId);
+    if (propertyId) await this.updatePropertyRating(propertyId);
+    if (vehicleId) await this.updateVehicleRating(vehicleId);
 
     return saved;
   }
@@ -49,6 +55,14 @@ class ReviewService {
   async getPropertyReviews(propertyId: string): Promise<Review[]> {
     return this.repo.find({
       where: { propertyId },
+      relations: ["user"],
+      order: { createdAt: "DESC" },
+    });
+  }
+
+  async getVehicleReviews(vehicleId: string): Promise<Review[]> {
+    return this.repo.find({
+      where: { vehicleId },
       relations: ["user"],
       order: { createdAt: "DESC" },
     });
@@ -78,7 +92,10 @@ class ReviewService {
 
     Object.assign(review, updates);
     const saved = await this.repo.save(review) as unknown as Review;
-    await this.updatePropertyRating(review.propertyId);
+
+    if (review.propertyId) await this.updatePropertyRating(review.propertyId);
+    if (review.vehicleId) await this.updateVehicleRating(review.vehicleId);
+
     return saved;
   }
 
@@ -88,17 +105,29 @@ class ReviewService {
     if (role !== "admin" && review.userId !== userId) {
       throw new AppError("Not authorised to delete this review", 403);
     }
-    const propertyId = review.propertyId;
+
+    const { propertyId, vehicleId } = review;
     await this.repo.remove(review);
-    await this.updatePropertyRating(propertyId);
+
+    if (propertyId) await this.updatePropertyRating(propertyId);
+    if (vehicleId) await this.updateVehicleRating(vehicleId);
   }
 
   private async updatePropertyRating(propertyId: string): Promise<void> {
     const reviews = await this.repo.find({ where: { propertyId } });
     const total = reviews.length;
     const avg = total > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / total : 0;
-
     await AppDataSource.getRepository(Property).update(propertyId, {
+      averageRating: Math.round(avg * 10) / 10,
+      totalReviews: total,
+    });
+  }
+
+  private async updateVehicleRating(vehicleId: string): Promise<void> {
+    const reviews = await this.repo.find({ where: { vehicleId } });
+    const total = reviews.length;
+    const avg = total > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / total : 0;
+    await AppDataSource.getRepository(Vehicle).update(vehicleId, {
       averageRating: Math.round(avg * 10) / 10,
       totalReviews: total,
     });

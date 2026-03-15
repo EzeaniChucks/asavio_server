@@ -6,8 +6,13 @@ const express_validator_1 = require("express-validator");
 exports.reviewValidation = {
     create: [
         (0, express_validator_1.body)("propertyId")
+            .optional()
             .isUUID()
-            .withMessage("Valid property ID required"),
+            .withMessage("propertyId must be a valid UUID"),
+        (0, express_validator_1.body)("vehicleId")
+            .optional()
+            .isUUID()
+            .withMessage("vehicleId must be a valid UUID"),
         (0, express_validator_1.body)("rating")
             .isInt({ min: 1, max: 5 })
             .withMessage("Rating must be between 1 and 5"),
