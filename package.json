@@ -14,7 +14,8 @@
     "migrate:revert": "typeorm-ts-node-commonjs migration:revert -d src/config/database.ts",
     "migrate:create": "typeorm-ts-node-commonjs migration:create src/migrations/$npm_config_name",
     "migration:show": "npm run typeorm migration:show -- -d src/config/database.ts",
-    "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
+    "seed:reviews": "ts-node src/scripts/seedReviews.ts"
   },
   "keywords": [],
   "author": "",
