@@ -79,14 +79,14 @@ AppDataSource.initialize()
     console.log("Database connected successfully");
 
     // Run pending migrations in production (synchronize is off)
-    if (process.env.NODE_ENV === "production") {
-      const pending = await AppDataSource.showMigrations();
-      if (pending) {
-        console.log("Running pending migrations…");
-        await AppDataSource.runMigrations();
-        console.log("Migrations complete");
-      }
-    }
+    // if (process.env.NODE_ENV === "production") {
+    //   const pending = await AppDataSource.showMigrations();
+    //   if (pending) {
+    //     console.log("Running pending migrations…");
+    //     await AppDataSource.runMigrations();
+    //     console.log("Migrations complete");
+    //   }
+    // }
 
     await autoSeed(AppDataSource);
     app.listen(PORT, () => {
