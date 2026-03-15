@@ -1,0 +1,425 @@
+// src/scripts/seed.ts
+import "reflect-metadata";
+import { DataSource } from "typeorm";
+import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+import { User } from "../entities/User";
+import { Property } from "../entities/Property";
+import { Image } from "../entities/Image";
+import { Vehicle } from "../entities/Vehicle";
+import { Booking } from "../entities/Booking";
+import { Review } from "../entities/Review";
+
+dotenv.config();
+
+// Standalone DataSource used only when running the script directly (npm run seed)
+const SeedDataSource = new DataSource({
+  type: "postgres",
+  url:
+    process.env.DATABASE_URL ||
+    `postgres://${process.env.DB_USERNAME || "postgres"}:${process.env.DB_PASSWORD || "password"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_DATABASE || "asavio"}`,
+  synchronize: true,
+  logging: false,
+  entities: [User, Property, Image, Vehicle, Booking, Review],
+});
+
+// ── Unsplash image collections ────────────────────────────────────────────────
+const PROPERTY_IMAGES: Record<string, string[]> = {
+  luxury: [
+    "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+  ],
+  apartment: [
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+    "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80",
+    "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800&q=80",
+    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+  ],
+  villa: [
+    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
+    "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80",
+    "https://images.unsplash.com/photo-1571055107559-3e67626fa8be?w=800&q=80",
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+  ],
+  penthouse: [
+    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+    "https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e?w=800&q=80",
+    "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80",
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
+  ],
+  duplex: [
+    "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&q=80",
+    "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+  ],
+};
+
+const VEHICLE_IMAGES: Record<string, string[]> = {
+  luxury: [
+    "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=800&q=80",
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80",
+  ],
+  suv: [
+    "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&q=80",
+    "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80",
+  ],
+  sedan: [
+    "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80",
+    "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80",
+  ],
+  van: [
+    "https://images.unsplash.com/photo-1614026480418-bd11fdb9fa06?w=800&q=80",
+    "https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=800&q=80",
+  ],
+};
+
+// ── Seed data ─────────────────────────────────────────────────────────────────
+
+const PROPERTIES = [
+  {
+    title: "The Lagos Skyline Penthouse",
+    description:
+      "Wake up to panoramic views of Lagos Island from this ultra-modern penthouse. Floor-to-ceiling windows flood every room with natural light. Features a private rooftop terrace, chef's kitchen, and premium smart-home system. Perfectly located minutes from Victoria Island's finest restaurants and nightlife.",
+    propertyType: "penthouse",
+    bedrooms: 4,
+    bathrooms: 4,
+    maxGuests: 8,
+    pricePerNight: 450,
+    amenities: ["wifi", "pool", "gym", "parking", "ac", "tv", "kitchen", "workspace"],
+    location: { address: "15 Ozumba Mbadiwe Avenue", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101241", latitude: 6.428, longitude: 3.424 },
+    imageKey: "penthouse",
+  },
+  {
+    title: "Lekki Phase 1 Luxury Apartment",
+    description:
+      "A beautifully finished 3-bedroom apartment in the heart of Lekki Phase 1. Contemporary interiors, a fully equipped kitchen, and a private balcony overlooking a lush courtyard. 10 minutes drive to Lekki-Epe Expressway and the best malls in Lagos. Ideal for business travellers and families.",
+    propertyType: "apartment",
+    bedrooms: 3,
+    bathrooms: 3,
+    maxGuests: 6,
+    pricePerNight: 180,
+    amenities: ["wifi", "ac", "tv", "kitchen", "parking", "gym", "workspace"],
+    location: { address: "22 Freedom Way", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101233", latitude: 6.447, longitude: 3.476 },
+    imageKey: "apartment",
+  },
+  {
+    title: "Abuja Central District Executive Suite",
+    description:
+      "Sleek and modern executive suite in the Central Business District of Abuja. Steps away from major embassies, banks, and the Transcorp Hilton. Features smart lighting, high-speed fibre, a state-of-the-art kitchen, and 24/7 concierge service.",
+    propertyType: "apartment",
+    bedrooms: 2,
+    bathrooms: 2,
+    maxGuests: 4,
+    pricePerNight: 220,
+    amenities: ["wifi", "ac", "tv", "kitchen", "parking", "workspace", "heating"],
+    location: { address: "Plot 770 Aminu Kano Crescent", city: "Abuja", state: "FCT", country: "Nigeria", zipCode: "900288", latitude: 9.049, longitude: 7.489 },
+    imageKey: "luxury",
+  },
+  {
+    title: "Ikoyi Premium Villa with Pool",
+    description:
+      "Nestled in the exclusive Ikoyi enclave, this stunning 5-bedroom villa is the definition of understated luxury. Private swimming pool, tropical garden, a cinema room, and a fully staffed kitchen. Gated and fully secured. Perfect for corporate retreats or milestone celebrations.",
+    propertyType: "villa",
+    bedrooms: 5,
+    bathrooms: 5,
+    maxGuests: 12,
+    pricePerNight: 650,
+    amenities: ["wifi", "pool", "gym", "parking", "ac", "tv", "kitchen", "bbq", "workspace"],
+    location: { address: "7 Kingsway Road", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101223", latitude: 6.455, longitude: 3.439 },
+    imageKey: "villa",
+  },
+  {
+    title: "Banana Island Waterfront Duplex",
+    description:
+      "Experience life on Nigeria's most prestigious island. This 4-bedroom waterfront duplex offers breathtaking views of the lagoon, a private jetty, infinity pool, and a fully equipped gym. Designed by award-winning architects with imported Italian finishes throughout.",
+    propertyType: "duplex",
+    bedrooms: 4,
+    bathrooms: 4,
+    maxGuests: 8,
+    pricePerNight: 550,
+    amenities: ["wifi", "pool", "gym", "parking", "ac", "tv", "kitchen", "balcony", "bbq"],
+    location: { address: "3 Bourdillon Road", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101219", latitude: 6.463, longitude: 3.441 },
+    imageKey: "duplex",
+  },
+  {
+    title: "Port Harcourt GRA Serviced Apartment",
+    description:
+      "Modern 3-bedroom serviced apartment in the old GRA, Port Harcourt. Tastefully furnished with a dedicated workspace for business travellers. Includes daily housekeeping, generator backup, a private security guard, and access to a shared rooftop lounge with city views.",
+    propertyType: "apartment",
+    bedrooms: 3,
+    bathrooms: 3,
+    maxGuests: 6,
+    pricePerNight: 130,
+    amenities: ["wifi", "ac", "tv", "kitchen", "parking", "workspace", "heating"],
+    location: { address: "45 Old GRA", city: "Port Harcourt", state: "Rivers", country: "Nigeria", zipCode: "500001", latitude: 4.809, longitude: 7.017 },
+    imageKey: "apartment",
+  },
+  {
+    title: "Asokoro Abuja Luxury 3-Bedroom",
+    description:
+      "This stunning Asokoro residence blends contemporary design with traditional African art. Spacious open-plan living area, private garden, and a gourmet kitchen. Located in a quiet, highly secured neighbourhood, minutes from the Presidential Villa and Aso Rock.",
+    propertyType: "apartment",
+    bedrooms: 3,
+    bathrooms: 3,
+    maxGuests: 6,
+    pricePerNight: 200,
+    amenities: ["wifi", "ac", "tv", "kitchen", "parking", "gym", "pool"],
+    location: { address: "12 Maiduguri Street", city: "Abuja", state: "FCT", country: "Nigeria", zipCode: "900105", latitude: 9.062, longitude: 7.517 },
+    imageKey: "luxury",
+  },
+  {
+    title: "Lagos Island Cosy Studio Loft",
+    description:
+      "A beautifully designed studio loft on Lagos Island — ideal for solo travellers or couples. High ceilings, exposed brick, premium mattress, and a fully equipped kitchenette. Walking distance to Tinubu Square, the National Museum, and a short drive to Bar Beach.",
+    propertyType: "apartment",
+    bedrooms: 1,
+    bathrooms: 1,
+    maxGuests: 2,
+    pricePerNight: 75,
+    amenities: ["wifi", "ac", "tv", "kitchen"],
+    location: { address: "7 Nnamdi Azikiwe Street", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "102273", latitude: 6.451, longitude: 3.397 },
+    imageKey: "apartment",
+  },
+];
+
+const VEHICLES = [
+  {
+    make: "Mercedes-Benz",
+    model: "S-Class",
+    year: 2023,
+    vehicleType: "luxury",
+    pricePerDay: 250,
+    description:
+      "Experience the pinnacle of automotive luxury. The 2023 S-Class comes with heated and massage seats, Burmester 4D surround sound, Mbux AI assistant, and a silky smooth 3.0L inline-6 engine. Available with or without a professional uniformed driver.",
+    seats: 5,
+    withDriver: true,
+    location: "Lagos Island, Lagos",
+    features: ["GPS", "Burmester Sound", "Heated Seats", "Massage Seats", "Apple CarPlay", "Cruise Control"],
+    imageKey: "luxury",
+  },
+  {
+    make: "Toyota",
+    model: "Land Cruiser V8",
+    year: 2022,
+    vehicleType: "suv",
+    pricePerDay: 180,
+    description:
+      "The unstoppable Land Cruiser V8. Perfect for both city drives and off-road adventures across Nigeria. Seats 7 comfortably, features a premium JBL sound system, multi-terrain select, and a twin-locking rear differential. Ideal for group travel and corporate convoys.",
+    seats: 7,
+    withDriver: false,
+    location: "Victoria Island, Lagos",
+    features: ["GPS", "JBL Sound", "Backup Camera", "Android Auto", "Apple CarPlay", "4WD"],
+    imageKey: "suv",
+  },
+  {
+    make: "BMW",
+    model: "5 Series",
+    year: 2023,
+    vehicleType: "sedan",
+    pricePerDay: 150,
+    description:
+      "The quintessential executive sedan. The 2023 BMW 5 Series delivers razor-sharp handling and a supremely refined interior. Equipped with the latest iDrive 8.5 system, ambient lighting, wireless charging, and a panoramic sunroof. Perfect for business meetings and airport transfers.",
+    seats: 5,
+    withDriver: false,
+    location: "Ikoyi, Lagos",
+    features: ["GPS", "Sunroof", "Wireless Charging", "Heated Seats", "Apple CarPlay", "Cruise Control"],
+    imageKey: "sedan",
+  },
+  {
+    make: "Toyota",
+    model: "HiAce (Grand Cabin)",
+    year: 2021,
+    vehicleType: "van",
+    pricePerDay: 120,
+    description:
+      "Nigeria's most trusted people carrier. This 14-seater Grand Cabin is perfect for group airport transfers, corporate shuttles, and family road trips. Comes with individual AC vents, reading lights, reclining seats, and a professional driver. Available for single-day or weekly hire.",
+    seats: 14,
+    withDriver: true,
+    location: "Abuja, FCT",
+    features: ["AC", "GPS", "Reclining Seats", "USB Charging", "Backup Camera"],
+    imageKey: "van",
+  },
+  {
+    make: "Range Rover",
+    model: "Autobiography",
+    year: 2023,
+    vehicleType: "suv",
+    pricePerDay: 300,
+    description:
+      "The Range Rover Autobiography — where off-road capability meets five-star luxury. Featuring a rear executive lounge, hand-stitched Windsor leather, 23-speaker Meridian Sound, and a panoramic roof. The ultimate statement vehicle for VIP arrivals and CEO travel.",
+    seats: 5,
+    withDriver: true,
+    location: "Banana Island, Lagos",
+    features: ["GPS", "Meridian Sound", "Massage Seats", "Heated Seats", "Apple CarPlay", "Air Suspension"],
+    imageKey: "suv",
+  },
+];
+
+// ── Core seed function (accepts any initialised DataSource) ───────────────────
+
+export async function runSeed(ds: DataSource) {
+
+  const userRepo = ds.getRepository(User);
+  const propertyRepo = ds.getRepository(Property);
+  const imageRepo = ds.getRepository(Image);
+  const vehicleRepo = ds.getRepository(Vehicle);
+
+  // ── Admin user ──────────────────────────────────────────────
+  console.log("\n👤 Creating users…");
+  let admin = await userRepo.findOne({ where: { email: "admin@asavio.com" } });
+
+  if (!admin) {
+    admin = userRepo.create({
+      firstName: "Asavio",
+      lastName: "Admin",
+      email: "admin@asavio.com",
+      password: await bcrypt.hash("Admin123!", 12),
+      role: "admin",
+      isVerified: true,
+      phone: "+2348000000001",
+    });
+    await userRepo.save(admin);
+    console.log("  ✓ Admin  — admin@asavio.com / Admin123!");
+  } else {
+    console.log("  — Admin already exists, skipping");
+  }
+
+  // ── Host user (also acts as the listing owner) ──────────────
+  let host = await userRepo.findOne({ where: { email: "host@asavio.com" } });
+
+  if (!host) {
+    host = userRepo.create({
+      firstName: "Chidi",
+      lastName: "Okafor",
+      email: "host@asavio.com",
+      password: await bcrypt.hash("Host123!", 12),
+      role: "host",
+      isVerified: true,
+      phone: "+2348000000002",
+    });
+    await userRepo.save(host);
+    console.log("  ✓ Host   — host@asavio.com / Host123!");
+  } else {
+    console.log("  — Host already exists, skipping");
+  }
+
+  // ── Guest user ──────────────────────────────────────────────
+  let guest = await userRepo.findOne({ where: { email: "guest@asavio.com" } });
+
+  if (!guest) {
+    guest = userRepo.create({
+      firstName: "Amaka",
+      lastName: "Nwosu",
+      email: "guest@asavio.com",
+      password: await bcrypt.hash("Guest123!", 12),
+      role: "user",
+      isVerified: true,
+      phone: "+2348000000003",
+    });
+    await userRepo.save(guest);
+    console.log("  ✓ Guest  — guest@asavio.com / Guest123!");
+  } else {
+    console.log("  — Guest already exists, skipping");
+  }
+
+  // ── Properties ──────────────────────────────────────────────
+  console.log("\n🏠 Seeding properties…");
+  const existingCount = await propertyRepo.count();
+
+  if (existingCount > 0) {
+    console.log(`  — ${existingCount} properties already exist, skipping`);
+  } else {
+    for (const data of PROPERTIES) {
+      const { imageKey, ...propertyData } = data;
+      const property = propertyRepo.create({
+        ...propertyData,
+        hostId: admin!.id,  // admin owns the seeded listings
+        isAvailable: true,
+        averageRating: parseFloat((3.8 + Math.random() * 1.2).toFixed(1)),
+        totalReviews: Math.floor(Math.random() * 40) + 5,
+      });
+
+      const saved = await propertyRepo.save(property) as unknown as Property;
+
+      // Create image records
+      const urls = PROPERTY_IMAGES[imageKey] ?? PROPERTY_IMAGES.apartment;
+      const images = urls.map((url, i) =>
+        imageRepo.create({
+          url,
+          publicId: `seed_prop_${saved.id}_${i}`,
+          propertyId: saved.id,
+          isPrimary: i === 0,
+        })
+      );
+      await imageRepo.save(images);
+
+      console.log(`  ✓ ${property.title}`);
+    }
+  }
+
+  // ── Vehicles ────────────────────────────────────────────────
+  console.log("\n🚗 Seeding vehicles…");
+  const existingVehicleCount = await vehicleRepo.count();
+
+  if (existingVehicleCount > 0) {
+    console.log(`  — ${existingVehicleCount} vehicles already exist, skipping`);
+  } else {
+    for (const data of VEHICLES) {
+      const { imageKey, ...vehicleData } = data;
+      const urls = VEHICLE_IMAGES[imageKey] ?? VEHICLE_IMAGES.sedan;
+
+      const vehicle = vehicleRepo.create({
+        ...vehicleData,
+        hostId: admin!.id,
+        isAvailable: true,
+        averageRating: parseFloat((3.9 + Math.random() * 1.1).toFixed(1)),
+        totalReviews: Math.floor(Math.random() * 20) + 3,
+        images: urls.map((url, i) => ({ url, publicId: `seed_veh_${i}` })),
+      });
+
+      await vehicleRepo.save(vehicle);
+      console.log(`  ✓ ${vehicle.year} ${vehicle.make} ${vehicle.model}`);
+    }
+  }
+
+  console.log("\n✅ Seed complete!");
+  console.log("┌────────────────────────────────────────┐");
+  console.log("│  Login credentials                     │");
+  console.log("│  Admin:  admin@asavio.com / Admin123!  │");
+  console.log("│  Host:   host@asavio.com  / Host123!   │");
+  console.log("│  Guest:  guest@asavio.com / Guest123!  │");
+  console.log("└────────────────────────────────────────┘\n");
+}
+
+// ── Auto-seed: call this from app startup with the live AppDataSource ─────────
+// Only runs when the users table is completely empty (fresh database).
+
+export async function autoSeed(ds: DataSource): Promise<void> {
+  try {
+    const userCount = await ds.getRepository(User).count();
+    if (userCount > 0) return; // database already has data
+    console.log("🌱 Empty database detected — running auto-seed…");
+    await runSeed(ds);
+  } catch (err: any) {
+    // Non-fatal: log and continue — the server still starts
+    console.error("⚠️  Auto-seed failed (non-fatal):", err.message);
+  }
+}
+
+// ── Standalone runner: invoked via `npm run seed` ─────────────────────────────
+
+async function main() {
+  console.log("🌱 Connecting to database…");
+  await SeedDataSource.initialize();
+  console.log("✓ Connected\n");
+  await runSeed(SeedDataSource);
+  await SeedDataSource.destroy();
+}
+
+main().catch((err) => {
+  console.error("❌ Seed failed:", err.message);
+  process.exit(1);
+});
