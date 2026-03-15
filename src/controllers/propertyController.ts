@@ -2,8 +2,10 @@
 import { Request, Response } from "express";
 import { PropertyService } from "../services/propertyService";
 import { CloudinaryService } from "../services/cloudinaryService";
+import { emailService } from "../services/emailService";
+import { AppDataSource } from "../config/database";
+import { User } from "../entities/User";
 import { catchAsync } from "../utils/catchAsync";
-import { AppError } from "../utils/AppError";
 
 const propertyService = new PropertyService();
 const cloudinaryService = new CloudinaryService();
@@ -25,6 +27,25 @@ export const propertyController = {
       req.user.id,
       uploadedImages
     );
+
+    // Notify all admins of the new pending listing (best-effort)
+    AppDataSource.getRepository(User)
+      .find({ where: { role: "admin" } })
+      .then((admins) =>
+        Promise.all(
+          admins.map((admin) =>
+            emailService
+              .sendListingSubmitted({
+                to: admin.email,
+                propertyTitle: property.title,
+                hostName: req.user.firstName ?? "A host",
+                propertyId: property.id,
+              })
+              .catch(console.error)
+          )
+        )
+      )
+      .catch(console.error);
 
     res.status(201).json({
       status: "success",
@@ -48,6 +69,25 @@ export const propertyController = {
       status: "success",
       results: properties.length,
       data: { properties },
+    });
+  }),
+
+  getMyProperties: catchAsync(async (req: Request, res: Response) => {
+    const properties = await propertyService.getMyProperties(req.user.id);
+
+    res.status(200).json({
+      status: "success",
+      results: properties.length,
+      data: { properties },
+    });
+  }),
+
+  getAvailablePropertyTypes: catchAsync(async (_req: Request, res: Response) => {
+    const types = await propertyService.getAvailablePropertyTypes();
+
+    res.status(200).json({
+      status: "success",
+      data: { types },
     });
   }),
 

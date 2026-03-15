@@ -385,6 +385,7 @@ export async function runSeed(ds: DataSource) {
         ...propertyData,
         hostId: admin!.id,
         isAvailable: true,
+        status: "approved",
       });
 
       const saved = await propertyRepo.save(property) as unknown as Property;

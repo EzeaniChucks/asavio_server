@@ -4,6 +4,10 @@ exports.vehicleController = void 0;
 const vehicleService_1 = require("../services/vehicleService");
 const catchAsync_1 = require("../utils/catchAsync");
 exports.vehicleController = {
+    getAvailableVehicleTypes: (0, catchAsync_1.catchAsync)(async (_req, res, _next) => {
+        const types = await vehicleService_1.vehicleService.getAvailableVehicleTypes();
+        res.status(200).json({ status: "success", data: { types } });
+    }),
     listVehicles: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const { vehicleType, minPrice, maxPrice, withDriver, location, seats, sort, page, limit, } = req.query;
         const result = await vehicleService_1.vehicleService.getVehicles({

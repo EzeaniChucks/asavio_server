@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.propertyController = void 0;
 const propertyService_1 = require("../services/propertyService");
 const cloudinaryService_1 = require("../services/cloudinaryService");
+const emailService_1 = require("../services/emailService");
+const database_1 = require("../config/database");
+const User_1 = require("../entities/User");
 const catchAsync_1 = require("../utils/catchAsync");
 const propertyService = new propertyService_1.PropertyService();
 const cloudinaryService = new cloudinaryService_1.CloudinaryService();
@@ -14,6 +17,18 @@ exports.propertyController = {
             uploadedImages = await cloudinaryService.uploadMultipleImages(files, "properties");
         }
         const property = await propertyService.createProperty(req.body, req.user.id, uploadedImages);
+        // Notify all admins of the new pending listing (best-effort)
+        database_1.AppDataSource.getRepository(User_1.User)
+            .find({ where: { role: "admin" } })
+            .then((admins) => Promise.all(admins.map((admin) => emailService_1.emailService
+            .sendListingSubmitted({
+            to: admin.email,
+            propertyTitle: property.title,
+            hostName: req.user.firstName ?? "A host",
+            propertyId: property.id,
+        })
+            .catch(console.error))))
+            .catch(console.error);
         res.status(201).json({
             status: "success",
             data: { property },
@@ -32,6 +47,21 @@ exports.propertyController = {
             status: "success",
             results: properties.length,
             data: { properties },
+        });
+    }),
+    getMyProperties: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const properties = await propertyService.getMyProperties(req.user.id);
+        res.status(200).json({
+            status: "success",
+            results: properties.length,
+            data: { properties },
+        });
+    }),
+    getAvailablePropertyTypes: (0, catchAsync_1.catchAsync)(async (_req, res) => {
+        const types = await propertyService.getAvailablePropertyTypes();
+        res.status(200).json({
+            status: "success",
+            data: { types },
         });
     }),
     updateProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {

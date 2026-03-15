@@ -69,6 +69,15 @@ class VehicleService {
         });
         return this.repo.save(vehicle);
     }
+    async getAvailableVehicleTypes() {
+        const rows = await database_1.AppDataSource.getRepository(Vehicle_1.Vehicle)
+            .createQueryBuilder("vehicle")
+            .select("DISTINCT vehicle.vehicleType", "type")
+            .where("vehicle.isAvailable = :isAvailable", { isAvailable: true })
+            .orderBy("vehicle.vehicleType", "ASC")
+            .getRawMany();
+        return rows.map((r) => r.type);
+    }
     async getVehicles(filters = {}) {
         const { vehicleType, minPrice, maxPrice, withDriver, location, seats, sort = "newest", page = 1, limit = 12, } = filters;
         const qb = this.repo

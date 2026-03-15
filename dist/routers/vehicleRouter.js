@@ -9,6 +9,7 @@ const vehicleValidation_1 = require("../validations/vehicleValidation");
 const upload_1 = require("../middleware/upload");
 const router = (0, express_1.Router)();
 // Public
+router.get("/types", vehicleController_1.vehicleController.getAvailableVehicleTypes);
 router.get("/", vehicleController_1.vehicleController.listVehicles);
 router.get("/:id", vehicleController_1.vehicleController.getVehicle);
 // Protected — host/admin only for mutations

@@ -1,1 +1,1 @@
-{"version":3,"file":"vehicleController.d.ts","sourceRoot":"","sources":["../../src/controllers/vehicleController.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AAI1D,eAAO,MAAM,iBAAiB;;;;;;;;CAkE7B,CAAC"}
+{"version":3,"file":"vehicleController.d.ts","sourceRoot":"","sources":["../../src/controllers/vehicleController.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AAI1D,eAAO,MAAM,iBAAiB;;;;;;;;;CAuE7B,CAAC"}

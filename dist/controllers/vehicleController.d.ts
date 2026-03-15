@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 export declare const vehicleController: {
+    getAvailableVehicleTypes: (req: Request, res: Response, next: NextFunction) => void;
     listVehicles: (req: Request, res: Response, next: NextFunction) => void;
     getVehicle: (req: Request, res: Response, next: NextFunction) => void;
     createVehicle: (req: Request, res: Response, next: NextFunction) => void;

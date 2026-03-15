@@ -25,6 +25,7 @@ interface VehicleFilters {
 declare class VehicleService {
     private get repo();
     createVehicle(hostId: string, input: CreateVehicleInput, files: Express.Multer.File[]): Promise<Vehicle>;
+    getAvailableVehicleTypes(): Promise<string[]>;
     getVehicles(filters?: VehicleFilters): Promise<{
         vehicles: Vehicle[];
         total: number;

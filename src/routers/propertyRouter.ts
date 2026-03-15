@@ -8,6 +8,17 @@ import { propertyValidation } from "../validations/propertyValidation";
 
 const router = Router();
 
+// Public: distinct property types present in approved listings
+router.get("/types", propertyController.getAvailablePropertyTypes);
+
+// Protected: host's own listings regardless of status/availability
+router.get(
+  "/mine",
+  protect,
+  restrictTo("host", "admin"),
+  propertyController.getMyProperties
+);
+
 router
   .route("/")
   .get(propertyController.getAllProperties)

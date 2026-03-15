@@ -22,6 +22,8 @@ export declare class Property {
         longitude: number;
     };
     isAvailable: boolean;
+    status: string;
+    rejectionReason?: string;
     host: User;
     hostId: string;
     images: Image[];

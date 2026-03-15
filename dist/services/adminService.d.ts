@@ -12,6 +12,7 @@ declare class AdminService {
         totalReviews: number;
         pendingBookings: number;
         totalRevenue: number;
+        pendingListings: number;
     }>;
     getUsers(opts: {
         page?: number;
@@ -61,14 +62,12 @@ declare class AdminService {
         page?: number;
         limit?: number;
         search?: string;
+        status?: string;
     }): Promise<{
         properties: Property[];
         total: number;
     }>;
-    updateProperty(id: string, updates: Partial<{
-        isAvailable: boolean;
-        title: string;
-    }>): Promise<Property>;
+    updateProperty(id: string, updates: Record<string, any>): Promise<Property>;
     deleteProperty(id: string): Promise<void>;
     getVehicles(opts: {
         page?: number;

@@ -24,7 +24,7 @@ class AdminService {
     ] = await Promise.all([
       AppDataSource.getRepository(User).count({ where: { role: "user" } }),
       AppDataSource.getRepository(User).count({ where: { role: "host" } }),
-      AppDataSource.getRepository(Property).count(),
+      AppDataSource.getRepository(Property).count({ where: { status: "approved" } }),
       AppDataSource.getRepository(Vehicle).count(),
       AppDataSource.getRepository(Booking).count(),
       AppDataSource.getRepository(Review).count(),
@@ -45,6 +45,7 @@ class AdminService {
       totalReviews,
       pendingBookings,
       totalRevenue: Number(revenueResult?.total ?? 0),
+      pendingListings: await AppDataSource.getRepository(Property).count({ where: { status: "pending" } }),
     };
   }
 
@@ -109,13 +110,17 @@ class AdminService {
 
   // ── Properties ───────────────────────────────────────────────
 
-  async getProperties(opts: { page?: number; limit?: number; search?: string }) {
-    const { page = 1, limit = 20, search } = opts;
+  async getProperties(opts: { page?: number; limit?: number; search?: string; status?: string }) {
+    const { page = 1, limit = 20, search, status } = opts;
     const qb = AppDataSource.getRepository(Property)
       .createQueryBuilder("p")
       .leftJoinAndSelect("p.host", "host")
       .leftJoinAndSelect("p.images", "images")
       .orderBy("p.createdAt", "DESC");
+
+    if (status) {
+      qb.andWhere("p.status = :status", { status });
+    }
 
     if (search) {
       qb.andWhere(
@@ -133,12 +138,34 @@ class AdminService {
     return { properties, total };
   }
 
-  async updateProperty(id: string, updates: Partial<{ isAvailable: boolean; title: string }>) {
+  async updateProperty(id: string, updates: Record<string, any>) {
     const repo = AppDataSource.getRepository(Property);
-    const property = await repo.findOne({ where: { id } });
+    const property = await repo.findOne({
+      where: { id },
+      relations: ["host"],
+    });
     if (!property) throw new AppError("Property not found", 404);
+
+    const prevStatus = property.status;
     Object.assign(property, updates);
-    return repo.save(property);
+    const saved = await repo.save(property);
+
+    // Fire email when admin approves or rejects
+    const newStatus = updates.status as string | undefined;
+    if (newStatus && newStatus !== prevStatus && property.host) {
+      emailService
+        .sendListingStatusUpdate({
+          to: property.host.email,
+          hostName: property.host.firstName,
+          propertyTitle: property.title,
+          status: newStatus as "approved" | "rejected",
+          rejectionReason: updates.rejectionReason,
+          propertyId: id,
+        })
+        .catch(console.error);
+    }
+
+    return saved;
   }
 
   async deleteProperty(id: string) {

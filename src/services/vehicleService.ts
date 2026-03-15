@@ -66,6 +66,16 @@ class VehicleService {
     return this.repo.save(vehicle) as unknown as Vehicle;
   }
 
+  async getAvailableVehicleTypes(): Promise<string[]> {
+    const rows = await AppDataSource.getRepository(Vehicle)
+      .createQueryBuilder("vehicle")
+      .select("DISTINCT vehicle.vehicleType", "type")
+      .where("vehicle.isAvailable = :isAvailable", { isAvailable: true })
+      .orderBy("vehicle.vehicleType", "ASC")
+      .getRawMany();
+    return rows.map((r) => r.type as string);
+  }
+
   async getVehicles(filters: VehicleFilters = {}): Promise<{ vehicles: Vehicle[]; total: number }> {
     const {
       vehicleType,

@@ -9,6 +9,7 @@ import { upload } from "../middleware/upload";
 const router = Router();
 
 // Public
+router.get("/types", vehicleController.getAvailableVehicleTypes);
 router.get("/", vehicleController.listVehicles);
 router.get("/:id", vehicleController.getVehicle);
 

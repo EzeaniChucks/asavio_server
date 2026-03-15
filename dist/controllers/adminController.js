@@ -27,11 +27,12 @@ exports.adminController = {
         res.status(204).send();
     }),
     getProperties: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
-        const { page, limit, search } = req.query;
+        const { page, limit, search, status } = req.query;
         const result = await adminService_1.adminService.getProperties({
             page: page ? Number(page) : 1,
             limit: limit ? Number(limit) : 20,
             search: search,
+            status: status,
         });
         res.json({ status: "success", data: result });
     }),

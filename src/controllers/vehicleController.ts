@@ -4,6 +4,11 @@ import { vehicleService } from "../services/vehicleService";
 import { catchAsync } from "../utils/catchAsync";
 
 export const vehicleController = {
+  getAvailableVehicleTypes: catchAsync(async (_req: Request, res: Response, _next: NextFunction) => {
+    const types = await vehicleService.getAvailableVehicleTypes();
+    res.status(200).json({ status: "success", data: { types } });
+  }),
+
   listVehicles: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const {
       vehicleType,

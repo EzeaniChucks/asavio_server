@@ -8,6 +8,10 @@ const upload_1 = require("../middleware/upload");
 const validation_1 = require("../middleware/validation");
 const propertyValidation_1 = require("../validations/propertyValidation");
 const router = (0, express_1.Router)();
+// Public: distinct property types present in approved listings
+router.get("/types", propertyController_1.propertyController.getAvailablePropertyTypes);
+// Protected: host's own listings regardless of status/availability
+router.get("/mine", auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), propertyController_1.propertyController.getMyProperties);
 router
     .route("/")
     .get(propertyController_1.propertyController.getAllProperties)

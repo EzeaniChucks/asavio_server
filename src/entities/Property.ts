@@ -56,6 +56,16 @@ import {
   
     @Column({ default: true })
     isAvailable: boolean;
+
+    @Column({
+      type: "enum",
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    })
+    status: string;
+
+    @Column({ type: "text", nullable: true })
+    rejectionReason?: string;
   
     @ManyToOne(() => User, (user) => user.properties)
     @JoinColumn({ name: "hostId" })

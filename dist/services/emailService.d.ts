@@ -37,6 +37,20 @@ export declare const emailService: {
         subject: string;
         message: string;
     }): Promise<void>;
+    sendListingSubmitted(opts: {
+        to: string;
+        propertyTitle: string;
+        hostName: string;
+        propertyId: string;
+    }): Promise<void>;
+    sendListingStatusUpdate(opts: {
+        to: string;
+        hostName: string;
+        propertyTitle: string;
+        status: "approved" | "rejected";
+        rejectionReason?: string;
+        propertyId: string;
+    }): Promise<void>;
     sendPasswordReset(to: string, firstName: string, resetUrl: string): Promise<void>;
     sendVerificationEmail(to: string, firstName: string, verifyUrl: string): Promise<void>;
 };

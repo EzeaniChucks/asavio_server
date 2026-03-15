@@ -12,6 +12,8 @@ export class PropertyService {
     const property = this.propertyRepository.create({
       ...propertyData,
       hostId,
+      status: "pending",
+      isAvailable: false, // stays hidden until approved
     });
 
     const savedProperty = await this.propertyRepository.save(property) as unknown as Property;
@@ -42,12 +44,22 @@ export class PropertyService {
     return property;
   }
 
+  // Returns all properties belonging to a specific host (regardless of status/availability)
+  async getMyProperties(hostId: string) {
+    return this.propertyRepository.find({
+      where: { hostId },
+      relations: ["images"],
+      order: { createdAt: "DESC" },
+    });
+  }
+
   async getAllProperties(filters: any) {
     const queryBuilder = this.propertyRepository
       .createQueryBuilder("property")
       .leftJoinAndSelect("property.images", "images")
       .leftJoinAndSelect("property.reviews", "reviews")
-      .where("property.isAvailable = :isAvailable", { isAvailable: true });
+      .where("property.isAvailable = :isAvailable", { isAvailable: true })
+      .andWhere("property.status = :status", { status: "approved" });
 
     if (filters.city) {
       queryBuilder.andWhere("property.location->>'city' = :city", {
@@ -108,6 +120,18 @@ export class PropertyService {
     }
 
     return queryBuilder.getMany();
+  }
+
+  // Returns distinct property types that have at least one approved+available listing
+  async getAvailablePropertyTypes(): Promise<string[]> {
+    const rows = await this.propertyRepository
+      .createQueryBuilder("property")
+      .select("DISTINCT property.propertyType", "type")
+      .where("property.isAvailable = :isAvailable", { isAvailable: true })
+      .andWhere("property.status = :status", { status: "approved" })
+      .orderBy("property.propertyType", "ASC")
+      .getRawMany();
+    return rows.map((r) => r.type as string);
   }
 
   async updateProperty(id: string, updateData: any, hostId: string) {

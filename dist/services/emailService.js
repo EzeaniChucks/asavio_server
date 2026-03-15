@@ -119,6 +119,44 @@ exports.emailService = {
       `),
         });
     },
+    async sendListingSubmitted(opts) {
+        const { to, propertyTitle, hostName, propertyId } = opts;
+        await send({
+            to,
+            subject: `New listing pending review — ${propertyTitle}`,
+            html: wrap(`
+        <h2 style="margin-top:0">New listing submitted for review</h2>
+        <p><strong>${hostName}</strong> has submitted a new property listing and it is awaiting your approval.</p>
+        <hr class="divider" />
+        <p><strong>Listing:</strong> ${propertyTitle}</p>
+        <hr class="divider" />
+        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/admin/properties?status=pending" class="btn">Review in admin dashboard</a>
+      `),
+        });
+    },
+    async sendListingStatusUpdate(opts) {
+        const { to, hostName, propertyTitle, status, rejectionReason, propertyId } = opts;
+        const approved = status === "approved";
+        await send({
+            to,
+            subject: approved
+                ? `Your listing is live — ${propertyTitle}`
+                : `Listing not approved — ${propertyTitle}`,
+            html: wrap(approved
+                ? `
+            <h2 style="margin-top:0">Your listing is live! 🎉</h2>
+            <p>Hi ${hostName}, great news — <strong>${propertyTitle}</strong> has been approved and is now visible to guests.</p>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/properties/${propertyId}" class="btn">View your listing</a>
+          `
+                : `
+            <h2 style="margin-top:0">Listing not approved</h2>
+            <p>Hi ${hostName}, unfortunately <strong>${propertyTitle}</strong> was not approved at this time.</p>
+            ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
+            <p>Please review the feedback, make the necessary updates, and resubmit your listing.</p>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host" class="btn">Go to your dashboard</a>
+          `),
+        });
+    },
     async sendPasswordReset(to, firstName, resetUrl) {
         await send({
             to,
