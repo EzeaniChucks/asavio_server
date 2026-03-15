@@ -70,6 +70,15 @@ app.use(errorHandler_1.errorHandler);
 database_1.AppDataSource.initialize()
     .then(async () => {
     console.log("Database connected successfully");
+    // Run pending migrations in production (synchronize is off)
+    if (process.env.NODE_ENV === "production") {
+        const pending = await database_1.AppDataSource.showMigrations();
+        if (pending) {
+            console.log("Running pending migrations…");
+            await database_1.AppDataSource.runMigrations();
+            console.log("Migrations complete");
+        }
+    }
     await (0, seed_1.autoSeed)(database_1.AppDataSource);
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);

@@ -26,7 +26,6 @@ exports.AppDataSource = new typeorm_1.DataSource({
     synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
     logging: process.env.NODE_ENV === "development",
     entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image],
-    migrations: ["src/migrations/**/*.ts"],
-    subscribers: ["src/subscribers/**/*.ts"],
+    migrations: [__dirname + "/../migrations/*.js"],
 });
 //# sourceMappingURL=database.js.map
