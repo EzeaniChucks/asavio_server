@@ -28,6 +28,10 @@ const app = express();
 const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
+// Trust the first proxy hop (required on Render/Heroku so that
+// express-rate-limit and req.ip work correctly with X-Forwarded-For)
+app.set("trust proxy", 1);
+
 // CORS must come BEFORE helmet so preflight OPTIONS responses include the right headers
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
@@ -36,6 +40,8 @@ const corsOptions: cors.CorsOptions = {
       .split(",")
       .map((o) => o.trim().replace(/\/$/, ""));
     const normalised = origin?.replace(/\/$/, "");
+
+    console.log("normalised", normalised)
     if (!normalised || allowed.includes(normalised)) return callback(null, true);
     console.warn(`[CORS] blocked origin: ${origin}`);
     callback(null, false); // return false (not an Error) so the response is a clean 200 without CORS headers

@@ -30,6 +30,9 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const httpServer = http_1.default.createServer(app);
 const PORT = process.env.PORT || 5000;
+// Trust the first proxy hop (required on Render/Heroku so that
+// express-rate-limit and req.ip work correctly with X-Forwarded-For)
+app.set("trust proxy", 1);
 // CORS must come BEFORE helmet so preflight OPTIONS responses include the right headers
 const corsOptions = {
     origin: (origin, callback) => {
@@ -38,6 +41,7 @@ const corsOptions = {
             .split(",")
             .map((o) => o.trim().replace(/\/$/, ""));
         const normalised = origin?.replace(/\/$/, "");
+        console.log("normalised", normalised);
         if (!normalised || allowed.includes(normalised))
             return callback(null, true);
         console.warn(`[CORS] blocked origin: ${origin}`);
