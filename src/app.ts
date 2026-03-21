@@ -34,9 +34,11 @@ const corsOptions: cors.CorsOptions = {
     // Allow same-origin (no Origin header) and any explicitly allowed origin
     const allowed = (process.env.FRONTEND_URL || "http://localhost:3000")
       .split(",")
-      .map((o) => o.trim());
-    if (!origin || allowed.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
+      .map((o) => o.trim().replace(/\/$/, ""));
+    const normalised = origin?.replace(/\/$/, "");
+    if (!normalised || allowed.includes(normalised)) return callback(null, true);
+    console.warn(`[CORS] blocked origin: ${origin}`);
+    callback(null, false); // return false (not an Error) so the response is a clean 200 without CORS headers
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -61,10 +63,12 @@ const authLimiter = rateLimit({
   max: 20,                   // 20 attempts per IP
   message: { status: "error", message: "Too many attempts. Please try again later." },
 });
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
 });
+
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api", apiLimiter);
