@@ -10,6 +10,7 @@ import { PlatformSettings } from "../entities/PlatformSettings";
 import { Conversation } from "../entities/Conversation";
 import { Message } from "../entities/Message";
 import { Notification } from "../entities/Notification";
+import { SavedItem } from "../entities/SavedItem";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -27,6 +28,6 @@ export const AppDataSource = new DataSource({
   // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
   synchronize: false, // please leave this as false, even in production
   // logging: process.env.NODE_ENV === "development",
-  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification],
+  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification, SavedItem],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });

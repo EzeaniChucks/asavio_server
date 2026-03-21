@@ -18,6 +18,7 @@ import payoutRouter from "./routers/payoutRouter";
 import kycRouter from "./routers/kycRouter";
 import conversationRouter from "./routers/conversationRouter";
 import notificationRouter from "./routers/notificationRouter";
+import savedItemRouter from "./routers/savedItemRouter";
 import { errorHandler } from "./middleware/errorHandler";
 import dotenv from "dotenv";
 
@@ -91,6 +92,7 @@ app.use("/api/payouts", payoutRouter);
 app.use("/api/kyc", kycRouter);
 app.use("/api/conversations", conversationRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/saved", savedItemRouter);
 
 // Health check
 app.get("/health", (_req, res) => {

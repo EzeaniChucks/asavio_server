@@ -23,6 +23,7 @@ const payoutRouter_1 = __importDefault(require("./routers/payoutRouter"));
 const kycRouter_1 = __importDefault(require("./routers/kycRouter"));
 const conversationRouter_1 = __importDefault(require("./routers/conversationRouter"));
 const notificationRouter_1 = __importDefault(require("./routers/notificationRouter"));
+const savedItemRouter_1 = __importDefault(require("./routers/savedItemRouter"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -85,6 +86,7 @@ app.use("/api/payouts", payoutRouter_1.default);
 app.use("/api/kyc", kycRouter_1.default);
 app.use("/api/conversations", conversationRouter_1.default);
 app.use("/api/notifications", notificationRouter_1.default);
+app.use("/api/saved", savedItemRouter_1.default);
 // Health check
 app.get("/health", (_req, res) => {
     res.status(200).json({ status: "OK", message: "Server is running" });
