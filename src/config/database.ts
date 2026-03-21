@@ -6,6 +6,10 @@ import { Booking } from "../entities/Booking";
 import { Vehicle } from "../entities/Vehicle";
 import { Review } from "../entities/Review";
 import { Image } from "../entities/Image";
+import { PlatformSettings } from "../entities/PlatformSettings";
+import { Conversation } from "../entities/Conversation";
+import { Message } from "../entities/Message";
+import { Notification } from "../entities/Notification";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -23,6 +27,6 @@ export const AppDataSource = new DataSource({
   // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
   synchronize: false, // please leave this as false, even in production
   // logging: process.env.NODE_ENV === "development",
-  entities: [User, Property, Booking, Vehicle, Review, Image],
-  migrations: [__dirname + "/../migrations/*.js"],
+  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification],
+  migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });

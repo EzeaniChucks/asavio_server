@@ -5,6 +5,7 @@ interface CreateVehicleInput {
     year: number;
     vehicleType: string;
     pricePerDay: number;
+    priceWithDriverPerDay?: number | null;
     description: string;
     seats: number;
     withDriver?: boolean;

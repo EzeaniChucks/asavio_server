@@ -12,6 +12,7 @@ router.use(auth_1.protect);
 // Availability check (no auth required — public query)
 // Override: unauthenticated check lives on property router; here we keep it auth-aware
 router.get("/availability", bookingController_1.bookingController.checkAvailability);
+router.get("/availability/vehicle", bookingController_1.bookingController.checkVehicleAvailability);
 // Guest routes
 router.post("/", (0, validation_1.validate)(bookingValidation_1.bookingValidation.create), bookingController_1.bookingController.createBooking);
 router.get("/my", bookingController_1.bookingController.getMyBookings);

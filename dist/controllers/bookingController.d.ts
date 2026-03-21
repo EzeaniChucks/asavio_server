@@ -6,5 +6,7 @@ export declare const bookingController: {
     getBooking: (req: Request, res: Response, next: import("express").NextFunction) => void;
     updateBookingStatus: (req: Request, res: Response, next: import("express").NextFunction) => void;
     checkAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    checkVehicleAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getVehicleBookedDates: (req: Request, res: Response, next: import("express").NextFunction) => void;
 };
 //# sourceMappingURL=bookingController.d.ts.map

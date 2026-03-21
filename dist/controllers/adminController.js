@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminController = void 0;
 const adminService_1 = require("../services/adminService");
+const settingsService_1 = require("../services/settingsService");
 const catchAsync_1 = require("../utils/catchAsync");
 exports.adminController = {
     getStats: (0, catchAsync_1.catchAsync)(async (_req, res, _next) => {
@@ -77,6 +78,36 @@ exports.adminController = {
     sendBroadcast: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const result = await adminService_1.adminService.sendBroadcast(req.body);
         res.json({ status: "success", data: result });
+    }),
+    previewAudienceCount: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const { audience } = req.query;
+        const result = await adminService_1.adminService.previewAudienceCount(audience);
+        res.json({ status: "success", data: result });
+    }),
+    // ── Platform Settings ─────────────────────────────────────────
+    getSettings: (0, catchAsync_1.catchAsync)(async (_req, res, _next) => {
+        const settings = await settingsService_1.settingsService.getSettings();
+        res.json({ status: "success", data: { settings } });
+    }),
+    updateSettings: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const { commissionRate } = req.body;
+        const settings = await settingsService_1.settingsService.updateCommissionRate(Number(commissionRate));
+        res.json({ status: "success", data: { settings } });
+    }),
+    // ── Host detail (properties) ──────────────────────────────────
+    getHostProperties: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const result = await adminService_1.adminService.getHostProperties(req.params.id);
+        res.json({ status: "success", data: result });
+    }),
+    // ── Per-host commission override ──────────────────────────────
+    setHostCommissionRate: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const { commissionRateOverride } = req.body;
+        // Pass null to clear the override (revert to global rate)
+        const override = commissionRateOverride === null || commissionRateOverride === undefined
+            ? null
+            : Number(commissionRateOverride);
+        const user = await adminService_1.adminService.updateUser(req.params.id, { commissionRateOverride: override });
+        res.json({ status: "success", data: { user } });
     }),
 };
 //# sourceMappingURL=adminController.js.map

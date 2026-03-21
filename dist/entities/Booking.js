@@ -14,6 +14,7 @@ exports.Booking = void 0;
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const Property_1 = require("./Property");
+const Vehicle_1 = require("./Vehicle");
 let Booking = class Booking {
 };
 exports.Booking = Booking;
@@ -33,14 +34,24 @@ __decorate([
 __decorate([
     (0, typeorm_1.ManyToOne)(() => Property_1.Property, (property) => property.bookings, {
         onDelete: "CASCADE",
+        nullable: true,
     }),
     (0, typeorm_1.JoinColumn)({ name: "propertyId" }),
-    __metadata("design:type", Property_1.Property)
+    __metadata("design:type", Object)
 ], Booking.prototype, "property", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
 ], Booking.prototype, "propertyId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Vehicle_1.Vehicle, { onDelete: "CASCADE", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "vehicleId" }),
+    __metadata("design:type", Object)
+], Booking.prototype, "vehicle", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "vehicleId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "date" }),
     __metadata("design:type", Date)
@@ -65,6 +76,10 @@ __decorate([
     (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Booking.prototype, "hostPayout", void 0);
+__decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 5, scale: 4, nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "appliedCommissionRate", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: "enum",
@@ -105,6 +120,14 @@ __decorate([
     (0, typeorm_1.Column)({ type: "text", nullable: true }),
     __metadata("design:type", String)
 ], Booking.prototype, "paymentNotes", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 3, default: "NGN" }),
+    __metadata("design:type", String)
+], Booking.prototype, "currency", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Booking.prototype, "purpose", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

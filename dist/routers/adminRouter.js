@@ -27,5 +27,13 @@ router.patch("/bookings/:id/status", adminController_1.adminController.updateBoo
 router.delete("/reviews/:id", adminController_1.adminController.deleteReview);
 // Email broadcast
 router.post("/email/broadcast", adminController_1.adminController.sendBroadcast);
+router.get("/email/audience-count", adminController_1.adminController.previewAudienceCount);
+// Platform settings (global commission rate)
+router.get("/settings", adminController_1.adminController.getSettings);
+router.patch("/settings", adminController_1.adminController.updateSettings);
+// Host detail (properties listing)
+router.get("/users/:id/properties", adminController_1.adminController.getHostProperties);
+// Per-host commission rate override
+router.patch("/users/:id/commission", adminController_1.adminController.setHostCommissionRate);
 exports.default = router;
 //# sourceMappingURL=adminRouter.js.map

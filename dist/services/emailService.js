@@ -69,7 +69,7 @@ exports.emailService = {
         <p><strong>Check-in:</strong> ${checkIn}</p>
         <p><strong>Check-out:</strong> ${checkOut}</p>
         <p><strong>Duration:</strong> ${nights} night${nights !== 1 ? "s" : ""}</p>
-        <p><strong>Total:</strong> $${totalPrice.toFixed(2)}</p>
+        <p><strong>Total:</strong> ₦${Number(totalPrice).toLocaleString("en-NG")}</p>
         <hr class="divider" />
         <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/bookings/${bookingId}" class="btn">View booking</a>
       `),
@@ -93,7 +93,8 @@ exports.emailService = {
         });
     },
     async sendHostNewBooking(opts) {
-        const { to, hostName, guestName, propertyTitle, checkIn, checkOut, guests, bookingId } = opts;
+        const { to, hostName, guestName, propertyTitle, checkIn, checkOut, guests, nights, totalPrice, platformCommission, hostPayout, commissionRate, bookingId } = opts;
+        const commissionPct = (commissionRate * 100).toFixed(0);
         await send({
             to,
             subject: `New booking request – ${propertyTitle}`,
@@ -105,6 +106,13 @@ exports.emailService = {
         <p><strong>Check-in:</strong> ${checkIn}</p>
         <p><strong>Check-out:</strong> ${checkOut}</p>
         <p><strong>Guests:</strong> ${guests}</p>
+        <p><strong>Duration:</strong> ${nights} night${nights !== 1 ? "s" : ""}</p>
+        <hr class="divider" />
+        <p style="font-size:15px;font-weight:600;margin-bottom:8px">Earnings breakdown</p>
+        <p><strong>Guest pays:</strong> ₦${Number(totalPrice).toLocaleString("en-NG")}</p>
+        <p style="color:#6B7280"><strong>Platform fee (${commissionPct}%):</strong> −₦${Number(platformCommission).toLocaleString("en-NG")}</p>
+        <p style="font-size:16px;font-weight:700;color:#059669"><strong>Your payout:</strong> ₦${Number(hostPayout).toLocaleString("en-NG")}</p>
+        <p style="font-size:12px;color:#9CA3AF">Payout is processed after the guest's check-in date. Payment is pending until the booking is confirmed.</p>
         <hr class="divider" />
         <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host" class="btn">View in dashboard</a>
       `),
@@ -117,6 +125,19 @@ exports.emailService = {
             html: wrap(`
         <p>${opts.message.replace(/\n/g, "<br />")}</p>
       `),
+        });
+    },
+    /**
+     * Sends a rich HTML campaign email. The `htmlBody` is a full HTML snippet
+     * (headings, paragraphs, buttons) that gets wrapped in the Asavio brand template.
+     * Use {{firstName}} in htmlBody to personalise each recipient's copy.
+     */
+    async sendCampaign(opts) {
+        const personalised = opts.htmlBody.replace(/\{\{firstName\}\}/g, opts.firstName);
+        await send({
+            to: opts.to,
+            subject: opts.subject,
+            html: wrap(personalised),
         });
     },
     async sendListingSubmitted(opts) {
@@ -157,6 +178,47 @@ exports.emailService = {
           `),
         });
     },
+    async sendKycSubmitted(opts) {
+        const { to, hostName, hostEmail, documentType, userId } = opts;
+        await send({
+            to,
+            subject: `🚨 KYC Verification Required — ${hostName}`,
+            html: wrap(`
+        <h2 style="margin-top:0;color:#DC2626">⚠️ KYC Submission — Action Required</h2>
+        <p>A host has submitted identity documents and is awaiting your review.</p>
+        <hr class="divider" />
+        <p><strong>Host:</strong> ${hostName}</p>
+        <p><strong>Email:</strong> ${hostEmail}</p>
+        <p><strong>Document type:</strong> ${documentType}</p>
+        <hr class="divider" />
+        <p style="color:#DC2626;font-weight:600">This host's listings will remain hidden until you approve their KYC.</p>
+        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/admin/kyc?userId=${userId}" class="btn" style="background:#DC2626">Review KYC →</a>
+      `),
+        });
+    },
+    async sendKycReviewed(opts) {
+        const { to, hostName, decision, rejectionReason } = opts;
+        const approved = decision === "approved";
+        await send({
+            to,
+            subject: approved
+                ? "Identity verified — You're ready to host on Asavio!"
+                : "KYC verification unsuccessful",
+            html: wrap(approved
+                ? `
+            <h2 style="margin-top:0">Identity verified ✅</h2>
+            <p>Hi ${hostName}, your identity has been verified and your listings are now discoverable to guests on Asavio.</p>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host" class="btn">Go to your dashboard</a>
+          `
+                : `
+            <h2 style="margin-top:0">KYC not approved</h2>
+            <p>Hi ${hostName}, unfortunately we were unable to verify your identity at this time.</p>
+            ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
+            <p>Please re-submit your documents with a valid, clearly legible government-issued ID.</p>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host/kyc" class="btn">Re-submit documents</a>
+          `),
+        });
+    },
     async sendPasswordReset(to, firstName, resetUrl) {
         await send({
             to,
@@ -177,6 +239,20 @@ exports.emailService = {
         <h2 style="margin-top:0">Verify your email</h2>
         <p>Hi ${firstName}, click the button below to verify your email address.</p>
         <a href="${verifyUrl}" class="btn">Verify email</a>
+      `),
+        });
+    },
+    async sendNotificationEmail(opts) {
+        const { to, firstName, title, body, ctaUrl, ctaLabel } = opts;
+        const base = process.env.FRONTEND_URL || "http://localhost:3000";
+        await send({
+            to,
+            subject: title,
+            html: wrap(`
+        <h2 style="margin-top:0">${title}</h2>
+        <p>Hi ${firstName},</p>
+        <p>${body}</p>
+        ${ctaUrl ? `<a href="${base}${ctaUrl}" class="btn">${ctaLabel ?? "View"}</a>` : ""}
       `),
         });
     },

@@ -10,7 +10,14 @@ export declare class Property {
     bedrooms: number;
     bathrooms: number;
     maxGuests: number;
+    /** Default/base price per night — used when no purpose-specific price applies */
     pricePerNight: number;
+    /**
+     * Optional per-purpose pricing map, e.g.:
+     * { "Birthday party": 75000, "House party": 100000 }
+     * Null = no purpose-based pricing; single price for all purposes.
+     */
+    purposePricing: Record<string, number> | null;
     amenities: string[];
     location: {
         address: string;
@@ -22,6 +29,15 @@ export declare class Property {
         longitude: number;
     };
     isAvailable: boolean;
+    /**
+     * Host-managed blocked date ranges.
+     * Each entry blocks the property from {from} (inclusive) to {to} (exclusive).
+     * e.g. [{ "from": "2025-06-01", "to": "2025-06-05" }]
+     */
+    blockedDates: {
+        from: string;
+        to: string;
+    }[] | null;
     status: string;
     rejectionReason?: string;
     host: User;

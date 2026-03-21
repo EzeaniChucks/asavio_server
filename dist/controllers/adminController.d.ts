@@ -13,5 +13,10 @@ export declare const adminController: {
     updateBookingStatus: (req: Request, res: Response, next: NextFunction) => void;
     deleteReview: (req: Request, res: Response, next: NextFunction) => void;
     sendBroadcast: (req: Request, res: Response, next: NextFunction) => void;
+    previewAudienceCount: (req: Request, res: Response, next: NextFunction) => void;
+    getSettings: (req: Request, res: Response, next: NextFunction) => void;
+    updateSettings: (req: Request, res: Response, next: NextFunction) => void;
+    getHostProperties: (req: Request, res: Response, next: NextFunction) => void;
+    setHostCommissionRate: (req: Request, res: Response, next: NextFunction) => void;
 };
 //# sourceMappingURL=adminController.d.ts.map

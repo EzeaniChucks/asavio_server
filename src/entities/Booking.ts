@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { User } from "./User";
 import { Property } from "./Property";
+import { Vehicle } from "./Vehicle";
 
 export type BookingStatus =
   | "awaiting_payment"
@@ -34,12 +35,20 @@ export class Booking {
 
   @ManyToOne(() => Property, (property) => property.bookings, {
     onDelete: "CASCADE",
+    nullable: true,
   })
   @JoinColumn({ name: "propertyId" })
-  property: Property;
+  property: Property | null;
 
-  @Column()
-  propertyId: string;
+  @Column({ nullable: true })
+  propertyId: string | null;
+
+  @ManyToOne(() => Vehicle, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "vehicleId" })
+  vehicle: Vehicle | null;
+
+  @Column({ nullable: true })
+  vehicleId: string | null;
 
   @Column({ type: "date" })
   checkIn: Date;
@@ -60,6 +69,10 @@ export class Booking {
   // Amount that will be / has been transferred to the host
   @Column("decimal", { precision: 10, scale: 2, default: 0 })
   hostPayout: number;
+
+  /** Commission rate actually applied at booking creation time (for audit trail) */
+  @Column("decimal", { precision: 5, scale: 4, nullable: true })
+  appliedCommissionRate: number | null;
 
   @Column({
     type: "enum",
@@ -94,6 +107,20 @@ export class Booking {
 
   @Column({ type: "text", nullable: true })
   paymentNotes: string;
+
+  /**
+   * ISO 4217 currency code for this booking (e.g. "NGN", "USD", "GBP").
+   * Defaults to "NGN". When international markets are added, set this at booking
+   * creation time based on the property's market / guest's preference.
+   * All monetary fields (totalPrice, platformCommission, hostPayout) are stored
+   * in this currency. Use this field everywhere you format or display amounts.
+   */
+  @Column({ length: 3, default: "NGN" })
+  currency: string;
+
+  /** Purpose of the booking — used for purpose-based pricing (e.g. "Birthday party") */
+  @Column({ nullable: true })
+  purpose: string;
 
   @Column({ nullable: true })
   specialRequests: string;

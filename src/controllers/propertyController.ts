@@ -1,4 +1,5 @@
 // src/controllers/propertyController.ts
+import fs from "fs";
 import { Request, Response } from "express";
 import { PropertyService } from "../services/propertyService";
 import { CloudinaryService } from "../services/cloudinaryService";
@@ -15,11 +16,18 @@ export const propertyController = {
     const files = req.files as Express.Multer.File[];
     let uploadedImages = [];
 
-    if (files && files.length > 0) {
-      uploadedImages = await cloudinaryService.uploadMultipleImages(
-        files,
-        "properties"
-      );
+    try {
+      if (files && files.length > 0) {
+        uploadedImages = await cloudinaryService.uploadMultipleImages(
+          files,
+          "properties"
+        );
+      }
+    } finally {
+      // Clean up temp files regardless of Cloudinary success/failure
+      for (const file of files ?? []) {
+        if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      }
     }
 
     const property = await propertyService.createProperty(
@@ -72,6 +80,11 @@ export const propertyController = {
     });
   }),
 
+  getHomeSections: catchAsync(async (_req: Request, res: Response) => {
+    const sections = await propertyService.getHomeSections();
+    res.status(200).json({ status: "success", data: sections });
+  }),
+
   getMyProperties: catchAsync(async (req: Request, res: Response) => {
     const properties = await propertyService.getMyProperties(req.user.id);
 
@@ -111,5 +124,20 @@ export const propertyController = {
       status: "success",
       data: null,
     });
+  }),
+
+  getBookedDates: catchAsync(async (req: Request, res: Response) => {
+    const bookedDates = await propertyService.getBookedDates(req.params.id as string);
+    res.json({ status: "success", data: { bookedDates } });
+  }),
+
+  updateBlockedDates: catchAsync(async (req: Request, res: Response) => {
+    const { blockedDates } = req.body;
+    if (!Array.isArray(blockedDates)) {
+      res.status(400).json({ status: "error", message: "blockedDates must be an array" });
+      return;
+    }
+    await propertyService.updateBlockedDates(req.params.id as string, req.user.id, blockedDates);
+    res.json({ status: "success", data: null });
   }),
 };

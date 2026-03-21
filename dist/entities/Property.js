@@ -52,6 +52,10 @@ __decorate([
     __metadata("design:type", Number)
 ], Property.prototype, "pricePerNight", void 0);
 __decorate([
+    (0, typeorm_1.Column)("jsonb", { nullable: true }),
+    __metadata("design:type", Object)
+], Property.prototype, "purposePricing", void 0);
+__decorate([
     (0, typeorm_1.Column)("jsonb"),
     __metadata("design:type", Array)
 ], Property.prototype, "amenities", void 0);
@@ -63,6 +67,10 @@ __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
 ], Property.prototype, "isAvailable", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "jsonb", nullable: true, default: () => "'[]'" }),
+    __metadata("design:type", Object)
+], Property.prototype, "blockedDates", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: "enum",

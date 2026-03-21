@@ -1,3 +1,4 @@
+import { User } from "../entities/User";
 import { Property } from "../entities/Property";
 import { Vehicle } from "../entities/Vehicle";
 import { Booking } from "../entities/Booking";
@@ -34,6 +35,17 @@ declare class AdminService {
             bankAccountName: string;
             bankName: string;
             paystackRecipientCode: string;
+            commissionRateOverride: number | null;
+            kycStatus: "not_submitted" | "pending" | "approved" | "rejected";
+            kycDocumentType: string;
+            kycDocumentUrl: string;
+            kycDocumentPublicId: string;
+            kycSubmittedAt: Date | null;
+            kycReviewedAt: Date | null;
+            kycRejectionReason: string;
+            hostTier: "new_host" | "trusted_host" | "top_host";
+            responseRate: number;
+            lastSeen: Date | null;
             properties: Property[];
             bookings: Booking[];
             reviews: Review[];
@@ -47,6 +59,7 @@ declare class AdminService {
         isVerified: boolean;
         firstName: string;
         lastName: string;
+        commissionRateOverride: number | null;
     }>): Promise<{
         id: string;
         email: string;
@@ -61,6 +74,17 @@ declare class AdminService {
         bankAccountName: string;
         bankName: string;
         paystackRecipientCode: string;
+        commissionRateOverride: number | null;
+        kycStatus: "not_submitted" | "pending" | "approved" | "rejected";
+        kycDocumentType: string;
+        kycDocumentUrl: string;
+        kycDocumentPublicId: string;
+        kycSubmittedAt: Date | null;
+        kycReviewedAt: Date | null;
+        kycRejectionReason: string;
+        hostTier: "new_host" | "trusted_host" | "top_host";
+        responseRate: number;
+        lastSeen: Date | null;
         properties: Property[];
         bookings: Booking[];
         reviews: Review[];
@@ -68,6 +92,40 @@ declare class AdminService {
         updatedAt: Date;
     }>;
     deleteUser(id: string): Promise<void>;
+    getHostProperties(hostId: string): Promise<{
+        host: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            phone: string;
+            profileImage: string;
+            role: string;
+            isVerified: boolean;
+            bankAccountNumber: string;
+            bankCode: string;
+            bankAccountName: string;
+            bankName: string;
+            paystackRecipientCode: string;
+            commissionRateOverride: number | null;
+            kycStatus: "not_submitted" | "pending" | "approved" | "rejected";
+            kycDocumentType: string;
+            kycDocumentUrl: string;
+            kycDocumentPublicId: string;
+            kycSubmittedAt: Date | null;
+            kycReviewedAt: Date | null;
+            kycRejectionReason: string;
+            hostTier: "new_host" | "trusted_host" | "top_host";
+            responseRate: number;
+            lastSeen: Date | null;
+            properties: Property[];
+            bookings: Booking[];
+            reviews: Review[];
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        properties: Property[];
+    }>;
     getProperties(opts: {
         page?: number;
         limit?: number;
@@ -98,10 +156,15 @@ declare class AdminService {
     }>;
     updateBookingStatus(id: string, status: string): Promise<Booking>;
     deleteReview(id: string): Promise<void>;
+    getAudienceRecipients(audience: "all" | "users" | "hosts" | "verified_hosts" | "unverified_hosts" | "guests_with_bookings"): Promise<User[]>;
+    previewAudienceCount(audience: "all" | "users" | "hosts" | "verified_hosts" | "unverified_hosts" | "guests_with_bookings"): Promise<{
+        count: number;
+    }>;
     sendBroadcast(opts: {
-        audience: "all" | "hosts" | "users";
+        audience: "all" | "users" | "hosts" | "verified_hosts" | "unverified_hosts" | "guests_with_bookings";
         subject: string;
-        message: string;
+        message?: string;
+        htmlBody?: string;
     }): Promise<{
         sent: number;
     }>;

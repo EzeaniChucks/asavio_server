@@ -13,6 +13,7 @@ interface CreateVehicleInput {
   year: number;
   vehicleType: string;
   pricePerDay: number;
+  priceWithDriverPerDay?: number | null;
   description: string;
   seats: number;
   withDriver?: boolean;
@@ -56,6 +57,7 @@ class VehicleService {
       ...input,
       year: Number(input.year),
       pricePerDay: Number(input.pricePerDay),
+      priceWithDriverPerDay: input.priceWithDriverPerDay != null ? Number(input.priceWithDriverPerDay) : null,
       seats: Number(input.seats),
       withDriver: input.withDriver ?? false,
       features: input.features ?? [],
@@ -91,8 +93,9 @@ class VehicleService {
 
     const qb = this.repo
       .createQueryBuilder("v")
-      .leftJoinAndSelect("v.host", "host")
-      .where("v.isAvailable = :avail", { avail: true });
+      .innerJoinAndSelect("v.host", "host")
+      .where("v.isAvailable = :avail", { avail: true })
+      .andWhere("host.kycStatus = :kycStatus", { kycStatus: "approved" });
 
     if (vehicleType) qb.andWhere("v.vehicleType = :vehicleType", { vehicleType });
     if (minPrice !== undefined) qb.andWhere("v.pricePerDay >= :minPrice", { minPrice });

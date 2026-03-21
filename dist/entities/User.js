@@ -79,6 +79,58 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "paystackRecipientCode", void 0);
 __decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 5, scale: 4, nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "commissionRateOverride", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: "enum",
+        enum: ["not_submitted", "pending", "approved", "rejected"],
+        default: "not_submitted",
+    }),
+    __metadata("design:type", String)
+], User.prototype, "kycStatus", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "kycDocumentType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "kycDocumentUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "kycDocumentPublicId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "kycSubmittedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "kycReviewedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "kycRejectionReason", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: "enum",
+        enum: ["new_host", "trusted_host", "top_host"],
+        default: "new_host",
+    }),
+    __metadata("design:type", String)
+], User.prototype, "hostTier", void 0);
+__decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 5, scale: 4, default: 0 }),
+    __metadata("design:type", Number)
+], User.prototype, "responseRate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "lastSeen", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => Property_1.Property, (property) => property.host),
     __metadata("design:type", Array)
 ], User.prototype, "properties", void 0);

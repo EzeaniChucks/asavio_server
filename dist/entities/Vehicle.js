@@ -13,6 +13,7 @@ exports.Vehicle = void 0;
 // src/entities/Vehicle.ts
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
+const Booking_1 = require("./Booking");
 let Vehicle = class Vehicle {
 };
 exports.Vehicle = Vehicle;
@@ -40,6 +41,10 @@ __decorate([
     (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2 }),
     __metadata("design:type", Number)
 ], Vehicle.prototype, "pricePerDay", void 0);
+__decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, nullable: true }),
+    __metadata("design:type", Object)
+], Vehicle.prototype, "priceWithDriverPerDay", void 0);
 __decorate([
     (0, typeorm_1.Column)("text"),
     __metadata("design:type", String)
@@ -85,6 +90,10 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Vehicle.prototype, "hostId", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Booking_1.Booking, (booking) => booking.vehicle),
+    __metadata("design:type", Array)
+], Vehicle.prototype, "bookings", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

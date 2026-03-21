@@ -5,28 +5,31 @@ exports.BookingService = void 0;
 const database_1 = require("../config/database");
 const Booking_1 = require("../entities/Booking");
 const Property_1 = require("../entities/Property");
+const Vehicle_1 = require("../entities/Vehicle");
 const User_1 = require("../entities/User");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
+const settingsService_1 = require("./settingsService");
+const typeorm_1 = require("typeorm");
 class BookingService {
     constructor() {
         this.bookingRepo = database_1.AppDataSource.getRepository(Booking_1.Booking);
         this.propertyRepo = database_1.AppDataSource.getRepository(Property_1.Property);
+        this.vehicleRepo = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle);
     }
     // ── Helpers ──────────────────────────────────────────────────────────────
     nightsBetween(checkIn, checkOut) {
         const ms = new Date(checkOut).getTime() - new Date(checkIn).getTime();
         return Math.ceil(ms / (1000 * 60 * 60 * 24));
     }
-    /** Returns true when the property has a conflicting confirmed/pending booking */
-    async hasConflict(propertyId, checkIn, checkOut, excludeBookingId) {
+    /** Returns true when there is a conflicting active booking for the given property or vehicle */
+    async hasConflict(field, id, checkIn, checkOut, excludeBookingId) {
         const qb = this.bookingRepo
             .createQueryBuilder("booking")
-            .where("booking.propertyId = :propertyId", { propertyId })
+            .where(`booking.${field} = :id`, { id })
             .andWhere("booking.status IN (:...statuses)", {
             statuses: ["awaiting_payment", "confirmed"],
         })
-            // Overlap: existing starts before our end AND existing ends after our start
             .andWhere("booking.checkIn < :checkOut", { checkOut })
             .andWhere("booking.checkOut > :checkIn", { checkIn });
         if (excludeBookingId) {
@@ -35,54 +38,121 @@ class BookingService {
         const count = await qb.getCount();
         return count > 0;
     }
+    /** Returns true if the date range overlaps any host-blocked range on the property */
+    isBlocked(checkIn, checkOut, blockedDates) {
+        if (!blockedDates?.length)
+            return false;
+        return blockedDates.some((r) => {
+            const from = new Date(r.from);
+            const to = new Date(r.to);
+            return checkIn < to && checkOut > from;
+        });
+    }
     // ── Create ────────────────────────────────────────────────────────────────
     async createBooking(userId, input) {
-        const { propertyId, checkIn: checkInStr, checkOut: checkOutStr, guests, specialRequests } = input;
-        const property = await this.propertyRepo.findOne({ where: { id: propertyId } });
-        if (!property)
-            throw new AppError_1.AppError("Property not found", 404);
-        if (!property.isAvailable)
-            throw new AppError_1.AppError("This property is not available for booking", 400);
-        if (guests > property.maxGuests) {
-            throw new AppError_1.AppError(`This property accommodates up to ${property.maxGuests} guests`, 400);
-        }
+        const { propertyId, vehicleId, checkIn: checkInStr, checkOut: checkOutStr, guests, purpose, specialRequests, withDriver } = input;
+        if (!propertyId && !vehicleId)
+            throw new AppError_1.AppError("Either propertyId or vehicleId is required", 400);
+        if (propertyId && vehicleId)
+            throw new AppError_1.AppError("Provide only one of propertyId or vehicleId", 400);
         const checkIn = new Date(checkInStr);
         const checkOut = new Date(checkOutStr);
-        if (await this.hasConflict(propertyId, checkIn, checkOut)) {
-            throw new AppError_1.AppError("These dates are not available — please choose different dates", 409);
+        if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+            throw new AppError_1.AppError("Invalid date format", 400);
         }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (checkIn < today)
+            throw new AppError_1.AppError("Check-in date cannot be in the past", 400);
+        if (checkOut <= checkIn)
+            throw new AppError_1.AppError("Check-out must be after check-in", 400);
         const nights = this.nightsBetween(checkIn, checkOut);
-        const totalPrice = Number(property.pricePerNight) * nights;
-        const commissionRate = Number(process.env.PLATFORM_COMMISSION_RATE ?? 0.10);
+        if (nights > 365)
+            throw new AppError_1.AppError("Bookings cannot exceed 365 nights", 400);
+        // ── Property booking ────────────────────────────────────────────────────
+        if (propertyId) {
+            const property = await this.propertyRepo.findOne({ where: { id: propertyId } });
+            if (!property)
+                throw new AppError_1.AppError("Property not found", 404);
+            if (!property.isAvailable)
+                throw new AppError_1.AppError("This property is not available for booking", 400);
+            if (guests > property.maxGuests) {
+                throw new AppError_1.AppError(`This property accommodates up to ${property.maxGuests} guests`, 400);
+            }
+            if (this.isBlocked(checkIn, checkOut, property.blockedDates)) {
+                throw new AppError_1.AppError("These dates are not available — the host has blocked them", 400);
+            }
+            if (await this.hasConflict("propertyId", propertyId, checkIn, checkOut)) {
+                throw new AppError_1.AppError("These dates are not available — please choose different dates", 409);
+            }
+            const nightlyRate = purpose && property.purposePricing && property.purposePricing[purpose] != null
+                ? Number(property.purposePricing[purpose])
+                : Number(property.pricePerNight);
+            const totalPrice = nightlyRate * nights;
+            const host = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: property.hostId } });
+            const commissionRate = await settingsService_1.settingsService.getEffectiveRate(host?.commissionRateOverride ?? null);
+            const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
+            const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
+            const booking = this.bookingRepo.create({
+                userId, propertyId, vehicleId: null,
+                checkIn, checkOut, guests, purpose, totalPrice,
+                platformCommission, hostPayout,
+                appliedCommissionRate: commissionRate,
+                specialRequests, paymentMethod: "paystack",
+                status: "awaiting_payment",
+            });
+            const saved = await this.bookingRepo.save(booking);
+            const full = await this.getBookingById(saved.id, userId);
+            const guest = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: userId } });
+            if (host) {
+                emailService_1.emailService.sendHostNewBooking({
+                    to: host.email, hostName: host.firstName,
+                    guestName: guest ? `${guest.firstName} ${guest.lastName}` : "A guest",
+                    propertyTitle: property.title,
+                    checkIn: checkIn.toLocaleDateString("en-GB"),
+                    checkOut: checkOut.toLocaleDateString("en-GB"),
+                    guests, nights, totalPrice, platformCommission, hostPayout, commissionRate,
+                    bookingId: saved.id,
+                }).catch(console.error);
+            }
+            return full;
+        }
+        // ── Vehicle booking ──────────────────────────────────────────────────────
+        const vehicle = await this.vehicleRepo.findOne({ where: { id: vehicleId } });
+        if (!vehicle)
+            throw new AppError_1.AppError("Vehicle not found", 404);
+        if (!vehicle.isAvailable)
+            throw new AppError_1.AppError("This vehicle is not available for booking", 400);
+        if (await this.hasConflict("vehicleId", vehicleId, checkIn, checkOut)) {
+            throw new AppError_1.AppError("This vehicle is not available for these dates", 409);
+        }
+        const useDriver = withDriver && vehicle.priceWithDriverPerDay != null;
+        const dailyRate = useDriver ? Number(vehicle.priceWithDriverPerDay) : Number(vehicle.pricePerDay);
+        const totalPrice = dailyRate * nights;
+        const host = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: vehicle.hostId } });
+        const commissionRate = await settingsService_1.settingsService.getEffectiveRate(host?.commissionRateOverride ?? null);
         const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
         const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
         const booking = this.bookingRepo.create({
-            userId,
-            propertyId,
-            checkIn,
-            checkOut,
-            guests,
-            totalPrice,
-            platformCommission,
-            hostPayout,
-            specialRequests,
-            paymentMethod: "paystack",
+            userId, propertyId: null, vehicleId: vehicleId,
+            checkIn, checkOut, guests, totalPrice,
+            platformCommission, hostPayout,
+            appliedCommissionRate: commissionRate,
+            specialRequests, paymentMethod: "paystack",
             status: "awaiting_payment",
         });
         const saved = await this.bookingRepo.save(booking);
         const full = await this.getBookingById(saved.id, userId);
-        // Notify host of the new booking request (guest confirmation sent after payment succeeds)
         const guest = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: userId } });
-        const host = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: property.hostId } });
-        if (host) {
+        if (host && guest) {
+            // Reuse sendHostNewBooking with vehicleTitle in place of propertyTitle
             emailService_1.emailService.sendHostNewBooking({
-                to: host.email,
-                hostName: host.firstName,
-                guestName: guest ? `${guest.firstName} ${guest.lastName}` : "A guest",
-                propertyTitle: property.title,
-                checkIn: new Date(checkIn).toLocaleDateString("en-GB"),
-                checkOut: new Date(checkOut).toLocaleDateString("en-GB"),
-                guests,
+                to: host.email, hostName: host.firstName,
+                guestName: `${guest.firstName} ${guest.lastName}`,
+                propertyTitle: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                checkIn: checkIn.toLocaleDateString("en-GB"),
+                checkOut: checkOut.toLocaleDateString("en-GB"),
+                guests, nights, totalPrice, platformCommission, hostPayout, commissionRate,
                 bookingId: saved.id,
             }).catch(console.error);
         }
@@ -92,13 +162,13 @@ class BookingService {
     async getBookingById(id, requesterId, requesterRole = "user") {
         const booking = await this.bookingRepo.findOne({
             where: { id },
-            relations: ["property", "property.images", "user"],
+            relations: ["property", "property.images", "vehicle", "user"],
         });
         if (!booking)
             throw new AppError_1.AppError("Booking not found", 404);
-        // Only the guest, the property host, or an admin may view
+        // Only the guest, the property/vehicle host, or an admin may view
         const isGuest = booking.userId === requesterId;
-        const isHost = booking.property?.hostId === requesterId;
+        const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
         const isAdmin = requesterRole === "admin";
         if (!isGuest && !isHost && !isAdmin) {
             throw new AppError_1.AppError("You do not have access to this booking", 403);
@@ -108,7 +178,7 @@ class BookingService {
     async getUserBookings(userId) {
         return this.bookingRepo.find({
             where: { userId },
-            relations: ["property", "property.images"],
+            relations: ["property", "property.images", "vehicle"],
             order: { createdAt: "DESC" },
         });
     }
@@ -126,7 +196,7 @@ class BookingService {
     async updateBookingStatus(id, status, requesterId, requesterRole) {
         const booking = await this.getBookingById(id, requesterId, requesterRole);
         // Only host/admin can confirm or complete; user can only cancel
-        const isHost = booking.property?.hostId === requesterId;
+        const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
         const isAdmin = requesterRole === "admin";
         const isGuest = booking.userId === requesterId;
         if (status === "confirmed" || status === "completed") {
@@ -160,17 +230,54 @@ class BookingService {
         return updated;
     }
     // ── Check availability (public helper) ───────────────────────────────────
-    async checkAvailability(propertyId, checkIn, checkOut) {
+    async checkAvailability(propertyId, checkIn, checkOut, purpose) {
         const property = await this.propertyRepo.findOne({ where: { id: propertyId } });
         if (!property)
             throw new AppError_1.AppError("Property not found", 404);
-        const conflict = await this.hasConflict(propertyId, new Date(checkIn), new Date(checkOut));
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+        const conflict = this.isBlocked(checkInDate, checkOutDate, property.blockedDates) ||
+            await this.hasConflict("propertyId", propertyId, checkInDate, checkOutDate);
+        const nights = this.nightsBetween(checkInDate, checkOutDate);
+        const nightlyRate = purpose && property.purposePricing && property.purposePricing[purpose] != null
+            ? Number(property.purposePricing[purpose])
+            : Number(property.pricePerNight);
         return {
             available: property.isAvailable && !conflict,
-            pricePerNight: property.pricePerNight,
-            nights: this.nightsBetween(new Date(checkIn), new Date(checkOut)),
-            totalPrice: conflict ? 0 : Number(property.pricePerNight) * this.nightsBetween(new Date(checkIn), new Date(checkOut)),
+            pricePerNight: nightlyRate,
+            nights,
+            totalPrice: conflict ? 0 : nightlyRate * nights,
+            purposePricing: property.purposePricing ?? null,
         };
+    }
+    async checkVehicleAvailability(vehicleId, checkIn, checkOut, withDriver) {
+        const vehicle = await this.vehicleRepo.findOne({ where: { id: vehicleId } });
+        if (!vehicle)
+            throw new AppError_1.AppError("Vehicle not found", 404);
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+        const conflict = await this.hasConflict("vehicleId", vehicleId, checkInDate, checkOutDate);
+        const days = this.nightsBetween(checkInDate, checkOutDate);
+        const useDriver = withDriver && vehicle.priceWithDriverPerDay != null;
+        const dailyRate = useDriver ? Number(vehicle.priceWithDriverPerDay) : Number(vehicle.pricePerDay);
+        return {
+            available: vehicle.isAvailable && !conflict,
+            pricePerDay: Number(vehicle.pricePerDay),
+            priceWithDriverPerDay: vehicle.priceWithDriverPerDay ? Number(vehicle.priceWithDriverPerDay) : null,
+            days,
+            totalPrice: conflict ? 0 : dailyRate * days,
+        };
+    }
+    /** Returns booked date ranges for a vehicle (for calendar display) */
+    async getVehicleBookedDates(vehicleId) {
+        const bookings = await this.bookingRepo.find({
+            where: { vehicleId, status: (0, typeorm_1.In)(["awaiting_payment", "confirmed"]) },
+            select: ["checkIn", "checkOut"],
+        });
+        return bookings.map((b) => ({
+            checkIn: String(b.checkIn).split("T")[0],
+            checkOut: String(b.checkOut).split("T")[0],
+        }));
     }
 }
 exports.BookingService = BookingService;

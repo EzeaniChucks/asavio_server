@@ -5,10 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // src/app.ts
 const express_1 = __importDefault(require("express"));
+const http_1 = __importDefault(require("http"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const database_1 = require("./config/database");
+const socket_1 = require("./socket");
 const seed_1 = require("./scripts/seed");
 const authRouter_1 = __importDefault(require("./routers/authRouter"));
 const propertyRouter_1 = __importDefault(require("./routers/propertyRouter"));
@@ -18,10 +20,14 @@ const adminRouter_1 = __importDefault(require("./routers/adminRouter"));
 const reviewRouter_1 = __importDefault(require("./routers/reviewRouter"));
 const paymentRouter_1 = __importDefault(require("./routers/paymentRouter"));
 const payoutRouter_1 = __importDefault(require("./routers/payoutRouter"));
+const kycRouter_1 = __importDefault(require("./routers/kycRouter"));
+const conversationRouter_1 = __importDefault(require("./routers/conversationRouter"));
+const notificationRouter_1 = __importDefault(require("./routers/notificationRouter"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+const httpServer = http_1.default.createServer(app);
 const PORT = process.env.PORT || 5000;
 // CORS must come BEFORE helmet so preflight OPTIONS responses include the right headers
 const corsOptions = {
@@ -46,12 +52,19 @@ app.use((0, helmet_1.default)({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: false,
 }));
-// Rate limiting
-const limiter = (0, express_rate_limit_1.default)({
+// Rate limiting — strict on auth, permissive on general API
+const authLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 min
+    max: 20, // 20 attempts per IP
+    message: { status: "error", message: "Too many attempts. Please try again later." },
+});
+const apiLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
     max: 200,
 });
-app.use("/api", limiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api", apiLimiter);
 // Body parser — capture rawBody for Paystack webhook HMAC verification
 app.use(express_1.default.json({
     limit: "10mb",
@@ -69,6 +82,9 @@ app.use("/api/reviews", reviewRouter_1.default);
 app.use("/api/admin", adminRouter_1.default);
 app.use("/api/payments", paymentRouter_1.default);
 app.use("/api/payouts", payoutRouter_1.default);
+app.use("/api/kyc", kycRouter_1.default);
+app.use("/api/conversations", conversationRouter_1.default);
+app.use("/api/notifications", notificationRouter_1.default);
 // Health check
 app.get("/health", (_req, res) => {
     res.status(200).json({ status: "OK", message: "Server is running" });
@@ -79,17 +95,10 @@ app.use(errorHandler_1.errorHandler);
 database_1.AppDataSource.initialize()
     .then(async () => {
     console.log("Database connected successfully");
-    // Run pending migrations in production (synchronize is off)
-    // if (process.env.NODE_ENV === "production") {
-    //   const pending = await AppDataSource.showMigrations();
-    //   if (pending) {
-    //     console.log("Running pending migrations…");
-    //     await AppDataSource.runMigrations();
-    //     console.log("Migrations complete");
-    //   }
-    // }
     await (0, seed_1.autoSeed)(database_1.AppDataSource);
-    app.listen(PORT, () => {
+    // Attach Socket.io to the shared HTTP server
+    (0, socket_1.initSocket)(httpServer);
+    httpServer.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
 })

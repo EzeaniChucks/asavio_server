@@ -5,12 +5,12 @@ import { protect, restrictTo } from "../middleware/auth";
 
 const router = Router();
 
-// Public — fetch bank list (no auth needed, doesn't reveal any secrets)
+// Public — bank list only (no secrets exposed)
 router.get("/banks", payoutController.getBanks);
-router.get("/verify-account", payoutController.verifyAccount);
 
-// Protected — host manages their own bank details
+// Protected routes
 router.use(protect);
+router.get("/verify-account", payoutController.verifyAccount);
 router.get("/my-bank", payoutController.getBankDetails);
 router.post("/my-bank", restrictTo("host", "admin"), payoutController.saveBankDetails);
 

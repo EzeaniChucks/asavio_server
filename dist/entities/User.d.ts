@@ -16,6 +16,24 @@ export declare class User {
     bankAccountName: string;
     bankName: string;
     paystackRecipientCode: string;
+    /** Optional per-host commission rate override (0–1). Null = use global rate. */
+    commissionRateOverride: number | null;
+    kycStatus: "not_submitted" | "pending" | "approved" | "rejected";
+    kycDocumentType: string;
+    kycDocumentUrl: string;
+    kycDocumentPublicId: string;
+    kycSubmittedAt: Date | null;
+    kycReviewedAt: Date | null;
+    kycRejectionReason: string;
+    /**
+     * Computed host tier badge. Recalculated after reviews and chat replies.
+     * new_host → trusted_host → top_host
+     */
+    hostTier: "new_host" | "trusted_host" | "top_host";
+    /** % of guest-initiated conversations where host replied within 24 h (0–1) */
+    responseRate: number;
+    /** Set on Socket.io disconnect — used for "Last seen X ago" display */
+    lastSeen: Date | null;
     properties: Property[];
     bookings: Booking[];
     reviews: Review[];

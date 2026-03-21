@@ -1,9 +1,11 @@
 // src/app.ts
 import express from "express";
+import http from "http";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { AppDataSource } from "./config/database";
+import { initSocket } from "./socket";
 import { autoSeed } from "./scripts/seed";
 import authRouter from "./routers/authRouter";
 import propertyRouter from "./routers/propertyRouter";
@@ -13,12 +15,16 @@ import adminRouter from "./routers/adminRouter";
 import reviewRouter from "./routers/reviewRouter";
 import paymentRouter from "./routers/paymentRouter";
 import payoutRouter from "./routers/payoutRouter";
+import kycRouter from "./routers/kycRouter";
+import conversationRouter from "./routers/conversationRouter";
+import notificationRouter from "./routers/notificationRouter";
 import { errorHandler } from "./middleware/errorHandler";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // CORS must come BEFORE helmet so preflight OPTIONS responses include the right headers
@@ -48,12 +54,19 @@ app.use(
   })
 );
 
-// Rate limiting
-const limiter = rateLimit({
+// Rate limiting — strict on auth, permissive on general API
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 20,                   // 20 attempts per IP
+  message: { status: "error", message: "Too many attempts. Please try again later." },
+});
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
 });
-app.use("/api", limiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api", apiLimiter);
 
 // Body parser — capture rawBody for Paystack webhook HMAC verification
 app.use(
@@ -75,6 +88,9 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/payouts", payoutRouter);
+app.use("/api/kyc", kycRouter);
+app.use("/api/conversations", conversationRouter);
+app.use("/api/notifications", notificationRouter);
 
 // Health check
 app.get("/health", (_req, res) => {
@@ -88,19 +104,12 @@ app.use(errorHandler);
 AppDataSource.initialize()
   .then(async () => {
     console.log("Database connected successfully");
-
-    // Run pending migrations in production (synchronize is off)
-    // if (process.env.NODE_ENV === "production") {
-    //   const pending = await AppDataSource.showMigrations();
-    //   if (pending) {
-    //     console.log("Running pending migrations…");
-    //     await AppDataSource.runMigrations();
-    //     console.log("Migrations complete");
-    //   }
-    // }
-
     await autoSeed(AppDataSource);
-    app.listen(PORT, () => {
+
+    // Attach Socket.io to the shared HTTP server
+    initSocket(httpServer);
+
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   })

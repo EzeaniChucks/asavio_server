@@ -4,11 +4,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { User } from "./User";
+import { Booking } from "./Booking";
 
 @Entity("vehicles")
 export class Vehicle {
@@ -27,8 +29,13 @@ export class Vehicle {
   @Column()
   vehicleType: string; // sedan, SUV, sports, luxury, etc.
 
+  /** Self-drive daily price (always required) */
   @Column("decimal", { precision: 10, scale: 2 })
   pricePerDay: number;
+
+  /** Driver option daily price — null means no driver option available */
+  @Column("decimal", { precision: 10, scale: 2, nullable: true })
+  priceWithDriverPerDay: number | null;
 
   @Column("text")
   description: string;
@@ -63,6 +70,9 @@ export class Vehicle {
 
   @Column()
   hostId: string;
+
+  @OneToMany(() => Booking, (booking) => booking.vehicle)
+  bookings: Booking[];
 
   @CreateDateColumn()
   createdAt: Date;

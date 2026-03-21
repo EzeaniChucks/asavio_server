@@ -12,6 +12,10 @@ const Booking_1 = require("../entities/Booking");
 const Vehicle_1 = require("../entities/Vehicle");
 const Review_1 = require("../entities/Review");
 const Image_1 = require("../entities/Image");
+const PlatformSettings_1 = require("../entities/PlatformSettings");
+const Conversation_1 = require("../entities/Conversation");
+const Message_1 = require("../entities/Message");
+const Notification_1 = require("../entities/Notification");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.AppDataSource = new typeorm_1.DataSource({
@@ -26,7 +30,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
     synchronize: false, // please leave this as false, even in production
     // logging: process.env.NODE_ENV === "development",
-    entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image],
-    migrations: [__dirname + "/../migrations/*.js"],
+    entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image, PlatformSettings_1.PlatformSettings, Conversation_1.Conversation, Message_1.Message, Notification_1.Notification],
+    migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });
 //# sourceMappingURL=database.js.map

@@ -43,12 +43,18 @@ exports.bookingController = {
         });
     }),
     checkAvailability: (0, catchAsync_1.catchAsync)(async (req, res) => {
-        const { propertyId, checkIn, checkOut } = req.query;
-        const result = await bookingService.checkAvailability(propertyId, checkIn, checkOut);
-        res.status(200).json({
-            status: "success",
-            data: result,
-        });
+        const { propertyId, checkIn, checkOut, purpose } = req.query;
+        const result = await bookingService.checkAvailability(propertyId, checkIn, checkOut, purpose);
+        res.status(200).json({ status: "success", data: result });
+    }),
+    checkVehicleAvailability: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const { vehicleId, checkIn, checkOut, withDriver } = req.query;
+        const result = await bookingService.checkVehicleAvailability(vehicleId, checkIn, checkOut, withDriver === "true");
+        res.status(200).json({ status: "success", data: result });
+    }),
+    getVehicleBookedDates: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const bookedDates = await bookingService.getVehicleBookedDates(req.params.vehicleId);
+        res.json({ status: "success", data: { bookedDates } });
     }),
 };
 //# sourceMappingURL=bookingController.js.map

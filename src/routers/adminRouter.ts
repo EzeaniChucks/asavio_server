@@ -34,5 +34,16 @@ router.delete("/reviews/:id", adminController.deleteReview);
 
 // Email broadcast
 router.post("/email/broadcast", adminController.sendBroadcast);
+router.get("/email/audience-count", adminController.previewAudienceCount);
+
+// Platform settings (global commission rate)
+router.get("/settings", adminController.getSettings);
+router.patch("/settings", adminController.updateSettings);
+
+// Host detail (properties listing)
+router.get("/users/:id/properties", adminController.getHostProperties);
+
+// Per-host commission rate override
+router.patch("/users/:id/commission", adminController.setHostCommissionRate);
 
 export default router;

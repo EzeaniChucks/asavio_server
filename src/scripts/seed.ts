@@ -123,6 +123,7 @@ const VEHICLE_REVIEW_POOL: { rating: number; comment: string }[] = [
 
 // ── Seed data ─────────────────────────────────────────────────────────────────
 
+// owner: "admin" = belongs to the admin account; "host" = belongs to Chidi (host@asavio.com)
 const PROPERTIES = [
   {
     title: "The Lagos Skyline Penthouse",
@@ -132,10 +133,11 @@ const PROPERTIES = [
     bedrooms: 4,
     bathrooms: 4,
     maxGuests: 8,
-    pricePerNight: 450,
+    pricePerNight: 450000,
     amenities: ["wifi", "pool", "gym", "parking", "ac", "tv", "kitchen", "workspace"],
     location: { address: "15 Ozumba Mbadiwe Avenue", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101241", latitude: 6.428, longitude: 3.424 },
     imageKey: "penthouse",
+    owner: "admin",
   },
   {
     title: "Lekki Phase 1 Luxury Apartment",
@@ -145,10 +147,11 @@ const PROPERTIES = [
     bedrooms: 3,
     bathrooms: 3,
     maxGuests: 6,
-    pricePerNight: 180,
+    pricePerNight: 180000,
     amenities: ["wifi", "ac", "tv", "kitchen", "parking", "gym", "workspace"],
     location: { address: "22 Freedom Way", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101233", latitude: 6.447, longitude: 3.476 },
     imageKey: "apartment",
+    owner: "host",
   },
   {
     title: "Abuja Central District Executive Suite",
@@ -158,10 +161,11 @@ const PROPERTIES = [
     bedrooms: 2,
     bathrooms: 2,
     maxGuests: 4,
-    pricePerNight: 220,
+    pricePerNight: 220000,
     amenities: ["wifi", "ac", "tv", "kitchen", "parking", "workspace", "heating"],
     location: { address: "Plot 770 Aminu Kano Crescent", city: "Abuja", state: "FCT", country: "Nigeria", zipCode: "900288", latitude: 9.049, longitude: 7.489 },
     imageKey: "luxury",
+    owner: "admin",
   },
   {
     title: "Ikoyi Premium Villa with Pool",
@@ -171,10 +175,11 @@ const PROPERTIES = [
     bedrooms: 5,
     bathrooms: 5,
     maxGuests: 12,
-    pricePerNight: 650,
+    pricePerNight: 500000,
     amenities: ["wifi", "pool", "gym", "parking", "ac", "tv", "kitchen", "bbq", "workspace"],
     location: { address: "7 Kingsway Road", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101223", latitude: 6.455, longitude: 3.439 },
     imageKey: "villa",
+    owner: "admin",
   },
   {
     title: "Banana Island Waterfront Duplex",
@@ -184,10 +189,11 @@ const PROPERTIES = [
     bedrooms: 4,
     bathrooms: 4,
     maxGuests: 8,
-    pricePerNight: 550,
+    pricePerNight: 400000,
     amenities: ["wifi", "pool", "gym", "parking", "ac", "tv", "kitchen", "balcony", "bbq"],
     location: { address: "3 Bourdillon Road", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "101219", latitude: 6.463, longitude: 3.441 },
     imageKey: "duplex",
+    owner: "admin",
   },
   {
     title: "Port Harcourt GRA Serviced Apartment",
@@ -197,10 +203,11 @@ const PROPERTIES = [
     bedrooms: 3,
     bathrooms: 3,
     maxGuests: 6,
-    pricePerNight: 130,
+    pricePerNight: 130000,
     amenities: ["wifi", "ac", "tv", "kitchen", "parking", "workspace", "heating"],
     location: { address: "45 Old GRA", city: "Port Harcourt", state: "Rivers", country: "Nigeria", zipCode: "500001", latitude: 4.809, longitude: 7.017 },
     imageKey: "apartment",
+    owner: "host",
   },
   {
     title: "Asokoro Abuja Luxury 3-Bedroom",
@@ -210,10 +217,11 @@ const PROPERTIES = [
     bedrooms: 3,
     bathrooms: 3,
     maxGuests: 6,
-    pricePerNight: 200,
+    pricePerNight: 200000,
     amenities: ["wifi", "ac", "tv", "kitchen", "parking", "gym", "pool"],
     location: { address: "12 Maiduguri Street", city: "Abuja", state: "FCT", country: "Nigeria", zipCode: "900105", latitude: 9.062, longitude: 7.517 },
     imageKey: "luxury",
+    owner: "admin",
   },
   {
     title: "Lagos Island Cosy Studio Loft",
@@ -223,20 +231,22 @@ const PROPERTIES = [
     bedrooms: 1,
     bathrooms: 1,
     maxGuests: 2,
-    pricePerNight: 75,
+    pricePerNight: 75000,
     amenities: ["wifi", "ac", "tv", "kitchen"],
     location: { address: "7 Nnamdi Azikiwe Street", city: "Lagos", state: "Lagos", country: "Nigeria", zipCode: "102273", latitude: 6.451, longitude: 3.397 },
     imageKey: "apartment",
+    owner: "host",
   },
 ];
 
+// owner: "admin" = belongs to admin; "host" = belongs to Chidi (host@asavio.com)
 const VEHICLES = [
   {
     make: "Mercedes-Benz",
     model: "S-Class",
     year: 2023,
     vehicleType: "luxury",
-    pricePerDay: 250,
+    pricePerDay: 200000,
     description:
       "Experience the pinnacle of automotive luxury. The 2023 S-Class comes with heated and massage seats, Burmester 4D surround sound, Mbux AI assistant, and a silky smooth 3.0L inline-6 engine. Available with or without a professional uniformed driver.",
     seats: 5,
@@ -244,13 +254,14 @@ const VEHICLES = [
     location: "Lagos Island, Lagos",
     features: ["GPS", "Burmester Sound", "Heated Seats", "Massage Seats", "Apple CarPlay", "Cruise Control"],
     imageKey: "luxury",
+    owner: "admin",
   },
   {
     make: "Toyota",
     model: "Land Cruiser V8",
     year: 2022,
     vehicleType: "suv",
-    pricePerDay: 180,
+    pricePerDay: 150000,
     description:
       "The unstoppable Land Cruiser V8. Perfect for both city drives and off-road adventures across Nigeria. Seats 7 comfortably, features a premium JBL sound system, multi-terrain select, and a twin-locking rear differential. Ideal for group travel and corporate convoys.",
     seats: 7,
@@ -258,13 +269,14 @@ const VEHICLES = [
     location: "Victoria Island, Lagos",
     features: ["GPS", "JBL Sound", "Backup Camera", "Android Auto", "Apple CarPlay", "4WD"],
     imageKey: "suv",
+    owner: "admin",
   },
   {
     make: "BMW",
     model: "5 Series",
     year: 2023,
     vehicleType: "sedan",
-    pricePerDay: 150,
+    pricePerDay: 120000,
     description:
       "The quintessential executive sedan. The 2023 BMW 5 Series delivers razor-sharp handling and a supremely refined interior. Equipped with the latest iDrive 8.5 system, ambient lighting, wireless charging, and a panoramic sunroof. Perfect for business meetings and airport transfers.",
     seats: 5,
@@ -272,13 +284,14 @@ const VEHICLES = [
     location: "Ikoyi, Lagos",
     features: ["GPS", "Sunroof", "Wireless Charging", "Heated Seats", "Apple CarPlay", "Cruise Control"],
     imageKey: "sedan",
+    owner: "host",
   },
   {
     make: "Toyota",
     model: "HiAce (Grand Cabin)",
     year: 2021,
     vehicleType: "van",
-    pricePerDay: 120,
+    pricePerDay: 80000,
     description:
       "Nigeria's most trusted people carrier. This 14-seater Grand Cabin is perfect for group airport transfers, corporate shuttles, and family road trips. Comes with individual AC vents, reading lights, reclining seats, and a professional driver. Available for single-day or weekly hire.",
     seats: 14,
@@ -286,13 +299,14 @@ const VEHICLES = [
     location: "Abuja, FCT",
     features: ["AC", "GPS", "Reclining Seats", "USB Charging", "Backup Camera"],
     imageKey: "van",
+    owner: "host",
   },
   {
     make: "Range Rover",
     model: "Autobiography",
     year: 2023,
     vehicleType: "suv",
-    pricePerDay: 300,
+    pricePerDay: 250000,
     description:
       "The Range Rover Autobiography — where off-road capability meets five-star luxury. Featuring a rear executive lounge, hand-stitched Windsor leather, 23-speaker Meridian Sound, and a panoramic roof. The ultimate statement vehicle for VIP arrivals and CEO travel.",
     seats: 5,
@@ -300,6 +314,7 @@ const VEHICLES = [
     location: "Banana Island, Lagos",
     features: ["GPS", "Meridian Sound", "Massage Seats", "Heated Seats", "Apple CarPlay", "Air Suspension"],
     imageKey: "suv",
+    owner: "admin",
   },
 ];
 
@@ -344,6 +359,7 @@ export async function runSeed(ds: DataSource) {
       password: await bcrypt.hash("Host123!", 12),
       role: "host",
       isVerified: true,
+      kycStatus: "approved",
       phone: "+2348000000002",
     });
     await userRepo.save(host);
@@ -396,10 +412,10 @@ export async function runSeed(ds: DataSource) {
     console.log(`  — ${existingCount} properties already exist, skipping`);
   } else {
     for (const data of PROPERTIES) {
-      const { imageKey, ...propertyData } = data;
+      const { imageKey, owner, ...propertyData } = data;
       const property = propertyRepo.create({
         ...propertyData,
-        hostId: admin!.id,
+        hostId: owner === "host" ? host!.id : admin!.id,
         isAvailable: true,
         status: "approved",
       });
@@ -462,12 +478,12 @@ export async function runSeed(ds: DataSource) {
     console.log(`  — ${existingVehicleCount} vehicles already exist, skipping`);
   } else {
     for (const data of VEHICLES) {
-      const { imageKey, ...vehicleData } = data;
+      const { imageKey, owner, ...vehicleData } = data;
       const urls = VEHICLE_IMAGES[imageKey] ?? VEHICLE_IMAGES.sedan;
 
       const vehicle = vehicleRepo.create({
         ...vehicleData,
-        hostId: admin!.id,
+        hostId: owner === "host" ? host!.id : admin!.id,
         isAvailable: true,
         images: urls.map((url, i) => ({ url, publicId: `seed_veh_${i}` })),
       });

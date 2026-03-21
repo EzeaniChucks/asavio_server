@@ -30,12 +30,28 @@ export declare const emailService: {
         checkIn: string;
         checkOut: string;
         guests: number;
+        nights: number;
+        totalPrice: number;
+        platformCommission: number;
+        hostPayout: number;
+        commissionRate: number;
         bookingId: string;
     }): Promise<void>;
     sendAdminBroadcast(opts: {
         to: string;
         subject: string;
         message: string;
+    }): Promise<void>;
+    /**
+     * Sends a rich HTML campaign email. The `htmlBody` is a full HTML snippet
+     * (headings, paragraphs, buttons) that gets wrapped in the Asavio brand template.
+     * Use {{firstName}} in htmlBody to personalise each recipient's copy.
+     */
+    sendCampaign(opts: {
+        to: string;
+        firstName: string;
+        subject: string;
+        htmlBody: string;
     }): Promise<void>;
     sendListingSubmitted(opts: {
         to: string;
@@ -51,7 +67,28 @@ export declare const emailService: {
         rejectionReason?: string;
         propertyId: string;
     }): Promise<void>;
+    sendKycSubmitted(opts: {
+        to: string;
+        hostName: string;
+        hostEmail: string;
+        documentType: string;
+        userId: string;
+    }): Promise<void>;
+    sendKycReviewed(opts: {
+        to: string;
+        hostName: string;
+        decision: "approved" | "rejected";
+        rejectionReason?: string;
+    }): Promise<void>;
     sendPasswordReset(to: string, firstName: string, resetUrl: string): Promise<void>;
     sendVerificationEmail(to: string, firstName: string, verifyUrl: string): Promise<void>;
+    sendNotificationEmail(opts: {
+        to: string;
+        firstName: string;
+        title: string;
+        body: string;
+        ctaUrl?: string;
+        ctaLabel?: string;
+    }): Promise<void>;
 };
 //# sourceMappingURL=emailService.d.ts.map

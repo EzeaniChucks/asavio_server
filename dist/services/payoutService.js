@@ -156,7 +156,10 @@ class PayoutService {
         if (booking.hostPayoutStatus === "processing")
             throw new AppError_1.AppError("Payout is already being processed", 400);
         // Fetch host details
-        const host = await this.userRepo.findOne({ where: { id: booking.property.hostId } });
+        const hostId = booking.property?.hostId ?? booking.vehicle?.hostId;
+        if (!hostId)
+            throw new AppError_1.AppError("Cannot determine host for this booking", 400);
+        const host = await this.userRepo.findOne({ where: { id: hostId } });
         if (!host)
             throw new AppError_1.AppError("Host not found", 404);
         if (!host.paystackRecipientCode) {

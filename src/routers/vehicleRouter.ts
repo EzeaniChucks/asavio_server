@@ -1,6 +1,7 @@
 // src/routers/vehicleRouter.ts
 import { Router } from "express";
 import { vehicleController } from "../controllers/vehicleController";
+import { bookingController } from "../controllers/bookingController";
 import { protect, restrictTo } from "../middleware/auth";
 import { validate } from "../middleware/validation";
 import { vehicleValidation } from "../validations/vehicleValidation";
@@ -11,6 +12,8 @@ const router = Router();
 // Public
 router.get("/types", vehicleController.getAvailableVehicleTypes);
 router.get("/", vehicleController.listVehicles);
+// Must be before /:id
+router.get("/:vehicleId/booked-dates", bookingController.getVehicleBookedDates);
 router.get("/:id", vehicleController.getVehicle);
 
 // Protected — host/admin only for mutations

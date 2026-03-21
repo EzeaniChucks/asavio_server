@@ -64,14 +64,24 @@ export const bookingController = {
   }),
 
   checkAvailability: catchAsync(async (req: Request, res: Response) => {
-    const { propertyId, checkIn, checkOut } = req.query as Record<string, string>;
-
-    const result = await bookingService.checkAvailability(propertyId, checkIn, checkOut);
-
-    res.status(200).json({
-      status: "success",
-      data: result,
-    });
+    const { propertyId, checkIn, checkOut, purpose } = req.query as Record<string, string>;
+    const result = await bookingService.checkAvailability(propertyId, checkIn, checkOut, purpose);
+    res.status(200).json({ status: "success", data: result });
   }),
 
+  checkVehicleAvailability: catchAsync(async (req: Request, res: Response) => {
+    const { vehicleId, checkIn, checkOut, withDriver } = req.query as Record<string, string>;
+    const result = await bookingService.checkVehicleAvailability(
+      vehicleId,
+      checkIn,
+      checkOut,
+      withDriver === "true"
+    );
+    res.status(200).json({ status: "success", data: result });
+  }),
+
+  getVehicleBookedDates: catchAsync(async (req: Request, res: Response) => {
+    const bookedDates = await bookingService.getVehicleBookedDates(req.params.vehicleId as string);
+    res.json({ status: "success", data: { bookedDates } });
+  }),
 };

@@ -4,11 +4,21 @@ import { body, param } from "express-validator";
 export const bookingValidation = {
   create: [
     body("propertyId")
+      .optional()
       .trim()
-      .notEmpty()
-      .withMessage("Property ID is required")
       .isUUID()
       .withMessage("Invalid property ID"),
+    body("vehicleId")
+      .optional()
+      .trim()
+      .isUUID()
+      .withMessage("Invalid vehicle ID"),
+    body().custom((_, { req }) => {
+      if (!req.body.propertyId && !req.body.vehicleId) {
+        throw new Error("Either propertyId or vehicleId is required");
+      }
+      return true;
+    }),
     body("checkIn")
       .notEmpty()
       .withMessage("Check-in date is required")

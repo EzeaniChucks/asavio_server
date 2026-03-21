@@ -41,7 +41,8 @@ class AdminService {
     }
     // ── Users ────────────────────────────────────────────────────
     async getUsers(opts) {
-        const { page = 1, limit = 20, role, search } = opts;
+        const { page = 1, role, search } = opts;
+        const limit = Math.min(opts.limit ?? 20, 100);
         const qb = database_1.AppDataSource.getRepository(User_1.User)
             .createQueryBuilder("u")
             .orderBy("u.createdAt", "DESC");
@@ -83,9 +84,22 @@ class AdminService {
             throw new AppError_1.AppError("Cannot delete an admin account", 403);
         await repo.remove(user);
     }
+    async getHostProperties(hostId) {
+        const user = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: hostId } });
+        if (!user)
+            throw new AppError_1.AppError("User not found", 404);
+        const properties = await database_1.AppDataSource.getRepository(Property_1.Property).find({
+            where: { hostId },
+            relations: ["images"],
+            order: { createdAt: "DESC" },
+        });
+        const { password: _pw, ...safeUser } = user;
+        return { host: safeUser, properties };
+    }
     // ── Properties ───────────────────────────────────────────────
     async getProperties(opts) {
-        const { page = 1, limit = 20, search, status } = opts;
+        const { page = 1, search, status } = opts;
+        const limit = Math.min(opts.limit ?? 20, 100);
         const qb = database_1.AppDataSource.getRepository(Property_1.Property)
             .createQueryBuilder("p")
             .leftJoinAndSelect("p.host", "host")
@@ -140,7 +154,8 @@ class AdminService {
     }
     // ── Vehicles ─────────────────────────────────────────────────
     async getVehicles(opts) {
-        const { page = 1, limit = 20, search } = opts;
+        const { page = 1, search } = opts;
+        const limit = Math.min(opts.limit ?? 20, 100);
         const qb = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle)
             .createQueryBuilder("v")
             .leftJoinAndSelect("v.host", "host")
@@ -164,7 +179,8 @@ class AdminService {
     }
     // ── Bookings ─────────────────────────────────────────────────
     async getBookings(opts) {
-        const { page = 1, limit = 20, status } = opts;
+        const { page = 1, status } = opts;
+        const limit = Math.min(opts.limit ?? 20, 100);
         const qb = database_1.AppDataSource.getRepository(Booking_1.Booking)
             .createQueryBuilder("b")
             .leftJoinAndSelect("b.user", "user")
@@ -194,7 +210,7 @@ class AdminService {
             .sendBookingStatusUpdate({
             to: booking.user.email,
             firstName: booking.user.firstName,
-            propertyTitle: booking.property.title,
+            propertyTitle: booking.property?.title ?? (`${booking.vehicle?.make ?? ""} ${booking.vehicle?.model ?? ""}`.trim() || "Booking"),
             status,
             bookingId: booking.id,
         })
@@ -210,18 +226,49 @@ class AdminService {
         await repo.remove(review);
     }
     // ── Email broadcast ──────────────────────────────────────────
-    async sendBroadcast(opts) {
-        const { audience, subject, message } = opts;
+    async getAudienceRecipients(audience) {
         const repo = database_1.AppDataSource.getRepository(User_1.User);
-        let where;
-        if (audience === "hosts")
-            where = { role: "host" };
-        else if (audience === "users")
-            where = { role: "user" };
-        const recipients = await repo.find({ where });
-        const sends = recipients.map((u) => emailService_1.emailService
-            .sendAdminBroadcast({ to: u.email, subject, message })
-            .catch(console.error));
+        switch (audience) {
+            case "users":
+                return repo.find({ where: { role: "user" } });
+            case "hosts":
+                return repo.find({ where: { role: "host" } });
+            case "verified_hosts":
+                return repo.find({ where: { role: "host", kycStatus: "approved" } });
+            case "unverified_hosts":
+                return repo.createQueryBuilder("u")
+                    .where("u.role = :role", { role: "host" })
+                    .andWhere("u.kycStatus != :status", { status: "approved" })
+                    .getMany();
+            case "guests_with_bookings":
+                return repo.createQueryBuilder("u")
+                    .innerJoin("u.bookings", "b")
+                    .where("u.role = :role", { role: "user" })
+                    .distinct(true)
+                    .getMany();
+            default: // "all"
+                return repo.createQueryBuilder("u")
+                    .where("u.role != :role", { role: "admin" })
+                    .getMany();
+        }
+    }
+    async previewAudienceCount(audience) {
+        const recipients = await this.getAudienceRecipients(audience);
+        return { count: recipients.length };
+    }
+    async sendBroadcast(opts) {
+        const { audience, subject, message, htmlBody } = opts;
+        const recipients = await this.getAudienceRecipients(audience);
+        const sends = recipients.map((u) => {
+            if (htmlBody) {
+                return emailService_1.emailService
+                    .sendCampaign({ to: u.email, firstName: u.firstName, subject, htmlBody })
+                    .catch(console.error);
+            }
+            return emailService_1.emailService
+                .sendAdminBroadcast({ to: u.email, subject, message: message ?? "" })
+                .catch(console.error);
+        });
         await Promise.all(sends);
         return { sent: recipients.length };
     }
