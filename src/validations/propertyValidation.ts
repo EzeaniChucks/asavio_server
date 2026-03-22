@@ -1,6 +1,14 @@
 // src/validations/propertyValidation.ts
 import { body } from "express-validator";
 
+// FormData sends everything as strings; parse JSON-encoded fields before validation
+const parseJson = (value: unknown) => {
+  if (typeof value === "string") {
+    try { return JSON.parse(value); } catch { return value; }
+  }
+  return value;
+};
+
 export const propertyValidation = {
   create: [
     body("title")
@@ -32,8 +40,11 @@ export const propertyValidation = {
       .isFloat({ min: 1 })
       .withMessage("Price per night must be greater than 0"),
     body("amenities")
+      .customSanitizer(parseJson)
       .isArray()
       .withMessage("Amenities must be an array"),
+    body("location")
+      .customSanitizer(parseJson),
     body("location.address")
       .trim()
       .notEmpty()
@@ -46,6 +57,25 @@ export const propertyValidation = {
       .trim()
       .notEmpty()
       .withMessage("Country is required"),
+    body("purposePricing")
+      .optional()
+      .customSanitizer(parseJson)
+      .custom((value) => {
+        if (value === null || value === undefined) return true;
+        if (typeof value !== "object" || Array.isArray(value)) {
+          throw new Error("purposePricing must be an object");
+        }
+        for (const [key, price] of Object.entries(value)) {
+          if (typeof key !== "string" || key.trim() === "") {
+            throw new Error("Each purpose must be a non-empty string");
+          }
+          const n = Number(price);
+          if (!Number.isFinite(n) || n <= 0) {
+            throw new Error(`Price for "${key}" must be a positive number`);
+          }
+        }
+        return true;
+      }),
   ],
 
   update: [
@@ -75,5 +105,26 @@ export const propertyValidation = {
       .optional()
       .isFloat({ min: 1 })
       .withMessage("Price per night must be greater than 0"),
+    body("amenities").optional().customSanitizer(parseJson),
+    body("location").optional().customSanitizer(parseJson),
+    body("purposePricing")
+      .optional()
+      .customSanitizer(parseJson)
+      .custom((value) => {
+        if (value === null || value === undefined) return true;
+        if (typeof value !== "object" || Array.isArray(value)) {
+          throw new Error("purposePricing must be an object");
+        }
+        for (const [key, price] of Object.entries(value)) {
+          if (typeof key !== "string" || key.trim() === "") {
+            throw new Error("Each purpose must be a non-empty string");
+          }
+          const n = Number(price);
+          if (!Number.isFinite(n) || n <= 0) {
+            throw new Error(`Price for "${key}" must be a positive number`);
+          }
+        }
+        return true;
+      }),
   ],
 };

@@ -1,14 +1,10 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.propertyController = void 0;
-// src/controllers/propertyController.ts
-const fs_1 = __importDefault(require("fs"));
 const propertyService_1 = require("../services/propertyService");
 const cloudinaryService_1 = require("../services/cloudinaryService");
 const emailService_1 = require("../services/emailService");
+const notificationService_1 = require("../services/notificationService");
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const catchAsync_1 = require("../utils/catchAsync");
@@ -18,19 +14,17 @@ exports.propertyController = {
     createProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {
         const files = req.files;
         let uploadedImages = [];
-        try {
-            if (files && files.length > 0) {
-                uploadedImages = await cloudinaryService.uploadMultipleImages(files, "properties");
-            }
-        }
-        finally {
-            // Clean up temp files regardless of Cloudinary success/failure
-            for (const file of files ?? []) {
-                if (file.path && fs_1.default.existsSync(file.path))
-                    fs_1.default.unlinkSync(file.path);
-            }
+        if (files && files.length > 0) {
+            uploadedImages = await cloudinaryService.uploadMultipleImages(files, "properties");
         }
         const property = await propertyService.createProperty(req.body, req.user.id, uploadedImages);
+        // In-app notification to all admins
+        notificationService_1.notificationService.sendToAllAdmins({
+            type: "listing_submitted",
+            title: "New listing pending review",
+            body: `${req.user.firstName ?? "A host"} has submitted "${property.title}" for approval.`,
+            data: { url: `/dashboard/admin`, urlLabel: "Review listing" },
+        }).catch(console.error);
         // Notify all admins of the new pending listing (best-effort)
         database_1.AppDataSource.getRepository(User_1.User)
             .find({ where: { role: "admin" } })
@@ -83,11 +77,16 @@ exports.propertyController = {
         });
     }),
     updateProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {
-        const property = await propertyService.updateProperty(req.params.id, req.body, req.user.id);
-        res.status(200).json({
-            status: "success",
-            data: { property },
-        });
+        const files = req.files ?? [];
+        let removeImagePublicIds = [];
+        try {
+            const raw = req.body.removeImagePublicIds;
+            if (raw)
+                removeImagePublicIds = Array.isArray(raw) ? raw : [raw];
+        }
+        catch { /* ignore */ }
+        const property = await propertyService.updateProperty(req.params.id, req.body, req.user.id, removeImagePublicIds, files.length ? files : undefined);
+        res.status(200).json({ status: "success", data: { property } });
     }),
     deleteProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {
         await propertyService.deleteProperty(req.params.id, req.user.id);

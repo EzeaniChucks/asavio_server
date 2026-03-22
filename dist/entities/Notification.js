@@ -41,9 +41,12 @@ __decorate([
             "review_received",
             "kyc_approved",
             "kyc_rejected",
+            "kyc_submitted",
             "listing_approved",
             "listing_rejected",
+            "listing_submitted",
             "payout_transferred",
+            "payout_failed",
         ],
     }),
     __metadata("design:type", String)

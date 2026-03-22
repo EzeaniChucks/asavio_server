@@ -111,6 +111,13 @@ import {
     @Column({ type: "timestamptz", nullable: true })
     lastSeen: Date | null;
 
+    // Password reset
+    @Column({ nullable: true, select: false })
+    passwordResetToken: string;
+
+    @Column({ type: "timestamptz", nullable: true })
+    passwordResetExpires: Date | null;
+
     @OneToMany(() => Property, (property) => property.host)
     properties: Property[];
   

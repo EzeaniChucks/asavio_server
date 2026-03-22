@@ -4,15 +4,8 @@ import path from "path";
 import { AppError } from "../utils/AppError";
 import { Request } from "express";
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, "/tmp/uploads");
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
-  },
-});
+// Memory storage — no temp directory needed; files are in file.buffer
+const storage = multer.memoryStorage();
 
 const fileFilter = (
   _req: Request,

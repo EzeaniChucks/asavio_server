@@ -40,6 +40,7 @@ const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const Booking_1 = require("../entities/Booking");
 const AppError_1 = require("../utils/AppError");
+const notificationService_1 = require("./notificationService");
 function paystackRequest(method, path, body) {
     return new Promise((resolve, reject) => {
         const payload = body ? JSON.stringify(body) : undefined;
@@ -178,12 +179,32 @@ class PayoutService {
         });
         if (!transferRes.status) {
             await this.bookingRepo.update(bookingId, { hostPayoutStatus: "failed" });
+            notificationService_1.notificationService.send({
+                userId: host.id,
+                type: "payout_failed",
+                title: "Payout failed",
+                body: `We could not transfer your payout for booking ${bookingId.slice(0, 8).toUpperCase()}. Our team will retry shortly.`,
+                data: { url: `/dashboard/host/earnings`, urlLabel: "View earnings" },
+            }).catch(console.error);
+            notificationService_1.notificationService.sendToAllAdmins({
+                type: "payout_failed",
+                title: "Payout failed — action required",
+                body: `Payout failed for booking ${bookingId.slice(0, 8).toUpperCase()}: ${transferRes.message}`,
+                data: { url: `/dashboard/admin`, urlLabel: "View payouts" },
+            }).catch(console.error);
             throw new AppError_1.AppError(`Transfer failed: ${transferRes.message}`, 502);
         }
         await this.bookingRepo.update(bookingId, {
             hostPayoutStatus: "transferred",
             payoutReference: transferRes.data.transfer_code,
         });
+        notificationService_1.notificationService.send({
+            userId: host.id,
+            type: "payout_transferred",
+            title: "Payout sent ✓",
+            body: `₦${Number(booking.hostPayout).toLocaleString()} has been transferred to your bank account for booking ${bookingId.slice(0, 8).toUpperCase()}.`,
+            data: { url: `/dashboard/host/earnings`, urlLabel: "View earnings" },
+        }).catch(console.error);
         return (await this.bookingRepo.findOne({
             where: { id: bookingId },
             relations: ["property", "user"],

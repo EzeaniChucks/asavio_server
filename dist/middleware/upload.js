@@ -8,15 +8,8 @@ exports.upload = void 0;
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const AppError_1 = require("../utils/AppError");
-const storage = multer_1.default.diskStorage({
-    destination: (_req, _file, cb) => {
-        cb(null, "/tmp/uploads");
-    },
-    filename: (_req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        cb(null, `${uniqueSuffix}${path_1.default.extname(file.originalname)}`);
-    },
-});
+// Memory storage — no temp directory needed; files are in file.buffer
+const storage = multer_1.default.memoryStorage();
 const fileFilter = (_req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp/;
     const isValid = allowedTypes.test(path_1.default.extname(file.originalname).toLowerCase()) &&

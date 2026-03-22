@@ -9,6 +9,7 @@ import { chatService } from "./services/chatService";
 import { notificationService } from "./services/notificationService";
 import { hostTierService } from "./services/hostTierService";
 import { onlineUsers } from "./state/presence";
+import { setIo } from "./state/ioInstance";
 
 export { onlineUsers };
 
@@ -27,6 +28,8 @@ export function initSocket(httpServer: HttpServer): SocketServer {
       credentials: true,
     },
   });
+
+  setIo(io);
 
   // ── JWT auth middleware ──────────────────────────────────────────────────────
   io.use(async (socket, next) => {

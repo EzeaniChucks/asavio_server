@@ -4,6 +4,7 @@ import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
 import { Booking } from "../entities/Booking";
 import { AppError } from "../utils/AppError";
+import { notificationService } from "./notificationService";
 
 function paystackRequest<T>(
   method: string,
@@ -177,6 +178,22 @@ export class PayoutService {
 
     if (!transferRes.status) {
       await this.bookingRepo.update(bookingId, { hostPayoutStatus: "failed" });
+
+      notificationService.send({
+        userId: host.id,
+        type: "payout_failed",
+        title: "Payout failed",
+        body: `We could not transfer your payout for booking ${bookingId.slice(0, 8).toUpperCase()}. Our team will retry shortly.`,
+        data: { url: `/dashboard/host/earnings`, urlLabel: "View earnings" },
+      }).catch(console.error);
+
+      notificationService.sendToAllAdmins({
+        type: "payout_failed",
+        title: "Payout failed — action required",
+        body: `Payout failed for booking ${bookingId.slice(0, 8).toUpperCase()}: ${transferRes.message}`,
+        data: { url: `/dashboard/admin`, urlLabel: "View payouts" },
+      }).catch(console.error);
+
       throw new AppError(`Transfer failed: ${transferRes.message}`, 502);
     }
 
@@ -184,6 +201,14 @@ export class PayoutService {
       hostPayoutStatus: "transferred",
       payoutReference: transferRes.data.transfer_code,
     });
+
+    notificationService.send({
+      userId: host.id,
+      type: "payout_transferred",
+      title: "Payout sent ✓",
+      body: `₦${Number(booking.hostPayout).toLocaleString()} has been transferred to your bank account for booking ${bookingId.slice(0, 8).toUpperCase()}.`,
+      data: { url: `/dashboard/host/earnings`, urlLabel: "View earnings" },
+    }).catch(console.error);
 
     return (await this.bookingRepo.findOne({
       where: { id: bookingId },

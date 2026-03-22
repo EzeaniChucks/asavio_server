@@ -41,6 +41,7 @@ const database_1 = require("../config/database");
 const Booking_1 = require("../entities/Booking");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
+const notificationService_1 = require("./notificationService");
 function paystackRequest(method, path, body) {
     return new Promise((resolve, reject) => {
         const payload = body ? JSON.stringify(body) : undefined;
@@ -150,6 +151,24 @@ class PaymentService {
                 bookingId: booking.id,
             })
                 .catch(console.error);
+            // In-app to guest
+            notificationService_1.notificationService.send({
+                userId: booking.user.id,
+                type: "booking_confirmed",
+                title: "Booking confirmed ✓",
+                body: `Payment received. Your booking for "${booking.property?.title ?? "your property"}" is confirmed.`,
+                data: { url: `/bookings/${booking.id}`, urlLabel: "View booking" },
+            }).catch(console.error);
+            // In-app to host
+            if (booking.property?.hostId) {
+                notificationService_1.notificationService.send({
+                    userId: booking.property.hostId,
+                    type: "booking_confirmed",
+                    title: "Booking payment received",
+                    body: `Payment confirmed for a booking at "${booking.property.title}". Check your dashboard.`,
+                    data: { url: `/dashboard/host`, urlLabel: "View bookings" },
+                }).catch(console.error);
+            }
         }
         else if (response.data.status === "failed") {
             await this.bookingRepo.update(booking.id, { paymentStatus: "failed" });
@@ -193,6 +212,24 @@ class PaymentService {
                 bookingId: booking.id,
             })
                 .catch(console.error);
+            // In-app to guest
+            notificationService_1.notificationService.send({
+                userId: booking.user.id,
+                type: "booking_confirmed",
+                title: "Booking confirmed ✓",
+                body: `Payment received. Your booking for "${booking.property?.title ?? "your property"}" is confirmed.`,
+                data: { url: `/bookings/${booking.id}`, urlLabel: "View booking" },
+            }).catch(console.error);
+            // In-app to host
+            if (booking.property?.hostId) {
+                notificationService_1.notificationService.send({
+                    userId: booking.property.hostId,
+                    type: "booking_confirmed",
+                    title: "Booking payment received",
+                    body: `Payment confirmed for a booking at "${booking.property.title}". Check your dashboard.`,
+                    data: { url: `/dashboard/host`, urlLabel: "View bookings" },
+                }).catch(console.error);
+            }
         }
     }
 }

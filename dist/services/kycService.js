@@ -6,6 +6,7 @@ const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const cloudinaryService_1 = require("./cloudinaryService");
 const emailService_1 = require("./emailService");
+const notificationService_1 = require("./notificationService");
 const AppError_1 = require("../utils/AppError");
 const cloudinaryService = new cloudinaryService_1.CloudinaryService();
 exports.ACCEPTED_DOCUMENT_TYPES = [
@@ -51,17 +52,24 @@ exports.kycService = {
         user.kycSubmittedAt = new Date();
         user.kycRejectionReason = null;
         await userRepo.save(user);
-        // Notify admin
+        // Notify admin — best-effort
         const adminEmail = process.env.ADMIN_EMAIL;
         if (adminEmail) {
-            await emailService_1.emailService.sendKycSubmitted({
+            emailService_1.emailService.sendKycSubmitted({
                 to: adminEmail,
                 hostName: `${user.firstName} ${user.lastName}`,
                 hostEmail: user.email,
                 documentType: exports.DOCUMENT_TYPE_LABELS[documentType],
                 userId: user.id,
-            });
+            }).catch(console.error);
         }
+        // In-app notification to all admins
+        notificationService_1.notificationService.sendToAllAdmins({
+            type: "kyc_submitted",
+            title: "New KYC submission",
+            body: `${user.firstName} ${user.lastName} has submitted their identity documents for verification.`,
+            data: { url: "/dashboard/admin/kyc", urlLabel: "Review KYC" },
+        }).catch(console.error);
         return { kycStatus: user.kycStatus };
     },
     async getKycStatus(userId) {
@@ -91,13 +99,23 @@ exports.kycService = {
             user.kycRejectionReason = rejectionReason;
         }
         await userRepo.save(user);
-        // Notify host
-        await emailService_1.emailService.sendKycReviewed({
+        // In-app notification to host
+        notificationService_1.notificationService.send({
+            userId: user.id,
+            type: decision === "approved" ? "kyc_approved" : "kyc_rejected",
+            title: decision === "approved" ? "Identity verified ✓" : "Identity verification failed",
+            body: decision === "approved"
+                ? "Your identity has been verified. You can now list properties and receive payouts."
+                : `Your KYC submission was rejected${rejectionReason ? `: ${rejectionReason}` : "."}`,
+            data: { url: "/dashboard/host/kyc", urlLabel: "View status" },
+        }).catch(console.error);
+        // Notify host — best-effort, never block the review succeeding
+        emailService_1.emailService.sendKycReviewed({
             to: user.email,
             hostName: user.firstName,
             decision,
             rejectionReason,
-        });
+        }).catch(console.error);
         return { kycStatus: user.kycStatus };
     },
     async getPendingKyc() {

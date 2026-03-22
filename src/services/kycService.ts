@@ -3,6 +3,7 @@ import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
 import { CloudinaryService } from "./cloudinaryService";
 import { emailService } from "./emailService";
+import { notificationService } from "./notificationService";
 import { AppError } from "../utils/AppError";
 
 const cloudinaryService = new CloudinaryService();
@@ -63,17 +64,25 @@ export const kycService = {
 
     await userRepo.save(user);
 
-    // Notify admin
+    // Notify admin — best-effort
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail) {
-      await emailService.sendKycSubmitted({
+      emailService.sendKycSubmitted({
         to: adminEmail,
         hostName: `${user.firstName} ${user.lastName}`,
         hostEmail: user.email,
         documentType: DOCUMENT_TYPE_LABELS[documentType],
         userId: user.id,
-      });
+      }).catch(console.error);
     }
+
+    // In-app notification to all admins
+    notificationService.sendToAllAdmins({
+      type: "kyc_submitted",
+      title: "New KYC submission",
+      body: `${user.firstName} ${user.lastName} has submitted their identity documents for verification.`,
+      data: { url: "/dashboard/admin/kyc", urlLabel: "Review KYC" },
+    }).catch(console.error);
 
     return { kycStatus: user.kycStatus };
   },
@@ -113,13 +122,24 @@ export const kycService = {
 
     await userRepo.save(user);
 
-    // Notify host
-    await emailService.sendKycReviewed({
+    // In-app notification to host
+    notificationService.send({
+      userId: user.id,
+      type: decision === "approved" ? "kyc_approved" : "kyc_rejected",
+      title: decision === "approved" ? "Identity verified ✓" : "Identity verification failed",
+      body: decision === "approved"
+        ? "Your identity has been verified. You can now list properties and receive payouts."
+        : `Your KYC submission was rejected${rejectionReason ? `: ${rejectionReason}` : "."}`,
+      data: { url: "/dashboard/host/kyc", urlLabel: "View status" },
+    }).catch(console.error);
+
+    // Notify host — best-effort, never block the review succeeding
+    emailService.sendKycReviewed({
       to: user.email,
       hostName: user.firstName,
       decision,
       rejectionReason,
-    });
+    }).catch(console.error);
 
     return { kycStatus: user.kycStatus };
   },

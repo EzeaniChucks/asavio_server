@@ -7,6 +7,7 @@ const Notification_1 = require("../entities/Notification");
 const User_1 = require("../entities/User");
 const emailService_1 = require("./emailService");
 const presence_1 = require("../state/presence");
+const ioInstance_1 = require("../state/ioInstance");
 const notifRepo = () => database_1.AppDataSource.getRepository(Notification_1.Notification);
 const userRepo = () => database_1.AppDataSource.getRepository(User_1.User);
 /** Types that always trigger an email regardless of online status */
@@ -15,12 +16,16 @@ const ALWAYS_EMAIL = new Set([
     "booking_cancelled",
     "kyc_approved",
     "kyc_rejected",
+    "kyc_submitted",
+    "listing_submitted",
     "payout_transferred",
+    "payout_failed",
 ]);
 exports.notificationService = {
     /** Create a notification and dispatch it: socket if online, email otherwise (30s delay). */
     async send(opts) {
-        const { userId, type, title, body, data, io } = opts;
+        const { userId, type, title, body, data } = opts;
+        const io = opts.io ?? (0, ioInstance_1.getIo)();
         const notif = notifRepo().create({ userId, type, title, body, data: data ?? null });
         const saved = await notifRepo().save(notif);
         if (io) {
@@ -51,14 +56,15 @@ exports.notificationService = {
             if (isOnline)
                 return;
         }
-        await emailService_1.emailService.sendNotificationEmail({
+        // Best-effort — never block notification delivery if email fails
+        emailService_1.emailService.sendNotificationEmail({
             to: user.email,
             firstName: user.firstName,
             title,
             body,
             ctaUrl: data?.url,
             ctaLabel: data?.urlLabel,
-        });
+        }).catch(console.error);
     },
     async getForUser(userId, unreadOnly = false) {
         const qb = notifRepo()
@@ -80,6 +86,10 @@ exports.notificationService = {
             .set({ isRead: true })
             .where("userId = :userId AND isRead = false", { userId })
             .execute();
+    },
+    async sendToAllAdmins(opts) {
+        const admins = await userRepo().find({ where: { role: "admin" } });
+        await Promise.all(admins.map((admin) => exports.notificationService.send({ userId: admin.id, ...opts })));
     },
     async getUnreadCount(userId) {
         return notifRepo().count({ where: { userId, isRead: false } });

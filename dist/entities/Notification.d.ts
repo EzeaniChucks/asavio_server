@@ -1,5 +1,5 @@
 import { User } from "./User";
-export type NotificationType = "message" | "booking_request" | "booking_confirmed" | "booking_cancelled" | "booking_completed" | "review_received" | "kyc_approved" | "kyc_rejected" | "listing_approved" | "listing_rejected" | "payout_transferred";
+export type NotificationType = "message" | "booking_request" | "booking_confirmed" | "booking_cancelled" | "booking_completed" | "review_received" | "kyc_approved" | "kyc_rejected" | "kyc_submitted" | "listing_approved" | "listing_rejected" | "listing_submitted" | "payout_transferred" | "payout_failed";
 export declare class Notification {
     id: string;
     user: User;

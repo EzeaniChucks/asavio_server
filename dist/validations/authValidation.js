@@ -44,5 +44,41 @@ exports.authValidation = {
             .withMessage("Please provide a valid email"),
         (0, express_validator_1.body)("password").notEmpty().withMessage("Password is required"),
     ],
+    forgotPassword: [
+        (0, express_validator_1.body)("email")
+            .trim()
+            .notEmpty()
+            .withMessage("Email is required")
+            .isEmail()
+            .withMessage("Please provide a valid email"),
+    ],
+    resetPassword: [
+        (0, express_validator_1.body)("password")
+            .notEmpty()
+            .withMessage("Password is required")
+            .isLength({ min: 8 })
+            .withMessage("Password must be at least 8 characters")
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+            .withMessage("Password must contain uppercase, lowercase, and a number"),
+    ],
+    changePassword: [
+        (0, express_validator_1.body)("currentPassword").notEmpty().withMessage("Current password is required"),
+        (0, express_validator_1.body)("newPassword")
+            .notEmpty()
+            .withMessage("New password is required")
+            .isLength({ min: 8 })
+            .withMessage("Password must be at least 8 characters")
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+            .withMessage("Password must contain uppercase, lowercase, and a number"),
+    ],
+    changeEmail: [
+        (0, express_validator_1.body)("password").notEmpty().withMessage("Password is required to confirm this change"),
+        (0, express_validator_1.body)("newEmail")
+            .trim()
+            .notEmpty()
+            .withMessage("New email is required")
+            .isEmail()
+            .withMessage("Please provide a valid email address"),
+    ],
 };
 //# sourceMappingURL=authValidation.js.map

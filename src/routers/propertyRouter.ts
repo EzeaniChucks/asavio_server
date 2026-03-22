@@ -48,6 +48,7 @@ router
   .patch(
     protect,
     restrictTo("host", "admin"),
+    upload.array("images", 10),
     validate(propertyValidation.update),
     propertyController.updateProperty
   )

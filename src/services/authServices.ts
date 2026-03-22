@@ -1,6 +1,7 @@
 // src/services/authServices.ts
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
 import { AppError } from "../utils/AppError";
@@ -111,6 +112,81 @@ export class AuthService {
     const { password, role, isVerified, ...safeData } = updateData as any;
 
     await this.userRepository.update(userId, safeData);
+
+    return this.getProfile(userId);
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    // Silent return — never reveal whether the email exists
+    if (!user) return;
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    user.passwordResetToken = hashedToken;
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await this.userRepository.save(user);
+
+    const base = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+    const resetUrl = `${base}/reset-password/${token}`;
+
+    await emailService.sendPasswordReset(user.email, user.firstName, resetUrl).catch(console.error);
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .addSelect("user.passwordResetToken")
+      .addSelect("user.passwordResetExpires")
+      .where("user.passwordResetToken = :hashedToken", { hashedToken })
+      .getOne();
+
+    if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+      throw new AppError("Reset link is invalid or has expired", 400);
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    user.passwordResetToken = null!;
+    user.passwordResetExpires = null;
+    await this.userRepository.save(user);
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .addSelect("user.password")
+      .where("user.id = :userId", { userId })
+      .getOne();
+
+    if (!user) throw new AppError("User not found", 404);
+
+    const isCorrect = await bcrypt.compare(currentPassword, user.password);
+    if (!isCorrect) throw new AppError("Current password is incorrect", 401);
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    await this.userRepository.save(user);
+  }
+
+  async changeEmail(userId: string, password: string, newEmail: string) {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .addSelect("user.password")
+      .where("user.id = :userId", { userId })
+      .getOne();
+
+    if (!user) throw new AppError("User not found", 404);
+
+    const isCorrect = await bcrypt.compare(password, user.password);
+    if (!isCorrect) throw new AppError("Password is incorrect", 401);
+
+    const existing = await this.userRepository.findOne({ where: { email: newEmail } });
+    if (existing) throw new AppError("This email is already in use", 409);
+
+    user.email = newEmail;
+    await this.userRepository.save(user);
 
     return this.getProfile(userId);
   }

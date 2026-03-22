@@ -3,7 +3,6 @@ import { AppDataSource } from "../config/database";
 import { Vehicle } from "../entities/Vehicle";
 import { AppError } from "../utils/AppError";
 import { CloudinaryService } from "./cloudinaryService";
-import * as fs from "fs";
 
 const cloudinaryService = new CloudinaryService();
 
@@ -45,12 +44,8 @@ class VehicleService {
   ): Promise<Vehicle> {
     const uploadedImages: { url: string; publicId: string }[] = [];
     for (const file of files) {
-      try {
-        const result = await cloudinaryService.uploadImage(file, "vehicles");
-        uploadedImages.push(result);
-      } finally {
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-      }
+      const result = await cloudinaryService.uploadImage(file, "vehicles");
+      uploadedImages.push(result);
     }
 
     const vehicle = this.repo.create({
@@ -156,23 +151,31 @@ class VehicleService {
       throw new AppError("Not authorised to update this vehicle", 403);
     }
 
+    // Remove specific images if requested
+    let currentImages = [...(vehicle.images ?? [])];
+    const toRemove = (updates as any).removeImagePublicIds as string | string[] | undefined;
+    if (toRemove) {
+      const removeSet = Array.isArray(toRemove) ? toRemove : [toRemove];
+      for (const pubId of removeSet) {
+        await cloudinaryService.deleteImage(pubId).catch(() => null);
+      }
+      currentImages = currentImages.filter((img) => !removeSet.includes(img.publicId));
+      vehicle.images = currentImages;
+    }
+
+    // Upload new images if provided, appending to current set
     if (files && files.length > 0) {
       const uploadedImages: { url: string; publicId: string }[] = [];
       for (const file of files) {
-        try {
-          const result = await cloudinaryService.uploadImage(file, "vehicles");
-          uploadedImages.push(result);
-        } finally {
-          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        }
+        const result = await cloudinaryService.uploadImage(file, "vehicles");
+        uploadedImages.push(result);
       }
-      for (const img of vehicle.images) {
-        if (img.publicId) await cloudinaryService.deleteImage(img.publicId).catch(() => null);
-      }
-      vehicle.images = uploadedImages;
+      vehicle.images = [...currentImages, ...uploadedImages];
     }
 
-    Object.assign(vehicle, updates);
+    // Strip removeImagePublicIds before applying remaining field updates
+    const { removeImagePublicIds: _r, ...cleanUpdates } = updates as any;
+    Object.assign(vehicle, cleanUpdates);
     return this.repo.save(vehicle) as unknown as Vehicle;
   }
 

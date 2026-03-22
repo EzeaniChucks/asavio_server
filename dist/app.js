@@ -41,7 +41,7 @@ const corsOptions = {
             .split(",")
             .map((o) => o.trim().replace(/\/$/, ""));
         const normalised = origin?.replace(/\/$/, "");
-        console.log("normalised", normalised);
+        // console.log("normalised", normalised)
         if (!normalised || allowed.includes(normalised))
             return callback(null, true);
         console.warn(`[CORS] blocked origin: ${origin}`);

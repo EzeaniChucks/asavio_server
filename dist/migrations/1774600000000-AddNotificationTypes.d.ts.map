@@ -1,0 +1,1 @@
+{"version":3,"file":"1774600000000-AddNotificationTypes.d.ts","sourceRoot":"","sources":["../../src/migrations/1774600000000-AddNotificationTypes.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,kBAAkB,EAAE,WAAW,EAAE,MAAM,SAAS,CAAC;AAE1D,qBAAa,iCAAkC,YAAW,kBAAkB;IACpE,EAAE,CAAC,EAAE,EAAE,WAAW;IAKlB,IAAI,CAAC,GAAG,EAAE,WAAW;CAG5B"}

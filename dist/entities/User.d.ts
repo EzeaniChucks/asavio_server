@@ -34,6 +34,8 @@ export declare class User {
     responseRate: number;
     /** Set on Socket.io disconnect — used for "Last seen X ago" display */
     lastSeen: Date | null;
+    passwordResetToken: string;
+    passwordResetExpires: Date | null;
     properties: Property[];
     bookings: Booking[];
     reviews: Review[];

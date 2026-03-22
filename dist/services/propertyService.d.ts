@@ -19,7 +19,7 @@ export declare class PropertyService {
         popular: Property[];
     }>;
     getAvailablePropertyTypes(): Promise<string[]>;
-    updateProperty(id: string, updateData: any, hostId: string): Promise<Property>;
+    updateProperty(id: string, updateData: any, hostId: string, removeImagePublicIds?: string[], files?: Express.Multer.File[]): Promise<Property>;
     deleteProperty(id: string, hostId: string): Promise<void>;
     /**
      * Returns all booked date ranges (confirmed/awaiting_payment) PLUS host-blocked

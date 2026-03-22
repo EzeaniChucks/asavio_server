@@ -3,6 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.propertyValidation = void 0;
 // src/validations/propertyValidation.ts
 const express_validator_1 = require("express-validator");
+// FormData sends everything as strings; parse JSON-encoded fields before validation
+const parseJson = (value) => {
+    if (typeof value === "string") {
+        try {
+            return JSON.parse(value);
+        }
+        catch {
+            return value;
+        }
+    }
+    return value;
+};
 exports.propertyValidation = {
     create: [
         (0, express_validator_1.body)("title")
@@ -34,8 +46,11 @@ exports.propertyValidation = {
             .isFloat({ min: 1 })
             .withMessage("Price per night must be greater than 0"),
         (0, express_validator_1.body)("amenities")
+            .customSanitizer(parseJson)
             .isArray()
             .withMessage("Amenities must be an array"),
+        (0, express_validator_1.body)("location")
+            .customSanitizer(parseJson),
         (0, express_validator_1.body)("location.address")
             .trim()
             .notEmpty()
@@ -48,6 +63,26 @@ exports.propertyValidation = {
             .trim()
             .notEmpty()
             .withMessage("Country is required"),
+        (0, express_validator_1.body)("purposePricing")
+            .optional()
+            .customSanitizer(parseJson)
+            .custom((value) => {
+            if (value === null || value === undefined)
+                return true;
+            if (typeof value !== "object" || Array.isArray(value)) {
+                throw new Error("purposePricing must be an object");
+            }
+            for (const [key, price] of Object.entries(value)) {
+                if (typeof key !== "string" || key.trim() === "") {
+                    throw new Error("Each purpose must be a non-empty string");
+                }
+                const n = Number(price);
+                if (!Number.isFinite(n) || n <= 0) {
+                    throw new Error(`Price for "${key}" must be a positive number`);
+                }
+            }
+            return true;
+        }),
     ],
     update: [
         (0, express_validator_1.body)("title")
@@ -76,6 +111,28 @@ exports.propertyValidation = {
             .optional()
             .isFloat({ min: 1 })
             .withMessage("Price per night must be greater than 0"),
+        (0, express_validator_1.body)("amenities").optional().customSanitizer(parseJson),
+        (0, express_validator_1.body)("location").optional().customSanitizer(parseJson),
+        (0, express_validator_1.body)("purposePricing")
+            .optional()
+            .customSanitizer(parseJson)
+            .custom((value) => {
+            if (value === null || value === undefined)
+                return true;
+            if (typeof value !== "object" || Array.isArray(value)) {
+                throw new Error("purposePricing must be an object");
+            }
+            for (const [key, price] of Object.entries(value)) {
+                if (typeof key !== "string" || key.trim() === "") {
+                    throw new Error("Each purpose must be a non-empty string");
+                }
+                const n = Number(price);
+                if (!Number.isFinite(n) || n <= 0) {
+                    throw new Error(`Price for "${key}" must be a positive number`);
+                }
+            }
+            return true;
+        }),
     ],
 };
 //# sourceMappingURL=propertyValidation.js.map

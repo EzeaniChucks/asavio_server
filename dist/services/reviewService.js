@@ -7,6 +7,7 @@ const Review_1 = require("../entities/Review");
 const Property_1 = require("../entities/Property");
 const Vehicle_1 = require("../entities/Vehicle");
 const AppError_1 = require("../utils/AppError");
+const notificationService_1 = require("./notificationService");
 class ReviewService {
     get repo() {
         return database_1.AppDataSource.getRepository(Review_1.Review);
@@ -41,6 +42,31 @@ class ReviewService {
             await this.updatePropertyRating(propertyId);
         if (vehicleId)
             await this.updateVehicleRating(vehicleId);
+        // Notify host of new review
+        if (propertyId) {
+            const property = await database_1.AppDataSource.getRepository(Property_1.Property).findOne({ where: { id: propertyId } });
+            if (property?.hostId) {
+                notificationService_1.notificationService.send({
+                    userId: property.hostId,
+                    type: "review_received",
+                    title: "New review received",
+                    body: `A guest left a ${rating}-star review on "${property.title}".`,
+                    data: { url: `/properties/${propertyId}`, urlLabel: "View review" },
+                }).catch(console.error);
+            }
+        }
+        else if (vehicleId) {
+            const vehicle = await database_1.AppDataSource.getRepository(Vehicle_1.Vehicle).findOne({ where: { id: vehicleId } });
+            if (vehicle?.hostId) {
+                notificationService_1.notificationService.send({
+                    userId: vehicle.hostId,
+                    type: "review_received",
+                    title: "New review received",
+                    body: `A guest left a ${rating}-star review on your ${vehicle.make} ${vehicle.model}.`,
+                    data: { url: `/vehicles/${vehicleId}`, urlLabel: "View review" },
+                }).catch(console.error);
+            }
+        }
         return saved;
     }
     async getPropertyReviews(propertyId) {

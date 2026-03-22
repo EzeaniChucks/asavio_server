@@ -9,6 +9,7 @@ const Vehicle_1 = require("../entities/Vehicle");
 const User_1 = require("../entities/User");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
+const notificationService_1 = require("./notificationService");
 const settingsService_1 = require("./settingsService");
 const typeorm_1 = require("typeorm");
 class BookingService {
@@ -85,8 +86,11 @@ class BookingService {
             if (await this.hasConflict("propertyId", propertyId, checkIn, checkOut)) {
                 throw new AppError_1.AppError("These dates are not available — please choose different dates", 409);
             }
-            const nightlyRate = purpose && property.purposePricing && property.purposePricing[purpose] != null
+            const purposePrice = purpose && property.purposePricing
                 ? Number(property.purposePricing[purpose])
+                : NaN;
+            const nightlyRate = Number.isFinite(purposePrice) && purposePrice > 0
+                ? purposePrice
                 : Number(property.pricePerNight);
             const totalPrice = nightlyRate * nights;
             const host = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: property.hostId } });
@@ -113,6 +117,15 @@ class BookingService {
                     checkOut: checkOut.toLocaleDateString("en-GB"),
                     guests, nights, totalPrice, platformCommission, hostPayout, commissionRate,
                     bookingId: saved.id,
+                }).catch(console.error);
+                // In-app notification to host — new booking request
+                const guestName = guest ? `${guest.firstName} ${guest.lastName}` : "A guest";
+                notificationService_1.notificationService.send({
+                    userId: host.id,
+                    type: "booking_request",
+                    title: "New booking request",
+                    body: `${guestName} has requested to book "${property.title}" — awaiting payment.`,
+                    data: { url: `/dashboard/host`, urlLabel: "View bookings" },
                 }).catch(console.error);
             }
             return full;
@@ -154,6 +167,17 @@ class BookingService {
                 checkOut: checkOut.toLocaleDateString("en-GB"),
                 guests, nights, totalPrice, platformCommission, hostPayout, commissionRate,
                 bookingId: saved.id,
+            }).catch(console.error);
+        }
+        if (host) {
+            // In-app notification to host — new vehicle booking request
+            const guestName = guest ? `${guest.firstName} ${guest.lastName}` : "A guest";
+            notificationService_1.notificationService.send({
+                userId: host.id,
+                type: "booking_request",
+                title: "New vehicle booking request",
+                body: `${guestName} has requested to book your ${vehicle.make} ${vehicle.model} — awaiting payment.`,
+                data: { url: `/dashboard/host`, urlLabel: "View bookings" },
             }).catch(console.error);
         }
         return full;
@@ -226,6 +250,30 @@ class BookingService {
                 status,
                 bookingId: id,
             }).catch(console.error);
+            // In-app notification to guest
+            const typeMap = {
+                confirmed: "booking_confirmed",
+                cancelled: "booking_cancelled",
+                completed: "booking_completed",
+            };
+            const notifType = typeMap[status];
+            if (notifType) {
+                notificationService_1.notificationService.send({
+                    userId: updated.user.id,
+                    type: notifType,
+                    title: status === "confirmed"
+                        ? "Booking confirmed ✓"
+                        : status === "cancelled"
+                            ? "Booking cancelled"
+                            : "Booking completed",
+                    body: status === "confirmed"
+                        ? `Your booking for "${updated.property?.title ?? "your property"}" has been confirmed.`
+                        : status === "cancelled"
+                            ? `Your booking for "${updated.property?.title ?? "your property"}" has been cancelled.`
+                            : `Your stay at "${updated.property?.title ?? "your property"}" is now complete. We hope you enjoyed it!`,
+                    data: { url: `/bookings/${id}`, urlLabel: "View booking" },
+                }).catch(console.error);
+            }
         }
         return updated;
     }
@@ -239,8 +287,11 @@ class BookingService {
         const conflict = this.isBlocked(checkInDate, checkOutDate, property.blockedDates) ||
             await this.hasConflict("propertyId", propertyId, checkInDate, checkOutDate);
         const nights = this.nightsBetween(checkInDate, checkOutDate);
-        const nightlyRate = purpose && property.purposePricing && property.purposePricing[purpose] != null
+        const purposePrice = purpose && property.purposePricing
             ? Number(property.purposePricing[purpose])
+            : NaN;
+        const nightlyRate = Number.isFinite(purposePrice) && purposePrice > 0
+            ? purposePrice
             : Number(property.pricePerNight);
         return {
             available: property.isAvailable && !conflict,

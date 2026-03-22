@@ -18,9 +18,12 @@ export type NotificationType =
   | "review_received"
   | "kyc_approved"
   | "kyc_rejected"
+  | "kyc_submitted"
   | "listing_approved"
   | "listing_rejected"
-  | "payout_transferred";
+  | "listing_submitted"
+  | "payout_transferred"
+  | "payout_failed";
 
 @Entity("notifications")
 export class Notification {
@@ -45,9 +48,12 @@ export class Notification {
       "review_received",
       "kyc_approved",
       "kyc_rejected",
+      "kyc_submitted",
       "listing_approved",
       "listing_rejected",
+      "listing_submitted",
       "payout_transferred",
+      "payout_failed",
     ],
   })
   type: NotificationType;

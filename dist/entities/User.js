@@ -131,6 +131,14 @@ __decorate([
     __metadata("design:type", Object)
 ], User.prototype, "lastSeen", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true, select: false }),
+    __metadata("design:type", String)
+], User.prototype, "passwordResetToken", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "passwordResetExpires", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => Property_1.Property, (property) => property.host),
     __metadata("design:type", Array)
 ], User.prototype, "properties", void 0);

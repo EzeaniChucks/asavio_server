@@ -4,6 +4,7 @@ import { Review } from "../entities/Review";
 import { Property } from "../entities/Property";
 import { Vehicle } from "../entities/Vehicle";
 import { AppError } from "../utils/AppError";
+import { notificationService } from "./notificationService";
 
 interface CreateReviewInput {
   propertyId?: string;
@@ -48,6 +49,31 @@ class ReviewService {
 
     if (propertyId) await this.updatePropertyRating(propertyId);
     if (vehicleId) await this.updateVehicleRating(vehicleId);
+
+    // Notify host of new review
+    if (propertyId) {
+      const property = await AppDataSource.getRepository(Property).findOne({ where: { id: propertyId } });
+      if (property?.hostId) {
+        notificationService.send({
+          userId: property.hostId,
+          type: "review_received",
+          title: "New review received",
+          body: `A guest left a ${rating}-star review on "${property.title}".`,
+          data: { url: `/properties/${propertyId}`, urlLabel: "View review" },
+        }).catch(console.error);
+      }
+    } else if (vehicleId) {
+      const vehicle = await AppDataSource.getRepository(Vehicle).findOne({ where: { id: vehicleId } });
+      if (vehicle?.hostId) {
+        notificationService.send({
+          userId: vehicle.hostId,
+          type: "review_received",
+          title: "New review received",
+          body: `A guest left a ${rating}-star review on your ${vehicle.make} ${vehicle.model}.`,
+          data: { url: `/vehicles/${vehicleId}`, urlLabel: "View review" },
+        }).catch(console.error);
+      }
+    }
 
     return saved;
   }

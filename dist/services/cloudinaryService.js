@@ -8,19 +8,14 @@ const AppError_1 = require("../utils/AppError");
 cloudinary_1.v2.config(cloudinary_2.config);
 class CloudinaryService {
     async uploadImage(file, folder) {
-        try {
-            const result = await cloudinary_1.v2.uploader.upload(file.path, {
-                folder: `asavio/${folder}`,
-                use_filename: true,
-            });
-            return {
-                publicId: result.public_id,
-                url: result.secure_url,
-            };
-        }
-        catch (error) {
-            throw new AppError_1.AppError("Error uploading image to Cloudinary", 500);
-        }
+        return new Promise((resolve, reject) => {
+            cloudinary_1.v2.uploader.upload_stream({ folder: `asavio/${folder}`, use_filename: true }, (error, result) => {
+                if (error || !result) {
+                    return reject(new AppError_1.AppError("Error uploading image to Cloudinary", 500));
+                }
+                resolve({ publicId: result.public_id, url: result.secure_url });
+            }).end(file.buffer);
+        });
     }
     async uploadMultipleImages(files, folder) {
         const uploadPromises = files.map((file) => this.uploadImage(file, folder));

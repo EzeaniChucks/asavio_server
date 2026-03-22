@@ -15,6 +15,7 @@ const notificationService_1 = require("./services/notificationService");
 const hostTierService_1 = require("./services/hostTierService");
 const presence_1 = require("./state/presence");
 Object.defineProperty(exports, "onlineUsers", { enumerable: true, get: function () { return presence_1.onlineUsers; } });
+const ioInstance_1 = require("./state/ioInstance");
 function initSocket(httpServer) {
     const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
         .split(",")
@@ -30,6 +31,7 @@ function initSocket(httpServer) {
             credentials: true,
         },
     });
+    (0, ioInstance_1.setIo)(io);
     // ── JWT auth middleware ──────────────────────────────────────────────────────
     io.use(async (socket, next) => {
         try {

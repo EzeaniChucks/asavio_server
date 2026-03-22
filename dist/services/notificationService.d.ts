@@ -14,6 +14,12 @@ export declare const notificationService: {
     getForUser(userId: string, unreadOnly?: boolean): Promise<Notification[]>;
     markRead(id: string, userId: string): Promise<void>;
     markAllRead(userId: string): Promise<void>;
+    sendToAllAdmins(opts: {
+        type: NotificationType;
+        title: string;
+        body: string;
+        data?: Record<string, string>;
+    }): Promise<void>;
     getUnreadCount(userId: string): Promise<number>;
 };
 //# sourceMappingURL=notificationService.d.ts.map

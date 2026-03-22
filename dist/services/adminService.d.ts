@@ -46,6 +46,8 @@ declare class AdminService {
             hostTier: "new_host" | "trusted_host" | "top_host";
             responseRate: number;
             lastSeen: Date | null;
+            passwordResetToken: string;
+            passwordResetExpires: Date | null;
             properties: Property[];
             bookings: Booking[];
             reviews: Review[];
@@ -85,6 +87,8 @@ declare class AdminService {
         hostTier: "new_host" | "trusted_host" | "top_host";
         responseRate: number;
         lastSeen: Date | null;
+        passwordResetToken: string;
+        passwordResetExpires: Date | null;
         properties: Property[];
         bookings: Booking[];
         reviews: Review[];
@@ -118,6 +122,8 @@ declare class AdminService {
             hostTier: "new_host" | "trusted_host" | "top_host";
             responseRate: number;
             lastSeen: Date | null;
+            passwordResetToken: string;
+            passwordResetExpires: Date | null;
             properties: Property[];
             bookings: Booking[];
             reviews: Review[];

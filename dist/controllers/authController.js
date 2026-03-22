@@ -35,5 +35,27 @@ exports.authController = {
             data: { user },
         });
     }),
+    forgotPassword: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        await authService.forgotPassword(req.body.email);
+        res.status(200).json({
+            status: "success",
+            message: "If that email is registered, a reset link has been sent.",
+        });
+    }),
+    resetPassword: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        await authService.resetPassword(req.params.token, req.body.password);
+        res.status(200).json({
+            status: "success",
+            message: "Password updated successfully. You can now log in.",
+        });
+    }),
+    changePassword: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        await authService.changePassword(req.user.id, req.body.currentPassword, req.body.newPassword);
+        res.status(200).json({ status: "success", message: "Password changed." });
+    }),
+    changeEmail: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const user = await authService.changeEmail(req.user.id, req.body.password, req.body.newEmail);
+        res.status(200).json({ status: "success", data: { user } });
+    }),
 };
 //# sourceMappingURL=authController.js.map

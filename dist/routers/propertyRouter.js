@@ -24,7 +24,7 @@ router.patch("/:id/blocked-dates", auth_1.protect, (0, auth_1.restrictTo)("host"
 router
     .route("/:id")
     .get(propertyController_1.propertyController.getProperty)
-    .patch(auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), (0, validation_1.validate)(propertyValidation_1.propertyValidation.update), propertyController_1.propertyController.updateProperty)
+    .patch(auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), upload_1.upload.array("images", 10), (0, validation_1.validate)(propertyValidation_1.propertyValidation.update), propertyController_1.propertyController.updateProperty)
     .delete(auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), propertyController_1.propertyController.deleteProperty);
 exports.default = router;
 //# sourceMappingURL=propertyRouter.js.map

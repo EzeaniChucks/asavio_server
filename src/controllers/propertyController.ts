@@ -1,9 +1,9 @@
 // src/controllers/propertyController.ts
-import fs from "fs";
 import { Request, Response } from "express";
 import { PropertyService } from "../services/propertyService";
 import { CloudinaryService } from "../services/cloudinaryService";
 import { emailService } from "../services/emailService";
+import { notificationService } from "../services/notificationService";
 import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
 import { catchAsync } from "../utils/catchAsync";
@@ -14,20 +14,10 @@ const cloudinaryService = new CloudinaryService();
 export const propertyController = {
   createProperty: catchAsync(async (req: Request, res: Response) => {
     const files = req.files as Express.Multer.File[];
-    let uploadedImages = [];
+    let uploadedImages: { url: string; publicId: string }[] = [];
 
-    try {
-      if (files && files.length > 0) {
-        uploadedImages = await cloudinaryService.uploadMultipleImages(
-          files,
-          "properties"
-        );
-      }
-    } finally {
-      // Clean up temp files regardless of Cloudinary success/failure
-      for (const file of files ?? []) {
-        if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
-      }
+    if (files && files.length > 0) {
+      uploadedImages = await cloudinaryService.uploadMultipleImages(files, "properties");
     }
 
     const property = await propertyService.createProperty(
@@ -35,6 +25,14 @@ export const propertyController = {
       req.user.id,
       uploadedImages
     );
+
+    // In-app notification to all admins
+    notificationService.sendToAllAdmins({
+      type: "listing_submitted",
+      title: "New listing pending review",
+      body: `${req.user.firstName ?? "A host"} has submitted "${property.title}" for approval.`,
+      data: { url: `/dashboard/admin`, urlLabel: "Review listing" },
+    }).catch(console.error);
 
     // Notify all admins of the new pending listing (best-effort)
     AppDataSource.getRepository(User)
@@ -105,16 +103,21 @@ export const propertyController = {
   }),
 
   updateProperty: catchAsync(async (req: Request, res: Response) => {
+    const files = (req.files as Express.Multer.File[]) ?? [];
+    let removeImagePublicIds: string[] = [];
+    try {
+      const raw = req.body.removeImagePublicIds;
+      if (raw) removeImagePublicIds = Array.isArray(raw) ? raw : [raw];
+    } catch { /* ignore */ }
+
     const property = await propertyService.updateProperty(
       req.params.id as string,
       req.body,
-      req.user.id
+      req.user.id,
+      removeImagePublicIds,
+      files.length ? files : undefined,
     );
-
-    res.status(200).json({
-      status: "success",
-      data: { property },
-    });
+    res.status(200).json({ status: "success", data: { property } });
   }),
 
   deleteProperty: catchAsync(async (req: Request, res: Response) => {

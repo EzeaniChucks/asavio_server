@@ -4,6 +4,7 @@ import { Notification, NotificationType } from "../entities/Notification";
 import { User } from "../entities/User";
 import { emailService } from "./emailService";
 import { onlineUsers } from "../state/presence";
+import { getIo } from "../state/ioInstance";
 
 const notifRepo = () => AppDataSource.getRepository(Notification);
 const userRepo = () => AppDataSource.getRepository(User);
@@ -14,7 +15,10 @@ const ALWAYS_EMAIL = new Set<NotificationType>([
   "booking_cancelled",
   "kyc_approved",
   "kyc_rejected",
+  "kyc_submitted",
+  "listing_submitted",
   "payout_transferred",
+  "payout_failed",
 ]);
 
 export const notificationService = {
@@ -27,7 +31,8 @@ export const notificationService = {
     data?: Record<string, string>;
     io?: any;
   }): Promise<Notification> {
-    const { userId, type, title, body, data, io } = opts;
+    const { userId, type, title, body, data } = opts;
+    const io = opts.io ?? getIo();
 
     const notif = notifRepo().create({ userId, type, title, body, data: data ?? null });
     const saved = await notifRepo().save(notif);
@@ -67,14 +72,15 @@ export const notificationService = {
       const isOnline = (onlineUsers.get(user.id)?.size ?? 0) > 0;
       if (isOnline) return;
     }
-    await emailService.sendNotificationEmail({
+    // Best-effort — never block notification delivery if email fails
+    emailService.sendNotificationEmail({
       to: user.email,
       firstName: user.firstName,
       title,
       body,
       ctaUrl: data?.url,
       ctaLabel: data?.urlLabel,
-    });
+    }).catch(console.error);
   },
 
   async getForUser(userId: string, unreadOnly = false): Promise<Notification[]> {
@@ -99,6 +105,20 @@ export const notificationService = {
       .set({ isRead: true })
       .where("userId = :userId AND isRead = false", { userId })
       .execute();
+  },
+
+  async sendToAllAdmins(opts: {
+    type: NotificationType;
+    title: string;
+    body: string;
+    data?: Record<string, string>;
+  }): Promise<void> {
+    const admins = await userRepo().find({ where: { role: "admin" } });
+    await Promise.all(
+      admins.map((admin) =>
+        notificationService.send({ userId: admin.id, ...opts })
+      )
+    );
   },
 
   async getUnreadCount(userId: string): Promise<number> {

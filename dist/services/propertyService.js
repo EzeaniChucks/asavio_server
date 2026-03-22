@@ -8,6 +8,8 @@ const Image_1 = require("../entities/Image");
 const Booking_1 = require("../entities/Booking");
 const AppError_1 = require("../utils/AppError");
 const typeorm_1 = require("typeorm");
+const cloudinaryService_1 = require("./cloudinaryService");
+const cloudinaryService = new cloudinaryService_1.CloudinaryService();
 class PropertyService {
     constructor() {
         this.propertyRepository = database_1.AppDataSource.getRepository(Property_1.Property);
@@ -16,6 +18,7 @@ class PropertyService {
     async createProperty(propertyData, hostId, images) {
         const property = this.propertyRepository.create({
             ...propertyData,
+            propertyType: propertyData.propertyType?.toLowerCase(),
             hostId,
             status: "pending",
             isAvailable: false, // stays hidden until approved
@@ -218,18 +221,47 @@ class PropertyService {
             .getRawMany();
         return rows.map((r) => r.type);
     }
-    async updateProperty(id, updateData, hostId) {
+    async updateProperty(id, updateData, hostId, removeImagePublicIds, files) {
         const property = await this.getPropertyById(id);
         if (property.hostId !== hostId) {
             throw new AppError_1.AppError("You can only update your own properties", 403);
         }
-        await this.propertyRepository.update(id, updateData);
+        // Delete specific images from Cloudinary + DB
+        if (removeImagePublicIds?.length) {
+            const toRemove = (property.images ?? []).filter((img) => removeImagePublicIds.includes(img.publicId));
+            for (const img of toRemove) {
+                await cloudinaryService.deleteImage(img.publicId).catch(() => null);
+                await this.imageRepository.delete(img.id);
+            }
+        }
+        // Upload new images
+        if (files?.length) {
+            const uploaded = await cloudinaryService.uploadMultipleImages(files, "properties");
+            const newImages = uploaded.map((img) => ({
+                url: img.url,
+                publicId: img.publicId,
+                propertyId: id,
+            }));
+            await this.imageRepository.save(newImages);
+        }
+        const { removeImagePublicIds: _removed, ...textFields } = updateData;
+        if (textFields.propertyType)
+            textFields.propertyType = textFields.propertyType.toLowerCase();
+        if (Object.keys(textFields).length) {
+            await this.propertyRepository.update(id, textFields);
+        }
         return this.getPropertyById(id);
     }
     async deleteProperty(id, hostId) {
         const property = await this.getPropertyById(id);
         if (property.hostId !== hostId) {
             throw new AppError_1.AppError("You can only delete your own properties", 403);
+        }
+        // Remove images from Cloudinary before deleting the DB record
+        for (const image of property.images ?? []) {
+            if (image.publicId) {
+                await cloudinaryService.deleteImage(image.publicId).catch(() => null);
+            }
         }
         await this.propertyRepository.delete(id);
     }

@@ -41,7 +41,8 @@ const corsOptions: cors.CorsOptions = {
       .map((o) => o.trim().replace(/\/$/, ""));
     const normalised = origin?.replace(/\/$/, "");
 
-    console.log("normalised", normalised)
+    // console.log("normalised", normalised)
+    
     if (!normalised || allowed.includes(normalised)) return callback(null, true);
     console.warn(`[CORS] blocked origin: ${origin}`);
     callback(null, false); // return false (not an Error) so the response is a clean 200 without CORS headers

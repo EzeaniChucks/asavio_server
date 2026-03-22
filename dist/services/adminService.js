@@ -10,6 +10,7 @@ const Booking_1 = require("../entities/Booking");
 const Review_1 = require("../entities/Review");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
+const notificationService_1 = require("./notificationService");
 class AdminService {
     // ── Stats ────────────────────────────────────────────────────
     async getStats() {
@@ -142,6 +143,18 @@ class AdminService {
                 propertyId: id,
             })
                 .catch(console.error);
+        }
+        // In-app notification to host when listing is approved or rejected
+        if (newStatus && (newStatus === "approved" || newStatus === "rejected") && newStatus !== prevStatus && property.host) {
+            notificationService_1.notificationService.send({
+                userId: property.host.id,
+                type: newStatus === "approved" ? "listing_approved" : "listing_rejected",
+                title: newStatus === "approved" ? "Listing approved ✓" : "Listing not approved",
+                body: newStatus === "approved"
+                    ? `Your listing "${property.title}" has been approved and is now live.`
+                    : `Your listing "${property.title}" was not approved${updates.rejectionReason ? `: ${updates.rejectionReason}` : "."}`,
+                data: { url: `/properties/${property.id}`, urlLabel: "View listing" },
+            }).catch(console.error);
         }
         return saved;
     }
