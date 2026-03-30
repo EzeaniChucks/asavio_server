@@ -12,8 +12,10 @@ exports.savedItemController = {
     }),
     getSavedProperties: (0, catchAsync_1.catchAsync)(async (req, res) => {
         const userId = req.user.id;
-        const items = await savedItemService_1.savedItemService.getSavedProperties(userId);
-        res.json({ status: "success", data: { items } });
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.max(1, parseInt(req.query.limit) || 20);
+        const result = await savedItemService_1.savedItemService.getSavedProperties(userId, page, limit);
+        res.json({ status: "success", data: result });
     }),
     getSavedIds: (0, catchAsync_1.catchAsync)(async (req, res) => {
         const userId = req.user.id;

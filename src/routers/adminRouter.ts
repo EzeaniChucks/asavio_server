@@ -1,49 +1,57 @@
 // src/routers/adminRouter.ts
 import { Router } from "express";
 import { adminController } from "../controllers/adminController";
-import { protect, restrictTo } from "../middleware/auth";
+import { protect, restrictTo, hasPermission } from "../middleware/auth";
+import { ADMIN_PERMISSIONS as P } from "../constants/permissions";
+import { validate } from "../middleware/validation";
+import { adminValidation } from "../validations/adminValidation";
 
 const router = Router();
 
 // All admin routes require authentication + admin role
 router.use(protect, restrictTo("admin"));
 
-// Overview stats
+// Overview stats (all admins can see the dashboard)
 router.get("/stats", adminController.getStats);
 
 // Users
-router.get("/users", adminController.getUsers);
-router.patch("/users/:id", adminController.updateUser);
-router.delete("/users/:id", adminController.deleteUser);
+router.get("/users",             hasPermission(P.MANAGE_USERS), adminController.getUsers);
+router.patch("/users/:id",       hasPermission(P.MANAGE_USERS), adminController.updateUser);
+router.delete("/users/:id",      hasPermission(P.MANAGE_USERS), adminController.deleteUser);
+router.get("/users/:id/properties", hasPermission(P.MANAGE_USERS), adminController.getHostProperties);
+router.patch("/users/:id/commission", hasPermission(P.MANAGE_PAYOUTS), validate(adminValidation.setHostCommission), adminController.setHostCommissionRate);
 
 // Properties
-router.get("/properties", adminController.getProperties);
-router.patch("/properties/:id", adminController.updateProperty);
-router.delete("/properties/:id", adminController.deleteProperty);
+router.get("/properties",        hasPermission(P.MANAGE_PROPERTIES), adminController.getProperties);
+router.patch("/properties/:id",  hasPermission(P.MANAGE_PROPERTIES), adminController.updateProperty);
+router.delete("/properties/:id", hasPermission(P.MANAGE_PROPERTIES), adminController.deleteProperty);
 
 // Vehicles
-router.get("/vehicles", adminController.getVehicles);
-router.delete("/vehicles/:id", adminController.deleteVehicle);
+router.get("/vehicles",          hasPermission(P.MANAGE_VEHICLES), adminController.getVehicles);
+router.delete("/vehicles/:id",   hasPermission(P.MANAGE_VEHICLES), adminController.deleteVehicle);
 
 // Bookings
-router.get("/bookings", adminController.getBookings);
-router.patch("/bookings/:id/status", adminController.updateBookingStatus);
+router.get("/bookings",                  hasPermission(P.MANAGE_BOOKINGS), adminController.getBookings);
+router.patch("/bookings/:id/status",     hasPermission(P.MANAGE_BOOKINGS), adminController.updateBookingStatus);
 
 // Reviews
-router.delete("/reviews/:id", adminController.deleteReview);
+router.delete("/reviews/:id",    hasPermission(P.MANAGE_REVIEWS), adminController.deleteReview);
 
 // Email broadcast
-router.post("/email/broadcast", adminController.sendBroadcast);
-router.get("/email/audience-count", adminController.previewAudienceCount);
+router.post("/email/broadcast",        hasPermission(P.MANAGE_MARKETING), adminController.sendBroadcast);
+router.get("/email/audience-count",    hasPermission(P.MANAGE_MARKETING), adminController.previewAudienceCount);
 
-// Platform settings (global commission rate)
-router.get("/settings", adminController.getSettings);
-router.patch("/settings", adminController.updateSettings);
+// Platform settings
+router.get("/settings",          hasPermission(P.MANAGE_SETTINGS), adminController.getSettings);
+router.patch("/settings",        hasPermission(P.MANAGE_SETTINGS), validate(adminValidation.updateSettings), adminController.updateSettings);
 
-// Host detail (properties listing)
-router.get("/users/:id/properties", adminController.getHostProperties);
+// IAM — sub-admin management (super-admin or manage_admins permission required)
+router.get("/iam/admins",                        hasPermission(P.MANAGE_ADMINS), adminController.listAdmins);
+router.post("/iam/admins",                       hasPermission(P.MANAGE_ADMINS), validate(adminValidation.createAdmin), adminController.createAdmin);
+router.patch("/iam/admins/:id/permissions",      hasPermission(P.MANAGE_ADMINS), validate(adminValidation.updateAdminPermissions), adminController.updateAdminPermissions);
+router.delete("/iam/admins/:id",                 hasPermission(P.MANAGE_ADMINS), adminController.revokeAdmin);
 
-// Per-host commission rate override
-router.patch("/users/:id/commission", adminController.setHostCommissionRate);
+// Audit logs
+router.get("/audit-logs",        hasPermission(P.VIEW_AUDIT_LOGS), adminController.getAuditLogs);
 
 export default router;

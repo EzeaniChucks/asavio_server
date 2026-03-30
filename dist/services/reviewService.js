@@ -6,6 +6,7 @@ const database_1 = require("../config/database");
 const Review_1 = require("../entities/Review");
 const Property_1 = require("../entities/Property");
 const Vehicle_1 = require("../entities/Vehicle");
+const Booking_1 = require("../entities/Booking");
 const AppError_1 = require("../utils/AppError");
 const notificationService_1 = require("./notificationService");
 class ReviewService {
@@ -24,6 +25,13 @@ class ReviewService {
             const property = await database_1.AppDataSource.getRepository(Property_1.Property).findOne({ where: { id: propertyId } });
             if (!property)
                 throw new AppError_1.AppError("Property not found", 404);
+            // Must have a completed booking for this property
+            const completedBooking = await database_1.AppDataSource.getRepository(Booking_1.Booking).findOne({
+                where: { userId, propertyId, status: "completed" },
+            });
+            if (!completedBooking) {
+                throw new AppError_1.AppError("You can only review a property after completing a stay", 403);
+            }
             const existing = await this.repo.findOne({ where: { propertyId, userId } });
             if (existing)
                 throw new AppError_1.AppError("You have already reviewed this property", 400);
@@ -32,6 +40,13 @@ class ReviewService {
             const vehicle = await database_1.AppDataSource.getRepository(Vehicle_1.Vehicle).findOne({ where: { id: vehicleId } });
             if (!vehicle)
                 throw new AppError_1.AppError("Vehicle not found", 404);
+            // Must have a completed booking for this vehicle
+            const completedBooking = await database_1.AppDataSource.getRepository(Booking_1.Booking).findOne({
+                where: { userId, vehicleId, status: "completed" },
+            });
+            if (!completedBooking) {
+                throw new AppError_1.AppError("You can only review a vehicle after completing a rental", 403);
+            }
             const existing = await this.repo.findOne({ where: { vehicleId, userId } });
             if (existing)
                 throw new AppError_1.AppError("You have already reviewed this vehicle", 400);

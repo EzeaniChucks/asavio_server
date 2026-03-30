@@ -41,6 +41,11 @@ export declare class AuthService {
             lastSeen: Date | null;
             passwordResetToken: string;
             passwordResetExpires: Date | null;
+            isEmailVerified: boolean;
+            emailVerificationToken: string;
+            emailVerificationExpires: Date | null;
+            isSuperAdmin: boolean;
+            adminPermissions: string[] | null;
             properties: import("../entities/Property").Property[];
             bookings: import("../entities/Booking").Booking[];
             reviews: import("../entities/Review").Review[];
@@ -77,6 +82,11 @@ export declare class AuthService {
             lastSeen: Date | null;
             passwordResetToken: string;
             passwordResetExpires: Date | null;
+            isEmailVerified: boolean;
+            emailVerificationToken: string;
+            emailVerificationExpires: Date | null;
+            isSuperAdmin: boolean;
+            adminPermissions: string[] | null;
             properties: import("../entities/Property").Property[];
             bookings: import("../entities/Booking").Booking[];
             reviews: import("../entities/Review").Review[];
@@ -112,6 +122,11 @@ export declare class AuthService {
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;
+        isEmailVerified: boolean;
+        emailVerificationToken: string;
+        emailVerificationExpires: Date | null;
+        isSuperAdmin: boolean;
+        adminPermissions: string[] | null;
         properties: import("../entities/Property").Property[];
         bookings: import("../entities/Booking").Booking[];
         reviews: import("../entities/Review").Review[];
@@ -145,6 +160,11 @@ export declare class AuthService {
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;
+        isEmailVerified: boolean;
+        emailVerificationToken: string;
+        emailVerificationExpires: Date | null;
+        isSuperAdmin: boolean;
+        adminPermissions: string[] | null;
         properties: import("../entities/Property").Property[];
         bookings: import("../entities/Booking").Booking[];
         reviews: import("../entities/Review").Review[];
@@ -154,6 +174,9 @@ export declare class AuthService {
     forgotPassword(email: string): Promise<void>;
     resetPassword(token: string, newPassword: string): Promise<void>;
     changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
+    logout(token: string, userId: string): Promise<void>;
+    sendEmailVerification(userId: string): Promise<void>;
+    verifyEmail(token: string): Promise<void>;
     changeEmail(userId: string, password: string, newEmail: string): Promise<{
         id: string;
         email: string;
@@ -181,6 +204,11 @@ export declare class AuthService {
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;
+        isEmailVerified: boolean;
+        emailVerificationToken: string;
+        emailVerificationExpires: Date | null;
+        isSuperAdmin: boolean;
+        adminPermissions: string[] | null;
         properties: import("../entities/Property").Property[];
         bookings: import("../entities/Booking").Booking[];
         reviews: import("../entities/Review").Review[];

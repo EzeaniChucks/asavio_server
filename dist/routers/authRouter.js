@@ -14,8 +14,13 @@ router.post("/forgot-password", (0, validation_1.validate)(authValidation_1.auth
 router.post("/reset-password/:token", (0, validation_1.validate)(authValidation_1.authValidation.resetPassword), authController_1.authController.resetPassword);
 // Protected routes
 router.get("/me", auth_1.protect, authController_1.authController.getMe);
-router.patch("/me", auth_1.protect, authController_1.authController.updateMe);
+router.patch("/me", auth_1.protect, (0, validation_1.validate)(authValidation_1.authValidation.updateProfile), authController_1.authController.updateMe);
 router.patch("/change-password", auth_1.protect, (0, validation_1.validate)(authValidation_1.authValidation.changePassword), authController_1.authController.changePassword);
 router.patch("/change-email", auth_1.protect, (0, validation_1.validate)(authValidation_1.authValidation.changeEmail), authController_1.authController.changeEmail);
+// Logout (blacklists the current token)
+router.post("/logout", auth_1.protect, authController_1.authController.logout);
+// Email verification
+router.get("/verify-email/:token", authController_1.authController.verifyEmail);
+router.post("/resend-verification", auth_1.protect, authController_1.authController.resendVerificationEmail);
 exports.default = router;
 //# sourceMappingURL=authRouter.js.map

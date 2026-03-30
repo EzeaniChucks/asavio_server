@@ -48,6 +48,11 @@ declare class AdminService {
             lastSeen: Date | null;
             passwordResetToken: string;
             passwordResetExpires: Date | null;
+            isEmailVerified: boolean;
+            emailVerificationToken: string;
+            emailVerificationExpires: Date | null;
+            isSuperAdmin: boolean;
+            adminPermissions: string[] | null;
             properties: Property[];
             bookings: Booking[];
             reviews: Review[];
@@ -89,6 +94,11 @@ declare class AdminService {
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;
+        isEmailVerified: boolean;
+        emailVerificationToken: string;
+        emailVerificationExpires: Date | null;
+        isSuperAdmin: boolean;
+        adminPermissions: string[] | null;
         properties: Property[];
         bookings: Booking[];
         reviews: Review[];
@@ -124,6 +134,11 @@ declare class AdminService {
             lastSeen: Date | null;
             passwordResetToken: string;
             passwordResetExpires: Date | null;
+            isEmailVerified: boolean;
+            emailVerificationToken: string;
+            emailVerificationExpires: Date | null;
+            isSuperAdmin: boolean;
+            adminPermissions: string[] | null;
             properties: Property[];
             bookings: Booking[];
             reviews: Review[];

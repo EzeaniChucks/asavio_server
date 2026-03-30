@@ -8,5 +8,8 @@ export declare const authController: {
     resetPassword: (req: Request, res: Response, next: import("express").NextFunction) => void;
     changePassword: (req: Request, res: Response, next: import("express").NextFunction) => void;
     changeEmail: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    logout: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    verifyEmail: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    resendVerificationEmail: (req: Request, res: Response, next: import("express").NextFunction) => void;
 };
 //# sourceMappingURL=authController.d.ts.map

@@ -139,6 +139,33 @@ __decorate([
     __metadata("design:type", Object)
 ], User.prototype, "passwordResetExpires", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isEmailVerified", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true, select: false }),
+    __metadata("design:type", String)
+], User.prototype, "emailVerificationToken", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "emailVerificationExpires", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isSuperAdmin", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: "text",
+        nullable: true,
+        transformer: {
+            to: (v) => (v === null ? null : JSON.stringify(v)),
+            from: (v) => (v === null ? null : JSON.parse(v)),
+        },
+    }),
+    __metadata("design:type", Object)
+], User.prototype, "adminPermissions", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => Property_1.Property, (property) => property.host),
     __metadata("design:type", Array)
 ], User.prototype, "properties", void 0);

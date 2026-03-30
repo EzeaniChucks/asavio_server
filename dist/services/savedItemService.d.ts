@@ -5,9 +5,14 @@ declare class SavedItemService {
     toggle(userId: string, propertyId?: string, vehicleId?: string): Promise<{
         saved: boolean;
     }>;
-    /** Returns all saved properties for a user (with images). */
-    getSavedProperties(userId: string): Promise<SavedItem[]>;
-    /** Returns the set of saved propertyIds for a user — for bulk "is saved?" checks. */
+    /** Returns a paginated list of saved properties for a user (with images). */
+    getSavedProperties(userId: string, page?: number, limit?: number): Promise<{
+        items: SavedItem[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
+    /** Returns the set of saved propertyIds and vehicleIds for a user — for bulk "is saved?" checks. */
     getSavedIds(userId: string): Promise<{
         propertyIds: string[];
         vehicleIds: string[];

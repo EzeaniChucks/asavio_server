@@ -118,6 +118,38 @@ import {
     @Column({ type: "timestamptz", nullable: true })
     passwordResetExpires: Date | null;
 
+    // ── Email verification ───────────────────────────────────────────────────
+
+    @Column({ default: false })
+    isEmailVerified: boolean;
+
+    @Column({ nullable: true, select: false })
+    emailVerificationToken: string;
+
+    @Column({ type: "timestamptz", nullable: true })
+    emailVerificationExpires: Date | null;
+
+    // ── Admin IAM ────────────────────────────────────────────────────────────
+
+    /** true = platform owner; bypasses all permission checks */
+    @Column({ default: false })
+    isSuperAdmin: boolean;
+
+    /**
+     * Granted permissions for sub-admins.
+     * null  → super-admin (all permissions).
+     * []    → admin with no permissions yet.
+     */
+    @Column({
+      type: "text",
+      nullable: true,
+      transformer: {
+        to: (v: string[] | null) => (v === null ? null : JSON.stringify(v)),
+        from: (v: string | null) => (v === null ? null : JSON.parse(v)),
+      },
+    })
+    adminPermissions: string[] | null;
+
     @OneToMany(() => Property, (property) => property.host)
     properties: Property[];
   

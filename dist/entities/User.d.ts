@@ -36,6 +36,17 @@ export declare class User {
     lastSeen: Date | null;
     passwordResetToken: string;
     passwordResetExpires: Date | null;
+    isEmailVerified: boolean;
+    emailVerificationToken: string;
+    emailVerificationExpires: Date | null;
+    /** true = platform owner; bypasses all permission checks */
+    isSuperAdmin: boolean;
+    /**
+     * Granted permissions for sub-admins.
+     * null  → super-admin (all permissions).
+     * []    → admin with no permissions yet.
+     */
+    adminPermissions: string[] | null;
     properties: Property[];
     bookings: Booking[];
     reviews: Review[];

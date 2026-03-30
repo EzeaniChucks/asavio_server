@@ -69,4 +69,20 @@ export const authController = {
     const user = await authService.changeEmail(req.user.id, req.body.password, req.body.newEmail);
     res.status(200).json({ status: "success", data: { user } });
   }),
+
+  logout: catchAsync(async (req: Request, res: Response) => {
+    const token = req.headers.authorization!.split(" ")[1];
+    await authService.logout(token, req.user.id);
+    res.status(200).json({ status: "success", message: "Logged out successfully." });
+  }),
+
+  verifyEmail: catchAsync(async (req: Request, res: Response) => {
+    await authService.verifyEmail(req.params.token as string);
+    res.status(200).json({ status: "success", message: "Email verified successfully." });
+  }),
+
+  resendVerificationEmail: catchAsync(async (req: Request, res: Response) => {
+    await authService.sendEmailVerification(req.user.id);
+    res.status(200).json({ status: "success", message: "Verification email sent." });
+  }),
 };

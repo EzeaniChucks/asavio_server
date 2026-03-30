@@ -1,8 +1,3 @@
-export interface EmailPayload {
-    to: string;
-    subject: string;
-    html: string;
-}
 export declare const emailService: {
     sendWelcome(to: string, firstName: string): Promise<void>;
     sendBookingConfirmation(opts: {
@@ -42,11 +37,6 @@ export declare const emailService: {
         subject: string;
         message: string;
     }): Promise<void>;
-    /**
-     * Sends a rich HTML campaign email. The `htmlBody` is a full HTML snippet
-     * (headings, paragraphs, buttons) that gets wrapped in the Asavio brand template.
-     * Use {{firstName}} in htmlBody to personalise each recipient's copy.
-     */
     sendCampaign(opts: {
         to: string;
         firstName: string;

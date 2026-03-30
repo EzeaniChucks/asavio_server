@@ -80,5 +80,17 @@ exports.authValidation = {
             .isEmail()
             .withMessage("Please provide a valid email address"),
     ],
+    updateProfile: [
+        (0, express_validator_1.body)("firstName").optional().trim().isLength({ min: 1, max: 50 }).withMessage("First name must be 1–50 characters"),
+        (0, express_validator_1.body)("lastName").optional().trim().isLength({ min: 1, max: 50 }).withMessage("Last name must be 1–50 characters"),
+        (0, express_validator_1.body)("phone").optional().trim().isLength({ max: 20 }).withMessage("Phone must be at most 20 characters"),
+        // Block fields that should never be updated via this endpoint
+        (0, express_validator_1.body)("role").not().exists().withMessage("Role cannot be changed via this endpoint"),
+        (0, express_validator_1.body)("password").not().exists().withMessage("Use /change-password to update your password"),
+        (0, express_validator_1.body)("isVerified").not().exists().withMessage("Field not allowed"),
+        (0, express_validator_1.body)("isEmailVerified").not().exists().withMessage("Field not allowed"),
+        (0, express_validator_1.body)("isSuperAdmin").not().exists().withMessage("Field not allowed"),
+        (0, express_validator_1.body)("adminPermissions").not().exists().withMessage("Field not allowed"),
+    ],
 };
 //# sourceMappingURL=authValidation.js.map

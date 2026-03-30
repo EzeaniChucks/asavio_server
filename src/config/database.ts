@@ -11,6 +11,8 @@ import { Conversation } from "../entities/Conversation";
 import { Message } from "../entities/Message";
 import { Notification } from "../entities/Notification";
 import { SavedItem } from "../entities/SavedItem";
+import { RevokedToken } from "../entities/RevokedToken";
+import { AdminAuditLog } from "../entities/AdminAuditLog";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -28,6 +30,6 @@ export const AppDataSource = new DataSource({
   // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
   synchronize: false, // please leave this as false, even in production
   // logging: process.env.NODE_ENV === "development",
-  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification, SavedItem],
+  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification, SavedItem, RevokedToken, AdminAuditLog],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });

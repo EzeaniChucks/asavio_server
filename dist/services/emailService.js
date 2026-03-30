@@ -1,22 +1,31 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.emailService = void 0;
 // src/services/emailService.ts
-const mail_1 = __importDefault(require("@sendgrid/mail"));
-mail_1.default.setApiKey(process.env.SENDGRID_API_KEY || "");
-const FROM = process.env.SENDGRID_FROM_EMAIL || "noreply@asavio.com";
+const email_1 = require("./email");
 const APP_NAME = "Asavio";
-async function send(payload) {
-    if (!process.env.SENDGRID_API_KEY) {
-        console.warn("[Email] SENDGRID_API_KEY not set — skipping send:", payload.subject);
-        return;
-    }
-    await mail_1.default.send({ ...payload, from: FROM });
+/** Escape characters that are meaningful in HTML to prevent XSS. */
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
-// ── Templates ────────────────────────────────────────────────────
+// FRONTEND_URL may be comma-separated (multiple allowed origins). Always use the first one for links.
+const BASE_URL = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+// Reply-to addresses — replies from recipients land in a monitored inbox,
+// not the noreply sender. Override via env vars if needed.
+const REPLY = {
+    hello: process.env.REPLY_TO_HELLO || "hello@asavio.rent", // welcome, friendly
+    bookings: process.env.REPLY_TO_BOOKINGS || "bookings@asavio.rent", // booking-related
+    support: process.env.REPLY_TO_SUPPORT || "support@asavio.rent", // disputes, rejections
+};
+async function send(payload) {
+    await (0, email_1.getProvider)().send(payload);
+}
+// ── Brand template ───────────────────────────────────────────────────────────
 function wrap(body) {
     return `
     <!DOCTYPE html>
@@ -44,15 +53,17 @@ function wrap(body) {
     </html>
   `;
 }
+// ── Templates ────────────────────────────────────────────────────────────────
 exports.emailService = {
     async sendWelcome(to, firstName) {
         await send({
             to,
+            replyTo: REPLY.hello,
             subject: `Welcome to ${APP_NAME}, ${firstName}!`,
             html: wrap(`
         <h2 style="margin-top:0">Welcome, ${firstName}! 🎉</h2>
         <p>Your account has been created. Start browsing our curated shortlets and luxury vehicles.</p>
-        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/properties" class="btn">Browse properties</a>
+        <a href="${BASE_URL}/properties" class="btn">Browse properties</a>
       `),
         });
     },
@@ -60,6 +71,7 @@ exports.emailService = {
         const { to, firstName, propertyTitle, checkIn, checkOut, nights, totalPrice, bookingId } = opts;
         await send({
             to,
+            replyTo: REPLY.bookings,
             subject: `Booking confirmed – ${propertyTitle}`,
             html: wrap(`
         <h2 style="margin-top:0">Your booking is confirmed! ✅</h2>
@@ -71,7 +83,7 @@ exports.emailService = {
         <p><strong>Duration:</strong> ${nights} night${nights !== 1 ? "s" : ""}</p>
         <p><strong>Total:</strong> ₦${Number(totalPrice).toLocaleString("en-NG")}</p>
         <hr class="divider" />
-        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/bookings/${bookingId}" class="btn">View booking</a>
+        <a href="${BASE_URL}/bookings/${bookingId}" class="btn">View booking</a>
       `),
         });
     },
@@ -84,11 +96,12 @@ exports.emailService = {
         };
         await send({
             to,
+            replyTo: status === "cancelled" ? REPLY.support : REPLY.bookings,
             subject: `Booking ${status} – ${propertyTitle}`,
             html: wrap(`
         <h2 style="margin-top:0">Booking update</h2>
         <p>Hi ${firstName}, your booking for <strong>${propertyTitle}</strong> has been <strong>${statusLabel[status] ?? status}</strong>.</p>
-        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/bookings/${bookingId}" class="btn">View booking</a>
+        <a href="${BASE_URL}/bookings/${bookingId}" class="btn">View booking</a>
       `),
         });
     },
@@ -97,6 +110,7 @@ exports.emailService = {
         const commissionPct = (commissionRate * 100).toFixed(0);
         await send({
             to,
+            replyTo: REPLY.bookings,
             subject: `New booking request – ${propertyTitle}`,
             html: wrap(`
         <h2 style="margin-top:0">New booking request 📩</h2>
@@ -114,34 +128,28 @@ exports.emailService = {
         <p style="font-size:16px;font-weight:700;color:#059669"><strong>Your payout:</strong> ₦${Number(hostPayout).toLocaleString("en-NG")}</p>
         <p style="font-size:12px;color:#9CA3AF">Payout is processed after the guest's check-in date. Payment is pending until the booking is confirmed.</p>
         <hr class="divider" />
-        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host" class="btn">View in dashboard</a>
+        <a href="${BASE_URL}/dashboard/host" class="btn">View in dashboard</a>
       `),
         });
     },
     async sendAdminBroadcast(opts) {
+        // Plain-text message — escape then convert newlines to <br>
+        const safeMessage = escapeHtml(opts.message).replace(/\n/g, "<br />");
         await send({
             to: opts.to,
             subject: opts.subject,
-            html: wrap(`
-        <p>${opts.message.replace(/\n/g, "<br />")}</p>
-      `),
+            html: wrap(`<p>${safeMessage}</p>`),
         });
     },
-    /**
-     * Sends a rich HTML campaign email. The `htmlBody` is a full HTML snippet
-     * (headings, paragraphs, buttons) that gets wrapped in the Asavio brand template.
-     * Use {{firstName}} in htmlBody to personalise each recipient's copy.
-     */
     async sendCampaign(opts) {
-        const personalised = opts.htmlBody.replace(/\{\{firstName\}\}/g, opts.firstName);
-        await send({
-            to: opts.to,
-            subject: opts.subject,
-            html: wrap(personalised),
-        });
+        // htmlBody is trusted admin-authored HTML. Only escape the recipient's
+        // firstName before substituting it so a crafted name can't inject markup.
+        const safeName = escapeHtml(opts.firstName);
+        const personalised = opts.htmlBody.replace(/\{\{firstName\}\}/g, safeName);
+        await send({ to: opts.to, subject: opts.subject, html: wrap(personalised) });
     },
     async sendListingSubmitted(opts) {
-        const { to, propertyTitle, hostName, propertyId } = opts;
+        const { to, propertyTitle, hostName } = opts;
         await send({
             to,
             subject: `New listing pending review — ${propertyTitle}`,
@@ -151,7 +159,7 @@ exports.emailService = {
         <hr class="divider" />
         <p><strong>Listing:</strong> ${propertyTitle}</p>
         <hr class="divider" />
-        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/admin/properties?status=pending" class="btn">Review in admin dashboard</a>
+        <a href="${BASE_URL}/dashboard/admin/properties?status=pending" class="btn">Review in admin dashboard</a>
       `),
         });
     },
@@ -160,6 +168,7 @@ exports.emailService = {
         const approved = status === "approved";
         await send({
             to,
+            replyTo: approved ? REPLY.hello : REPLY.support,
             subject: approved
                 ? `Your listing is live — ${propertyTitle}`
                 : `Listing not approved — ${propertyTitle}`,
@@ -167,14 +176,14 @@ exports.emailService = {
                 ? `
             <h2 style="margin-top:0">Your listing is live! 🎉</h2>
             <p>Hi ${hostName}, great news — <strong>${propertyTitle}</strong> has been approved and is now visible to guests.</p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/properties/${propertyId}" class="btn">View your listing</a>
+            <a href="${BASE_URL}/properties/${propertyId}" class="btn">View your listing</a>
           `
                 : `
             <h2 style="margin-top:0">Listing not approved</h2>
             <p>Hi ${hostName}, unfortunately <strong>${propertyTitle}</strong> was not approved at this time.</p>
             ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
             <p>Please review the feedback, make the necessary updates, and resubmit your listing.</p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host" class="btn">Go to your dashboard</a>
+            <a href="${BASE_URL}/dashboard/host" class="btn">Go to your dashboard</a>
           `),
         });
     },
@@ -182,7 +191,7 @@ exports.emailService = {
         const { to, hostName, hostEmail, documentType, userId } = opts;
         await send({
             to,
-            subject: `🚨 KYC Verification Required — ${hostName}`,
+            subject: `KYC Verification Required — ${hostName}`,
             html: wrap(`
         <h2 style="margin-top:0;color:#DC2626">⚠️ KYC Submission — Action Required</h2>
         <p>A host has submitted identity documents and is awaiting your review.</p>
@@ -192,7 +201,7 @@ exports.emailService = {
         <p><strong>Document type:</strong> ${documentType}</p>
         <hr class="divider" />
         <p style="color:#DC2626;font-weight:600">This host's listings will remain hidden until you approve their KYC.</p>
-        <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/admin/kyc?userId=${userId}" class="btn" style="background:#DC2626">Review KYC →</a>
+        <a href="${BASE_URL}/dashboard/admin/kyc?userId=${userId}" class="btn" style="background:#DC2626">Review KYC →</a>
       `),
         });
     },
@@ -201,6 +210,7 @@ exports.emailService = {
         const approved = decision === "approved";
         await send({
             to,
+            replyTo: approved ? REPLY.hello : REPLY.support,
             subject: approved
                 ? "Identity verified — You're ready to host on Asavio!"
                 : "KYC verification unsuccessful",
@@ -208,14 +218,14 @@ exports.emailService = {
                 ? `
             <h2 style="margin-top:0">Identity verified ✅</h2>
             <p>Hi ${hostName}, your identity has been verified and your listings are now discoverable to guests on Asavio.</p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host" class="btn">Go to your dashboard</a>
+            <a href="${BASE_URL}/dashboard/host" class="btn">Go to your dashboard</a>
           `
                 : `
             <h2 style="margin-top:0">KYC not approved</h2>
             <p>Hi ${hostName}, unfortunately we were unable to verify your identity at this time.</p>
             ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
             <p>Please re-submit your documents with a valid, clearly legible government-issued ID.</p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard/host/kyc" class="btn">Re-submit documents</a>
+            <a href="${BASE_URL}/dashboard/host/kyc" class="btn">Re-submit documents</a>
           `),
         });
     },

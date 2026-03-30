@@ -18,5 +18,10 @@ export declare const adminController: {
     updateSettings: (req: Request, res: Response, next: NextFunction) => void;
     getHostProperties: (req: Request, res: Response, next: NextFunction) => void;
     setHostCommissionRate: (req: Request, res: Response, next: NextFunction) => void;
+    listAdmins: (req: Request, res: Response, next: NextFunction) => void;
+    createAdmin: (req: Request, res: Response, next: NextFunction) => void;
+    updateAdminPermissions: (req: Request, res: Response, next: NextFunction) => void;
+    revokeAdmin: (req: Request, res: Response, next: NextFunction) => void;
+    getAuditLogs: (req: Request, res: Response, next: NextFunction) => void;
 };
 //# sourceMappingURL=adminController.d.ts.map

@@ -100,7 +100,7 @@ class PaymentService {
                 propertyId: booking.propertyId,
                 propertyTitle: booking.property?.title,
             },
-            callback_url: `${process.env.FRONTEND_URL}/bookings/${booking.id}/payment-success`,
+            callback_url: `${(process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim()}/bookings/${booking.id}/payment-success`,
         });
         if (!response.status) {
             throw new AppError_1.AppError(`Payment initialization failed: ${response.message}`, 502);

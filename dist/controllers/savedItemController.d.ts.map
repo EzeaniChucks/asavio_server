@@ -1,1 +1,1 @@
-{"version":3,"file":"savedItemController.d.ts","sourceRoot":"","sources":["../../src/controllers/savedItemController.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAI5C,eAAO,MAAM,mBAAmB;;;;CAmB/B,CAAC"}
+{"version":3,"file":"savedItemController.d.ts","sourceRoot":"","sources":["../../src/controllers/savedItemController.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAI5C,eAAO,MAAM,mBAAmB;;;;CAqB/B,CAAC"}

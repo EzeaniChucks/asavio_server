@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
+import { RevokedToken } from "../entities/RevokedToken";
 import { AppError } from "../utils/AppError";
 import { emailService } from "./emailService";
 
@@ -56,8 +57,9 @@ export class AuthService {
     const savedUser = await this.userRepository.save(user);
     const token = signToken(savedUser.id);
 
-    // Fire welcome email (best-effort — don't fail registration if email fails)
+    // Fire welcome + verification emails (best-effort)
     emailService.sendWelcome(savedUser.email, savedUser.firstName).catch(console.error);
+    this.sendEmailVerification(savedUser.id).catch(console.error);
 
     // Strip password before returning
     const { password: _pw, ...userWithoutPassword } = savedUser;
@@ -167,6 +169,58 @@ export class AuthService {
     if (!isCorrect) throw new AppError("Current password is incorrect", 401);
 
     user.password = await bcrypt.hash(newPassword, 12);
+    await this.userRepository.save(user);
+  }
+
+  async logout(token: string, userId: string) {
+    const decoded = jwt.decode(token) as { exp?: number } | null;
+    if (!decoded?.exp) return;
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const repo = AppDataSource.getRepository(RevokedToken);
+
+    const existing = await repo.findOne({ where: { tokenHash } });
+    if (!existing) {
+      await repo.save(
+        repo.create({ tokenHash, userId, expiresAt: new Date(decoded.exp * 1000) })
+      );
+    }
+  }
+
+  async sendEmailVerification(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.isEmailVerified) return;
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
+    await this.userRepository.save(user);
+
+    const base = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+    const verifyUrl = `${base}/verify-email/${token}`;
+
+    await emailService.sendVerificationEmail(user.email, user.firstName, verifyUrl);
+  }
+
+  async verifyEmail(token: string) {
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .addSelect("user.emailVerificationToken")
+      .addSelect("user.emailVerificationExpires")
+      .where("user.emailVerificationToken = :hashedToken", { hashedToken })
+      .getOne();
+
+    if (!user || !user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
+      throw new AppError("Verification link is invalid or has expired.", 400);
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null!;
+    user.emailVerificationExpires = null;
     await this.userRepository.save(user);
   }
 

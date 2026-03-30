@@ -16,8 +16,15 @@ router.post("/reset-password/:token", validate(authValidation.resetPassword), au
 
 // Protected routes
 router.get("/me", protect, authController.getMe);
-router.patch("/me", protect, authController.updateMe);
+router.patch("/me", protect, validate(authValidation.updateProfile), authController.updateMe);
 router.patch("/change-password", protect, validate(authValidation.changePassword), authController.changePassword);
 router.patch("/change-email", protect, validate(authValidation.changeEmail), authController.changeEmail);
+
+// Logout (blacklists the current token)
+router.post("/logout", protect, authController.logout);
+
+// Email verification
+router.get("/verify-email/:token", authController.verifyEmail);
+router.post("/resend-verification", protect, authController.resendVerificationEmail);
 
 export default router;

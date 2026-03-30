@@ -3,6 +3,7 @@ import { AppDataSource } from "../config/database";
 import { Review } from "../entities/Review";
 import { Property } from "../entities/Property";
 import { Vehicle } from "../entities/Vehicle";
+import { Booking } from "../entities/Booking";
 import { AppError } from "../utils/AppError";
 import { notificationService } from "./notificationService";
 
@@ -32,6 +33,14 @@ class ReviewService {
       const property = await AppDataSource.getRepository(Property).findOne({ where: { id: propertyId } });
       if (!property) throw new AppError("Property not found", 404);
 
+      // Must have a completed booking for this property
+      const completedBooking = await AppDataSource.getRepository(Booking).findOne({
+        where: { userId, propertyId, status: "completed" },
+      });
+      if (!completedBooking) {
+        throw new AppError("You can only review a property after completing a stay", 403);
+      }
+
       const existing = await this.repo.findOne({ where: { propertyId, userId } });
       if (existing) throw new AppError("You have already reviewed this property", 400);
     }
@@ -39,6 +48,14 @@ class ReviewService {
     if (vehicleId) {
       const vehicle = await AppDataSource.getRepository(Vehicle).findOne({ where: { id: vehicleId } });
       if (!vehicle) throw new AppError("Vehicle not found", 404);
+
+      // Must have a completed booking for this vehicle
+      const completedBooking = await AppDataSource.getRepository(Booking).findOne({
+        where: { userId, vehicleId, status: "completed" },
+      });
+      if (!completedBooking) {
+        throw new AppError("You can only review a vehicle after completing a rental", 403);
+      }
 
       const existing = await this.repo.findOne({ where: { vehicleId, userId } });
       if (existing) throw new AppError("You have already reviewed this vehicle", 400);

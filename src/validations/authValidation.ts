@@ -85,4 +85,17 @@ export const authValidation = {
       .isEmail()
       .withMessage("Please provide a valid email address"),
   ],
+
+  updateProfile: [
+    body("firstName").optional().trim().isLength({ min: 1, max: 50 }).withMessage("First name must be 1–50 characters"),
+    body("lastName").optional().trim().isLength({ min: 1, max: 50 }).withMessage("Last name must be 1–50 characters"),
+    body("phone").optional().trim().isLength({ max: 20 }).withMessage("Phone must be at most 20 characters"),
+    // Block fields that should never be updated via this endpoint
+    body("role").not().exists().withMessage("Role cannot be changed via this endpoint"),
+    body("password").not().exists().withMessage("Use /change-password to update your password"),
+    body("isVerified").not().exists().withMessage("Field not allowed"),
+    body("isEmailVerified").not().exists().withMessage("Field not allowed"),
+    body("isSuperAdmin").not().exists().withMessage("Field not allowed"),
+    body("adminPermissions").not().exists().withMessage("Field not allowed"),
+  ],
 };
