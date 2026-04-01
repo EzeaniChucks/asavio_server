@@ -24,6 +24,7 @@ router.patch("/properties/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PE
 router.delete("/properties/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_PROPERTIES), adminController_1.adminController.deleteProperty);
 // Vehicles
 router.get("/vehicles", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_VEHICLES), adminController_1.adminController.getVehicles);
+router.patch("/vehicles/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_VEHICLES), adminController_1.adminController.updateVehicle);
 router.delete("/vehicles/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_VEHICLES), adminController_1.adminController.deleteVehicle);
 // Bookings
 router.get("/bookings", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_BOOKINGS), adminController_1.adminController.getBookings);

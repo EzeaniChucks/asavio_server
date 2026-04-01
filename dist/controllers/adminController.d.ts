@@ -8,6 +8,7 @@ export declare const adminController: {
     updateProperty: (req: Request, res: Response, next: NextFunction) => void;
     deleteProperty: (req: Request, res: Response, next: NextFunction) => void;
     getVehicles: (req: Request, res: Response, next: NextFunction) => void;
+    updateVehicle: (req: Request, res: Response, next: NextFunction) => void;
     deleteVehicle: (req: Request, res: Response, next: NextFunction) => void;
     getBookings: (req: Request, res: Response, next: NextFunction) => void;
     updateBookingStatus: (req: Request, res: Response, next: NextFunction) => void;

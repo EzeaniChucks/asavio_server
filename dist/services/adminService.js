@@ -183,6 +183,14 @@ class AdminService {
             .getMany();
         return { vehicles, total };
     }
+    async updateVehicle(id, updates) {
+        const repo = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle);
+        const vehicle = await repo.findOne({ where: { id } });
+        if (!vehicle)
+            throw new AppError_1.AppError("Vehicle not found", 404);
+        Object.assign(vehicle, updates);
+        return repo.save(vehicle);
+    }
     async deleteVehicle(id) {
         const repo = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle);
         const vehicle = await repo.findOne({ where: { id } });

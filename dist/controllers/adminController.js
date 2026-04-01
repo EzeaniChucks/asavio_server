@@ -77,6 +77,11 @@ exports.adminController = {
         });
         res.json({ status: "success", data: result });
     }),
+    updateVehicle: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const vehicle = await adminService_1.adminService.updateVehicle(req.params.id, req.body);
+        audit(req, "update_vehicle", "vehicle", req.params.id);
+        res.json({ status: "success", data: vehicle });
+    }),
     deleteVehicle: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         await adminService_1.adminService.deleteVehicle(req.params.id);
         audit(req, "delete_vehicle", "vehicle", req.params.id);

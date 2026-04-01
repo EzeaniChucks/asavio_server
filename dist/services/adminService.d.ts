@@ -166,6 +166,9 @@ declare class AdminService {
         vehicles: Vehicle[];
         total: number;
     }>;
+    updateVehicle(id: string, updates: {
+        isAvailable?: boolean;
+    }): Promise<Vehicle>;
     deleteVehicle(id: string): Promise<void>;
     getBookings(opts: {
         page?: number;
