@@ -13,8 +13,9 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;");
 }
 
-// FRONTEND_URL may be comma-separated (multiple allowed origins). Always use the first one for links.
-const BASE_URL = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+// APP_URL is the canonical public URL used in email links (always production).
+// Falls back to the first entry in FRONTEND_URL if APP_URL is not set.
+const BASE_URL = process.env.APP_URL || (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
 
 // Reply-to addresses — replies from recipients land in a monitored inbox,
 // not the noreply sender. Override via env vars if needed.
@@ -344,7 +345,7 @@ export const emailService = {
     ctaLabel?: string;
   }): Promise<void> {
     const { to, firstName, title, body, ctaUrl, ctaLabel } = opts;
-    const base = process.env.FRONTEND_URL || "http://localhost:3000";
+    const base = BASE_URL;
     await send({
       to,
       subject: title,
