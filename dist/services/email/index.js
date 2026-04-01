@@ -15,17 +15,22 @@ let _provider = null;
 function getProvider() {
     if (_provider)
         return _provider;
-    const name = (process.env.EMAIL_PROVIDER || "mailjet").toLowerCase().trim();
+    const name = (process.env.EMAIL_PROVIDER || "mailgun").toLowerCase().trim();
     switch (name) {
         case "sendgrid": {
             const { SendGridProvider } = require("./sendgrid");
             _provider = new SendGridProvider();
             break;
         }
-        case "mailjet":
-        default: {
+        case "mailjet": {
             const { MailjetProvider } = require("./mailjet");
             _provider = new MailjetProvider();
+            break;
+        }
+        case "mailgun":
+        default: {
+            const { MailgunProvider } = require("./mailgun");
+            _provider = new MailgunProvider();
             break;
         }
     }

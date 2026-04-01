@@ -130,7 +130,7 @@ export class AuthService {
     user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await this.userRepository.save(user);
 
-    const base = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+    const base = process.env.APP_URL || (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
     const resetUrl = `${base}/reset-password/${token}`;
 
     await emailService.sendPasswordReset(user.email, user.firstName, resetUrl).catch(console.error);
@@ -198,7 +198,7 @@ export class AuthService {
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
     await this.userRepository.save(user);
 
-    const base = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+    const base = process.env.APP_URL || (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
     const verifyUrl = `${base}/verify-email/${token}`;
 
     await emailService.sendVerificationEmail(user.email, user.firstName, verifyUrl);

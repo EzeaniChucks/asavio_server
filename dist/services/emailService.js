@@ -18,9 +18,9 @@ const BASE_URL = (process.env.FRONTEND_URL || "http://localhost:3000").split(","
 // Reply-to addresses — replies from recipients land in a monitored inbox,
 // not the noreply sender. Override via env vars if needed.
 const REPLY = {
-    hello: process.env.REPLY_TO_HELLO || "hello@asavio.rent", // welcome, friendly
-    bookings: process.env.REPLY_TO_BOOKINGS || "bookings@asavio.rent", // booking-related
-    support: process.env.REPLY_TO_SUPPORT || "support@asavio.rent", // disputes, rejections
+    hello: process.env.REPLY_TO_HELLO || "hello@asavio.app", // welcome, friendly
+    bookings: process.env.REPLY_TO_BOOKINGS || "bookings@asavio.app", // booking-related
+    support: process.env.REPLY_TO_SUPPORT || "support@asavio.app", // disputes, rejections
 };
 async function send(payload) {
     await (0, email_1.getProvider)().send(payload);
