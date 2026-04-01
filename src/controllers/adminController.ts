@@ -93,6 +93,12 @@ export const adminController = {
     res.json({ status: "success", data: result });
   }),
 
+  updateVehicle: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const vehicle = await adminService.updateVehicle(req.params.id as string, req.body);
+    audit(req, "update_vehicle", "vehicle", req.params.id);
+    res.json({ status: "success", data: vehicle });
+  }),
+
   deleteVehicle: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     await adminService.deleteVehicle(req.params.id as string);
     audit(req, "delete_vehicle", "vehicle", req.params.id);

@@ -28,6 +28,7 @@ router.delete("/properties/:id", hasPermission(P.MANAGE_PROPERTIES), adminContro
 
 // Vehicles
 router.get("/vehicles",          hasPermission(P.MANAGE_VEHICLES), adminController.getVehicles);
+router.patch("/vehicles/:id",    hasPermission(P.MANAGE_VEHICLES), adminController.updateVehicle);
 router.delete("/vehicles/:id",   hasPermission(P.MANAGE_VEHICLES), adminController.deleteVehicle);
 
 // Bookings

@@ -229,6 +229,14 @@ class AdminService {
     return { vehicles, total };
   }
 
+  async updateVehicle(id: string, updates: { isAvailable?: boolean }) {
+    const repo = AppDataSource.getRepository(Vehicle);
+    const vehicle = await repo.findOne({ where: { id } });
+    if (!vehicle) throw new AppError("Vehicle not found", 404);
+    Object.assign(vehicle, updates);
+    return repo.save(vehicle);
+  }
+
   async deleteVehicle(id: string) {
     const repo = AppDataSource.getRepository(Vehicle);
     const vehicle = await repo.findOne({ where: { id } });
