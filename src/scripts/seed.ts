@@ -330,20 +330,20 @@ export async function runSeed(ds: DataSource) {
 
   // ── Admin user ──────────────────────────────────────────────
   console.log("\n👤 Creating users…");
-  let admin = await userRepo.findOne({ where: { email: "admin@asavio.com" } });
+  let admin = await userRepo.findOne({ where: { email: "asavioluxury@gmail.com" } });
 
   if (!admin) {
     admin = userRepo.create({
       firstName: "Asavio",
       lastName: "Admin",
-      email: "admin@asavio.com",
+      email: "asavioluxury@gmail.com",
       password: await bcrypt.hash("Admin123!", 12),
       role: "admin",
       isVerified: true,
       phone: "+2348000000001",
     });
     await userRepo.save(admin);
-    console.log("  ✓ Admin  — admin@asavio.com / Admin123!");
+    console.log("  ✓ Admin  — asavioluxury@gmail.com / Admin123!");
   } else {
     console.log("  — Admin already exists, skipping");
   }
@@ -526,7 +526,7 @@ export async function runSeed(ds: DataSource) {
   console.log("\n✅ Seed complete!");
   console.log("┌────────────────────────────────────────┐");
   console.log("│  Login credentials                     │");
-  console.log("│  Admin:  admin@asavio.com / Admin123!  │");
+  console.log("│  Admin:  asavioluxury@gmail.com / Admin123!  │");
   console.log("│  Host:   host@asavio.com  / Host123!   │");
   console.log("│  Guest:  guest@asavio.com / Guest123!  │");
   console.log("└────────────────────────────────────────┘\n");
