@@ -25,6 +25,8 @@ export declare class Vehicle {
     host: User;
     hostId: string;
     bookings: Booking[];
+    /** Private check-in/pickup instructions sent to the guest 24 h before pickup. */
+    checkInInstructions?: string;
     createdAt: Date;
     updatedAt: Date;
 }

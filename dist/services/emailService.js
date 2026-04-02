@@ -253,6 +253,45 @@ exports.emailService = {
       `),
         });
     },
+    async sendCheckInInstructions(opts) {
+        const { to, firstName, listingTitle, checkIn, checkOut, instructions, bookingId } = opts;
+        const safeInstructions = escapeHtml(instructions).replace(/\n/g, "<br />");
+        await send({
+            to,
+            replyTo: REPLY.bookings,
+            subject: `Your check-in details — ${listingTitle}`,
+            html: wrap(`
+        <h2 style="margin-top:0">You're checking in tomorrow! 🎉</h2>
+        <p>Hi ${firstName}, here are your check-in details for your upcoming stay.</p>
+        <hr class="divider" />
+        <p><strong>Listing:</strong> ${listingTitle}</p>
+        <p><strong>Check-in:</strong> ${checkIn}</p>
+        <p><strong>Check-out:</strong> ${checkOut}</p>
+        <hr class="divider" />
+        <p style="font-size:15px;font-weight:600;margin-bottom:8px">Access &amp; instructions</p>
+        <p style="background:#F9FAFB;border-radius:8px;padding:16px;line-height:1.7">${safeInstructions}</p>
+        <hr class="divider" />
+        <a href="${BASE_URL}/bookings/${bookingId}" class="btn">View booking</a>
+        <p style="margin-top:16px;font-size:12px;color:#9CA3AF">If you have any questions, reply to this email or use the messaging feature in the app.</p>
+      `),
+        });
+    },
+    async sendReviewNudge(opts) {
+        const { to, firstName, listingTitle, bookingId, listingId, listingType } = opts;
+        const reviewUrl = `${BASE_URL}/${listingType === "property" ? "properties" : "vehicles"}/${listingId}?review=1`;
+        await send({
+            to,
+            replyTo: REPLY.hello,
+            subject: `How was your stay at ${listingTitle}?`,
+            html: wrap(`
+        <h2 style="margin-top:0">How was your experience? ⭐</h2>
+        <p>Hi ${firstName}, your stay at <strong>${listingTitle}</strong> has ended. We'd love to hear what you thought!</p>
+        <p>Your review helps other guests make informed decisions and rewards great hosts.</p>
+        <a href="${reviewUrl}" class="btn">Leave a review</a>
+        <p style="margin-top:16px;font-size:12px;color:#9CA3AF">It only takes a minute. Thank you for being part of Asavio.</p>
+      `),
+        });
+    },
     async sendNotificationEmail(opts) {
         const { to, firstName, title, body, ctaUrl, ctaLabel } = opts;
         const base = BASE_URL;

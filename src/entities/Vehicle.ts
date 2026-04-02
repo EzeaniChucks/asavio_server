@@ -74,6 +74,10 @@ export class Vehicle {
   @OneToMany(() => Booking, (booking) => booking.vehicle)
   bookings: Booking[];
 
+  /** Private check-in/pickup instructions sent to the guest 24 h before pickup. */
+  @Column({ type: "text", nullable: true })
+  checkInInstructions?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

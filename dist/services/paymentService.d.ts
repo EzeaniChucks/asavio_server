@@ -5,7 +5,7 @@ export declare class PaymentService {
         authorization_url: string;
         reference: string;
     }>;
-    verifyPayment(reference: string, requestingUserId: string): Promise<Booking>;
+    verifyPayment(reference: string): Promise<Booking>;
     handleWebhook(rawBody: Buffer, signature: string): Promise<void>;
 }
 export declare const paymentService: PaymentService;

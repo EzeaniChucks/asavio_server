@@ -115,7 +115,7 @@ class PaymentService {
             reference: response.data.reference,
         };
     }
-    async verifyPayment(reference, requestingUserId) {
+    async verifyPayment(reference) {
         const response = await paystackRequest("GET", `/transaction/verify/${encodeURIComponent(reference)}`);
         if (!response.status) {
             throw new AppError_1.AppError("Could not verify payment with Paystack", 502);
@@ -126,9 +126,6 @@ class PaymentService {
         });
         if (!booking)
             throw new AppError_1.AppError("Booking not found for this reference", 404);
-        if (booking.userId !== requestingUserId) {
-            throw new AppError_1.AppError("You are not authorised to verify this payment", 403);
-        }
         if (response.data.status === "success") {
             await this.bookingRepo.update(booking.id, {
                 paymentStatus: "paid",

@@ -72,6 +72,23 @@ export declare const emailService: {
     }): Promise<void>;
     sendPasswordReset(to: string, firstName: string, resetUrl: string): Promise<void>;
     sendVerificationEmail(to: string, firstName: string, verifyUrl: string): Promise<void>;
+    sendCheckInInstructions(opts: {
+        to: string;
+        firstName: string;
+        listingTitle: string;
+        checkIn: string;
+        checkOut: string;
+        instructions: string;
+        bookingId: string;
+    }): Promise<void>;
+    sendReviewNudge(opts: {
+        to: string;
+        firstName: string;
+        listingTitle: string;
+        bookingId: string;
+        listingId: string;
+        listingType: "property" | "vehicle";
+    }): Promise<void>;
     sendNotificationEmail(opts: {
         to: string;
         firstName: string;

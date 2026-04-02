@@ -40,6 +40,8 @@ export declare class Property {
     }[] | null;
     status: string;
     rejectionReason?: string;
+    /** Private check-in instructions sent to the guest 24 h before arrival. */
+    checkInInstructions?: string;
     host: User;
     hostId: string;
     images: Image[];

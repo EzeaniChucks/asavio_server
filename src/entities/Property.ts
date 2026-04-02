@@ -83,6 +83,10 @@ import {
 
     @Column({ type: "text", nullable: true })
     rejectionReason?: string;
+
+    /** Private check-in instructions sent to the guest 24 h before arrival. */
+    @Column({ type: "text", nullable: true })
+    checkInInstructions?: string;
   
     @ManyToOne(() => User, (user) => user.properties)
     @JoinColumn({ name: "hostId" })

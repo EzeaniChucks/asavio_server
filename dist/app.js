@@ -12,6 +12,7 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const database_1 = require("./config/database");
 const socket_1 = require("./socket");
 const seed_1 = require("./scripts/seed");
+const bookingLifecycleJob_1 = require("./jobs/bookingLifecycleJob");
 const authRouter_1 = __importDefault(require("./routers/authRouter"));
 const propertyRouter_1 = __importDefault(require("./routers/propertyRouter"));
 const bookingRouter_1 = __importDefault(require("./routers/bookingRouter"));
@@ -106,6 +107,8 @@ database_1.AppDataSource.initialize()
     await (0, seed_1.autoSeed)(database_1.AppDataSource);
     // Attach Socket.io to the shared HTTP server
     (0, socket_1.initSocket)(httpServer);
+    // Background jobs
+    (0, bookingLifecycleJob_1.startBookingLifecycleJob)();
     httpServer.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });

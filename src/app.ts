@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import { AppDataSource } from "./config/database";
 import { initSocket } from "./socket";
 import { autoSeed } from "./scripts/seed";
+import { startBookingLifecycleJob } from "./jobs/bookingLifecycleJob";
 import authRouter from "./routers/authRouter";
 import propertyRouter from "./routers/propertyRouter";
 import bookingRouter from "./routers/bookingRouter";
@@ -121,6 +122,9 @@ AppDataSource.initialize()
 
     // Attach Socket.io to the shared HTTP server
     initSocket(httpServer);
+
+    // Background jobs
+    startBookingLifecycleJob();
 
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

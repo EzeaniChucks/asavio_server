@@ -1,0 +1,1 @@
+{"version":3,"file":"1774900000000-AddCheckInInstructions.d.ts","sourceRoot":"","sources":["../../src/migrations/1774900000000-AddCheckInInstructions.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,kBAAkB,EAAE,WAAW,EAAE,MAAM,SAAS,CAAC;AAE1D,qBAAa,mCAAoC,YAAW,kBAAkB;IACtE,EAAE,CAAC,WAAW,EAAE,WAAW,GAAG,OAAO,CAAC,IAAI,CAAC;IAS3C,IAAI,CAAC,WAAW,EAAE,WAAW,GAAG,OAAO,CAAC,IAAI,CAAC;CAQpD"}

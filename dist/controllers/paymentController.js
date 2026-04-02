@@ -17,7 +17,7 @@ exports.paymentController = {
     }),
     verifyPayment: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const { reference } = req.params;
-        const booking = await paymentService_1.paymentService.verifyPayment(reference, req.user.id);
+        const booking = await paymentService_1.paymentService.verifyPayment(reference);
         res.json({ status: "success", data: { booking } });
     }),
     webhook: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
