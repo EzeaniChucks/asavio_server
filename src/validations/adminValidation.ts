@@ -7,11 +7,6 @@ export const adminValidation = {
     body("firstName").trim().notEmpty().withMessage("First name is required").isLength({ max: 50 }),
     body("lastName").trim().notEmpty().withMessage("Last name is required").isLength({ max: 50 }),
     body("email").trim().notEmpty().withMessage("Email is required").isEmail().withMessage("Valid email required"),
-    body("password")
-      .notEmpty().withMessage("Password is required")
-      .isLength({ min: 8 }).withMessage("Password must be at least 8 characters")
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-      .withMessage("Password must contain uppercase, lowercase, and a number"),
     body("adminPermissions")
       .isArray().withMessage("adminPermissions must be an array")
       .custom((perms: string[]) => {

@@ -71,6 +71,7 @@ export declare const emailService: {
         rejectionReason?: string;
     }): Promise<void>;
     sendPasswordReset(to: string, firstName: string, resetUrl: string): Promise<void>;
+    sendAdminInvite(to: string, firstName: string, setPasswordUrl: string): Promise<void>;
     sendVerificationEmail(to: string, firstName: string, verifyUrl: string): Promise<void>;
     sendCheckInInstructions(opts: {
         to: string;
@@ -96,6 +97,24 @@ export declare const emailService: {
         body: string;
         ctaUrl?: string;
         ctaLabel?: string;
+    }): Promise<void>;
+    sendSubscriptionConfirmation(opts: {
+        to: string;
+        firstName: string;
+        tier: string;
+        cycle: string;
+        renewalDate: string;
+    }): Promise<void>;
+    sendSubscriptionCancelled(opts: {
+        to: string;
+        firstName: string;
+        tier: string;
+        accessUntil: string;
+    }): Promise<void>;
+    sendSubscriptionPaymentFailed(opts: {
+        to: string;
+        firstName: string;
+        tier: string;
     }): Promise<void>;
 };
 //# sourceMappingURL=emailService.d.ts.map

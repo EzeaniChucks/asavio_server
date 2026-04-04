@@ -42,6 +42,7 @@ const Booking_1 = require("../entities/Booking");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
 const notificationService_1 = require("./notificationService");
+const subscriptionService_1 = require("./subscriptionService");
 function paystackRequest(method, path, body) {
     return new Promise((resolve, reject) => {
         const payload = body ? JSON.stringify(body) : undefined;
@@ -183,7 +184,23 @@ class PaymentService {
             throw new AppError_1.AppError("Invalid webhook signature", 400);
         }
         const event = JSON.parse(rawBody.toString());
+        // ── Booking payment ────────────────────────────────────────────────────
         if (event.event === "charge.success") {
+            const meta = event.data.metadata;
+            // If metadata has type = 'subscription_initiate' this is the first
+            // subscription charge — activate the subscription record.
+            if (meta?.type === "subscription_initiate") {
+                const hostId = meta.hostId;
+                const tier = meta.subscriptionTier;
+                const cycle = meta.billingCycle;
+                const planCode = meta.planCode;
+                const subData = event.data.subscription ?? event.data;
+                await subscriptionService_1.subscriptionService
+                    .activateSubscription({ hostId, tier, cycle, planCode, subscriptionData: subData })
+                    .catch(console.error);
+                return;
+            }
+            // Regular booking charge
             const { reference } = event.data;
             const booking = await this.bookingRepo.findOne({
                 where: { paystackReference: reference },
@@ -209,7 +226,6 @@ class PaymentService {
                 bookingId: booking.id,
             })
                 .catch(console.error);
-            // In-app to guest
             notificationService_1.notificationService.send({
                 userId: booking.user.id,
                 type: "booking_confirmed",
@@ -217,7 +233,6 @@ class PaymentService {
                 body: `Payment received. Your booking for "${booking.property?.title ?? "your property"}" is confirmed.`,
                 data: { url: `/bookings/${booking.id}`, urlLabel: "View booking" },
             }).catch(console.error);
-            // In-app to host
             if (booking.property?.hostId) {
                 notificationService_1.notificationService.send({
                     userId: booking.property.hostId,
@@ -226,6 +241,20 @@ class PaymentService {
                     body: `Payment confirmed for a booking at "${booking.property.title}". Check your dashboard.`,
                     data: { url: `/dashboard/host`, urlLabel: "View bookings" },
                 }).catch(console.error);
+            }
+        }
+        // ── Subscription renewal ───────────────────────────────────────────────
+        if (event.event === "invoice.payment_failed") {
+            const subCode = event.data?.subscription?.subscription_code;
+            if (subCode) {
+                await subscriptionService_1.subscriptionService.markPastDue(subCode).catch(console.error);
+            }
+        }
+        // ── Subscription disabled (cancel confirmed by Paystack) ───────────────
+        if (event.event === "subscription.disable" || event.event === "subscription.not_renew") {
+            const subCode = event.data?.subscription_code;
+            if (subCode) {
+                await subscriptionService_1.subscriptionService.expireSubscription(subCode).catch(console.error);
             }
         }
     }

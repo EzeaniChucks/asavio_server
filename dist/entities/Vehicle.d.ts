@@ -27,6 +27,12 @@ export declare class Vehicle {
     bookings: Booking[];
     /** Private check-in/pickup instructions sent to the guest 24 h before pickup. */
     checkInInstructions?: string;
+    /** Optional refundable caution fee amount displayed to guests. Not processed by Asavio. */
+    cautionFee: number | null;
+    /** Cloudinary secure URL of the feature video, if uploaded */
+    featureVideoUrl: string | null;
+    /** Cloudinary public_id of the feature video, for deletion */
+    featureVideoPublicId: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

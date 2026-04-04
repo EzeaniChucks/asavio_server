@@ -19,6 +19,7 @@ const Notification_1 = require("../entities/Notification");
 const SavedItem_1 = require("../entities/SavedItem");
 const RevokedToken_1 = require("../entities/RevokedToken");
 const AdminAuditLog_1 = require("../entities/AdminAuditLog");
+const Subscription_1 = require("../entities/Subscription");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.AppDataSource = new typeorm_1.DataSource({
@@ -33,7 +34,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
     synchronize: false, // please leave this as false, even in production
     // logging: process.env.NODE_ENV === "development",
-    entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image, PlatformSettings_1.PlatformSettings, Conversation_1.Conversation, Message_1.Message, Notification_1.Notification, SavedItem_1.SavedItem, RevokedToken_1.RevokedToken, AdminAuditLog_1.AdminAuditLog],
+    entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image, PlatformSettings_1.PlatformSettings, Conversation_1.Conversation, Message_1.Message, Notification_1.Notification, SavedItem_1.SavedItem, RevokedToken_1.RevokedToken, AdminAuditLog_1.AdminAuditLog, Subscription_1.Subscription],
     migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });
 //# sourceMappingURL=database.js.map

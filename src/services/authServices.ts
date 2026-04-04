@@ -78,6 +78,8 @@ export class AuthService {
         "lastName",
         "role",
         "isVerified",
+        "isSuperAdmin",
+        "adminPermissions",
         "profileImage",
         "phone",
         "createdAt",

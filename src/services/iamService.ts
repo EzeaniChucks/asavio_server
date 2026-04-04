@@ -1,9 +1,11 @@
 // src/services/iamService.ts
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
 import { AdminAuditLog } from "../entities/AdminAuditLog";
 import { AppError } from "../utils/AppError";
+import { emailService } from "./emailService";
 import type { AdminPermission } from "../constants/permissions";
 
 class IamService {
@@ -24,21 +26,32 @@ class IamService {
     email: string;
     firstName: string;
     lastName: string;
-    password: string;
     adminPermissions: AdminPermission[];
   }) {
     const existing = await this.userRepo.findOne({ where: { email: opts.email } });
     if (existing) throw new AppError("An account with this email already exists.", 409);
 
-    const hashed = await bcrypt.hash(opts.password, 12);
+    // Random placeholder password — will be replaced when the invite link is used
+    const placeholder = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
     const admin = this.userRepo.create({
       ...opts,
-      password: hashed,
+      password: placeholder,
       role: "admin",
       isSuperAdmin: false,
-      isEmailVerified: true, // admin accounts skip email verification
+      isEmailVerified: true,
     });
     const saved = await this.userRepo.save(admin);
+
+    // Generate a 72-hour "set your password" token and email the invite
+    const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    saved.passwordResetToken = hashedToken;
+    saved.passwordResetExpires = new Date(Date.now() + 72 * 60 * 60 * 1000);
+    await this.userRepo.save(saved);
+
+    const base = process.env.APP_URL || (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+    emailService.sendAdminInvite(saved.email, saved.firstName, `${base}/reset-password/${token}`).catch(console.error);
+
     const { password: _pw, ...safe } = saved;
     return safe;
   }

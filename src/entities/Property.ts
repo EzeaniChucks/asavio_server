@@ -51,7 +51,11 @@ import {
   
     @Column("jsonb")
     amenities: string[];
-  
+
+    /** Places of interest nearby — e.g. ["Lekki Phase 1 — 5 min", "Eko Atlantic — 10 min"] */
+    @Column("jsonb", { nullable: true })
+    nearbyPlaces: string[] | null;
+
     @Column("jsonb")
     location: {
       address: string;
@@ -106,13 +110,35 @@ import {
   
     @Column("float", { default: 0 })
     averageRating: number;
-  
+
     @Column({ default: 0 })
     totalReviews: number;
-  
+
+    // ── Caution fee (advisory — collected by host offline) ───────────────────
+
+    /** Optional refundable caution fee amount displayed to guests. Not processed by Asavio. */
+    @Column("decimal", { precision: 10, scale: 2, nullable: true })
+    cautionFee: number | null;
+
+    // ── Feature video (Pro/Elite tier only) ─────────────────────────────────
+
+    /** Cloudinary secure URL of the feature video, if uploaded */
+    @Column({ type: "text", nullable: true })
+    featureVideoUrl: string | null;
+
+    /** Cloudinary public_id of the feature video, for deletion */
+    @Column({ type: "varchar", nullable: true })
+    featureVideoPublicId: string | null;
+
+    // ── Analytics ────────────────────────────────────────────────────────────
+
+    /** Incremented each time the property detail page is fetched */
+    @Column({ default: 0 })
+    viewCount: number;
+
     @CreateDateColumn()
     createdAt: Date;
-  
+
     @UpdateDateColumn()
     updatedAt: Date;
   }

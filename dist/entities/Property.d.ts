@@ -19,6 +19,8 @@ export declare class Property {
      */
     purposePricing: Record<string, number> | null;
     amenities: string[];
+    /** Places of interest nearby — e.g. ["Lekki Phase 1 — 5 min", "Eko Atlantic — 10 min"] */
+    nearbyPlaces: string[] | null;
     location: {
         address: string;
         city: string;
@@ -49,6 +51,14 @@ export declare class Property {
     reviews: Review[];
     averageRating: number;
     totalReviews: number;
+    /** Optional refundable caution fee amount displayed to guests. Not processed by Asavio. */
+    cautionFee: number | null;
+    /** Cloudinary secure URL of the feature video, if uploaded */
+    featureVideoUrl: string | null;
+    /** Cloudinary public_id of the feature video, for deletion */
+    featureVideoPublicId: string | null;
+    /** Incremented each time the property detail page is fetched */
+    viewCount: number;
     createdAt: Date;
     updatedAt: Date;
 }

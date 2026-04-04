@@ -116,6 +116,7 @@ export const kycService = {
 
     user.kycStatus = decision;
     user.kycReviewedAt = new Date();
+    user.isVerified = decision === "approved";
     if (decision === "rejected" && rejectionReason) {
       user.kycRejectionReason = rejectionReason;
     }

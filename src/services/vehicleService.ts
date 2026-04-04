@@ -3,6 +3,7 @@ import { AppDataSource } from "../config/database";
 import { Vehicle } from "../entities/Vehicle";
 import { AppError } from "../utils/AppError";
 import { CloudinaryService } from "./cloudinaryService";
+import { In } from "typeorm";
 
 const cloudinaryService = new CloudinaryService();
 
@@ -13,6 +14,7 @@ interface CreateVehicleInput {
   vehicleType: string;
   pricePerDay: number;
   priceWithDriverPerDay?: number | null;
+  cautionFee?: number | string | null;
   description: string;
   seats: number;
   withDriver?: boolean;
@@ -53,6 +55,7 @@ class VehicleService {
       year: Number(input.year),
       pricePerDay: Number(input.pricePerDay),
       priceWithDriverPerDay: input.priceWithDriverPerDay != null ? Number(input.priceWithDriverPerDay) : null,
+      cautionFee: input.cautionFee === "" || input.cautionFee == null ? null : Number(input.cautionFee),
       seats: Number(input.seats),
       withDriver: input.withDriver ?? false,
       features: input.features ?? [],
@@ -71,6 +74,29 @@ class VehicleService {
       .orderBy("vehicle.vehicleType", "ASC")
       .getRawMany();
     return rows.map((r) => r.type as string);
+  }
+
+  // Returns one representative vehicle (best-rated) per available type
+  async getVehicleTypeRepresentatives(): Promise<Vehicle[]> {
+    const rows = await AppDataSource.query<{ id: string }[]>(`
+      SELECT DISTINCT ON (LOWER(v."vehicleType")) v.id
+      FROM vehicles v
+      INNER JOIN users host ON host.id = v."hostId"
+      WHERE v."isAvailable" = true
+        AND host."kycStatus" = 'approved'
+      ORDER BY LOWER(v."vehicleType"), v."averageRating" DESC, v."createdAt" DESC
+    `);
+
+    if (!rows.length) return [];
+
+    const ids = rows.map((r) => r.id);
+    const vehicles = await this.repo.find({
+      where: { id: In(ids) },
+      relations: ["host"],
+    });
+
+    // Preserve DISTINCT ON ordering
+    return ids.map((id) => vehicles.find((v) => v.id === id)!).filter(Boolean);
   }
 
   async getVehicles(filters: VehicleFilters = {}): Promise<{ vehicles: Vehicle[]; total: number }> {
@@ -175,6 +201,11 @@ class VehicleService {
 
     // Strip removeImagePublicIds before applying remaining field updates
     const { removeImagePublicIds: _r, ...cleanUpdates } = updates as any;
+    if ("cautionFee" in cleanUpdates) {
+      cleanUpdates.cautionFee = cleanUpdates.cautionFee === "" || cleanUpdates.cautionFee == null
+        ? null
+        : Number(cleanUpdates.cautionFee);
+    }
     Object.assign(vehicle, cleanUpdates);
     return this.repo.save(vehicle) as unknown as Vehicle;
   }

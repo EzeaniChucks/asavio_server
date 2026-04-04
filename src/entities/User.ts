@@ -10,6 +10,7 @@ import {
   import { Property } from "./Property";
   import { Booking } from "./Booking";
   import { Review } from "./Review";
+  import { SubscriptionTier } from "../constants/subscriptionTiers";
   
   @Entity("users")
   export class User {
@@ -103,9 +104,49 @@ import {
     })
     hostTier: "new_host" | "trusted_host" | "top_host";
 
+    // ── Subscription tier ────────────────────────────────────────────────────
+
+    /**
+     * Paid subscription tier. Denormalised from the Subscription table for
+     * fast reads in middleware and commission calculations.
+     * Defaults to 'starter' (free tier).
+     */
+    @Column({ default: "starter" })
+    subscriptionTier: SubscriptionTier;
+
     /** % of guest-initiated conversations where host replied within 24 h (0–1) */
     @Column("decimal", { precision: 5, scale: 4, default: 0 })
     responseRate: number;
+
+    // ── Host public profile ──────────────────────────────────────────────────
+
+    /** Short bio shown on public host profile */
+    @Column({ type: "text", nullable: true })
+    bio: string | null;
+
+    /** Languages the host speaks — e.g. ["English", "Yoruba"] */
+    @Column("jsonb", { nullable: true })
+    languages: string[] | null;
+
+    /** Host's occupation / job title */
+    @Column({ type: "varchar", nullable: true })
+    occupation: string | null;
+
+    /** City/area where the host is based */
+    @Column({ type: "varchar", nullable: true })
+    city: string | null;
+
+    /** Why the host chose to host — shown on public profile */
+    @Column({ type: "text", nullable: true })
+    whyIHost: string | null;
+
+    /** School / university attended */
+    @Column({ type: "varchar", nullable: true })
+    school: string | null;
+
+    /** Cloudinary public_id for the profile image — for deletion */
+    @Column({ type: "varchar", nullable: true })
+    profileImagePublicId: string | null;
 
     /** Set on Socket.io disconnect — used for "Last seen X ago" display */
     @Column({ type: "timestamptz", nullable: true })

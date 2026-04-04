@@ -5,12 +5,14 @@ import { bookingController } from "../controllers/bookingController";
 import { protect, restrictTo } from "../middleware/auth";
 import { validate } from "../middleware/validation";
 import { vehicleValidation } from "../validations/vehicleValidation";
-import { upload } from "../middleware/upload";
+import { upload, uploadVideo } from "../middleware/upload";
+import { requireTier } from "../middleware/requireTier";
 
 const router = Router();
 
 // Public
 router.get("/types", vehicleController.getAvailableVehicleTypes);
+router.get("/type-representatives", vehicleController.getVehicleTypeRepresentatives);
 router.get("/", vehicleController.listVehicles);
 // Must be before /:id
 router.get("/:vehicleId/booked-dates", bookingController.getVehicleBookedDates);
@@ -43,6 +45,20 @@ router.patch(
   "/:id/toggle-availability",
   restrictTo("host", "admin"),
   vehicleController.toggleAvailability
+);
+
+// Feature video — Pro/Elite tier required
+router.post(
+  "/:id/feature-video",
+  restrictTo("host", "admin"),
+  requireTier("pro"),
+  uploadVideo.single("video"),
+  vehicleController.uploadFeatureVideo
+);
+router.delete(
+  "/:id/feature-video",
+  restrictTo("host", "admin"),
+  vehicleController.deleteFeatureVideo
 );
 
 export default router;

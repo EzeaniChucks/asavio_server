@@ -6,10 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.iamService = void 0;
 // src/services/iamService.ts
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const crypto_1 = __importDefault(require("crypto"));
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const AdminAuditLog_1 = require("../entities/AdminAuditLog");
 const AppError_1 = require("../utils/AppError");
+const emailService_1 = require("./emailService");
 class IamService {
     constructor() {
         this.userRepo = database_1.AppDataSource.getRepository(User_1.User);
@@ -27,15 +29,24 @@ class IamService {
         const existing = await this.userRepo.findOne({ where: { email: opts.email } });
         if (existing)
             throw new AppError_1.AppError("An account with this email already exists.", 409);
-        const hashed = await bcryptjs_1.default.hash(opts.password, 12);
+        // Random placeholder password — will be replaced when the invite link is used
+        const placeholder = await bcryptjs_1.default.hash(crypto_1.default.randomBytes(32).toString("hex"), 12);
         const admin = this.userRepo.create({
             ...opts,
-            password: hashed,
+            password: placeholder,
             role: "admin",
             isSuperAdmin: false,
-            isEmailVerified: true, // admin accounts skip email verification
+            isEmailVerified: true,
         });
         const saved = await this.userRepo.save(admin);
+        // Generate a 72-hour "set your password" token and email the invite
+        const token = crypto_1.default.randomBytes(32).toString("hex");
+        const hashedToken = crypto_1.default.createHash("sha256").update(token).digest("hex");
+        saved.passwordResetToken = hashedToken;
+        saved.passwordResetExpires = new Date(Date.now() + 72 * 60 * 60 * 1000);
+        await this.userRepo.save(saved);
+        const base = process.env.APP_URL || (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+        emailService_1.emailService.sendAdminInvite(saved.email, saved.firstName, `${base}/reset-password/${token}`).catch(console.error);
         const { password: _pw, ...safe } = saved;
         return safe;
     }

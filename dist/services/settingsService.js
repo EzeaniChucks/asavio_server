@@ -5,6 +5,7 @@ exports.settingsService = void 0;
 const database_1 = require("../config/database");
 const PlatformSettings_1 = require("../entities/PlatformSettings");
 const AppError_1 = require("../utils/AppError");
+const subscriptionTiers_1 = require("../constants/subscriptionTiers");
 const SINGLETON_ID = 1;
 class SettingsService {
     get repo() {
@@ -34,6 +35,7 @@ class SettingsService {
     /**
      * Returns the effective commission rate for a given host.
      * Uses the host's override if set, otherwise falls back to the global rate.
+     * @deprecated Prefer getEffectiveRateForHost() which respects subscription tiers.
      */
     async getEffectiveRate(hostCommissionRateOverride) {
         if (hostCommissionRateOverride !== null && hostCommissionRateOverride !== undefined) {
@@ -41,6 +43,19 @@ class SettingsService {
         }
         const settings = await this.getSettings();
         return Number(settings.commissionRate);
+    }
+    /**
+     * Returns the effective commission rate for a host, checking in priority order:
+     * 1. Admin-set per-host override (commissionRateOverride)
+     * 2. Subscription tier rate (from TIER_CONFIG)
+     * 3. Global platform rate (PlatformSettings)
+     */
+    async getEffectiveRateForHost(host) {
+        if (host.commissionRateOverride !== null && host.commissionRateOverride !== undefined) {
+            return Number(host.commissionRateOverride);
+        }
+        const tier = host.subscriptionTier ?? "starter";
+        return subscriptionTiers_1.TIER_CONFIG[tier].commissionRate;
     }
 }
 exports.settingsService = new SettingsService();

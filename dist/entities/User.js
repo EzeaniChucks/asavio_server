@@ -123,9 +123,41 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "hostTier", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: "starter" }),
+    __metadata("design:type", String)
+], User.prototype, "subscriptionTier", void 0);
+__decorate([
     (0, typeorm_1.Column)("decimal", { precision: 5, scale: 4, default: 0 }),
     __metadata("design:type", Number)
 ], User.prototype, "responseRate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "bio", void 0);
+__decorate([
+    (0, typeorm_1.Column)("jsonb", { nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "languages", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "occupation", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "city", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "whyIHost", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "school", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], User.prototype, "profileImagePublicId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
     __metadata("design:type", Object)

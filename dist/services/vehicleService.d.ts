@@ -6,6 +6,7 @@ interface CreateVehicleInput {
     vehicleType: string;
     pricePerDay: number;
     priceWithDriverPerDay?: number | null;
+    cautionFee?: number | string | null;
     description: string;
     seats: number;
     withDriver?: boolean;
@@ -27,6 +28,7 @@ declare class VehicleService {
     private get repo();
     createVehicle(hostId: string, input: CreateVehicleInput, files: Express.Multer.File[]): Promise<Vehicle>;
     getAvailableVehicleTypes(): Promise<string[]>;
+    getVehicleTypeRepresentatives(): Promise<Vehicle[]>;
     getVehicles(filters?: VehicleFilters): Promise<{
         vehicles: Vehicle[];
         total: number;

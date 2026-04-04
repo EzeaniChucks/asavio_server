@@ -19,6 +19,9 @@ class PropertyService {
         const property = this.propertyRepository.create({
             ...propertyData,
             propertyType: propertyData.propertyType?.toLowerCase(),
+            cautionFee: propertyData.cautionFee === "" || propertyData.cautionFee == null
+                ? null
+                : Number(propertyData.cautionFee),
             hostId,
             status: "pending",
             isAvailable: false, // stays hidden until approved
@@ -34,7 +37,7 @@ class PropertyService {
         }
         return this.getPropertyById(savedProperty.id);
     }
-    async getPropertyById(id) {
+    async getPropertyById(id, trackView = false) {
         const property = await this.propertyRepository.findOne({
             where: { id },
             relations: ["host", "images", "reviews"],
@@ -42,7 +45,88 @@ class PropertyService {
         if (!property) {
             throw new AppError_1.AppError("Property not found", 404);
         }
+        // Increment view counter asynchronously — don't block the response
+        if (trackView) {
+            this.propertyRepository
+                .increment({ id }, "viewCount", 1)
+                .catch(() => { });
+        }
         return property;
+    }
+    /**
+     * Returns analytics data for a host's portfolio.
+     * Used by the host earnings/analytics dashboard.
+     */
+    async getHostAnalytics(hostId) {
+        // Revenue, bookings (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const [revenueRows, viewRows, dailyRows, topRows] = await Promise.all([
+            // Total revenue & booking count from confirmed/completed bookings
+            database_1.AppDataSource.query(`
+        SELECT COALESCE(SUM(b."hostPayout"), 0) AS total, COUNT(*) AS count
+        FROM bookings b
+        INNER JOIN properties p ON p.id = b."propertyId"
+        WHERE p."hostId" = $1
+          AND b.status IN ('confirmed', 'completed')
+          AND b."paymentStatus" = 'paid'
+      `, [hostId]),
+            // Total views across all properties
+            database_1.AppDataSource.query(`
+        SELECT COALESCE(SUM("viewCount"), 0) AS views
+        FROM properties
+        WHERE "hostId" = $1
+      `, [hostId]),
+            // Daily revenue for the last 30 days
+            database_1.AppDataSource.query(`
+        SELECT
+          DATE(b."createdAt") AS date,
+          COALESCE(SUM(b."hostPayout"), 0) AS revenue
+        FROM bookings b
+        INNER JOIN properties p ON p.id = b."propertyId"
+        WHERE p."hostId" = $1
+          AND b.status IN ('confirmed', 'completed')
+          AND b."paymentStatus" = 'paid'
+          AND b."createdAt" >= $2
+        GROUP BY DATE(b."createdAt")
+        ORDER BY date ASC
+      `, [hostId, thirtyDaysAgo]),
+            // Top performing listings
+            database_1.AppDataSource.query(`
+        SELECT
+          p.id AS "propertyId",
+          p.title,
+          COALESCE(SUM(b."hostPayout"), 0) AS revenue,
+          p."viewCount" AS views,
+          COUNT(b.id) AS bookings
+        FROM properties p
+        LEFT JOIN bookings b ON b."propertyId" = p.id
+          AND b.status IN ('confirmed', 'completed')
+          AND b."paymentStatus" = 'paid'
+        WHERE p."hostId" = $1
+        GROUP BY p.id, p.title, p."viewCount"
+        ORDER BY revenue DESC
+        LIMIT 5
+      `, [hostId]),
+        ]);
+        const totalRevenue = Number(revenueRows[0]?.total ?? 0);
+        const totalBookings = Number(revenueRows[0]?.count ?? 0);
+        const totalViews = Number(viewRows[0]?.views ?? 0);
+        const conversionRate = totalViews > 0 ? (totalBookings / totalViews) * 100 : 0;
+        return {
+            totalRevenue,
+            totalViews,
+            totalBookings,
+            conversionRate: Math.round(conversionRate * 100) / 100,
+            revenueByDay: dailyRows.map((r) => ({ date: r.date, revenue: Number(r.revenue) })),
+            topListings: topRows.map((r) => ({
+                propertyId: r.propertyId,
+                title: r.title,
+                revenue: Number(r.revenue),
+                views: Number(r.views),
+                bookings: Number(r.bookings),
+            })),
+        };
     }
     // Returns all properties belonging to a specific host (regardless of status/availability)
     async getMyProperties(hostId) {
@@ -57,7 +141,7 @@ class PropertyService {
             .createQueryBuilder("property")
             .leftJoinAndSelect("property.images", "images")
             .leftJoinAndSelect("property.reviews", "reviews")
-            .innerJoin("property.host", "host")
+            .innerJoinAndSelect("property.host", "host")
             .where("property.isAvailable = :isAvailable", { isAvailable: true })
             .andWhere("property.status = :status", { status: "approved" })
             .andWhere("(host.kycStatus = 'approved' OR host.role = 'admin')");
@@ -116,8 +200,8 @@ class PropertyService {
                 queryBuilder.orderBy("property.averageRating", "DESC");
                 break;
             case "featured":
-                // Tier → rating → review count → recency (all TypeORM-safe column refs)
-                // Host tier is surfaced as a badge on the card; rating+reviews+freshness drive order
+                // Rating → review count → recency. Subscription boost is applied in
+                // homepage getHomeSections() via raw SQL (see topPicks query).
                 queryBuilder
                     .orderBy("property.averageRating", "DESC")
                     .addOrderBy("property.totalReviews", "DESC")
@@ -155,12 +239,17 @@ class PropertyService {
       WHERE ${BASE_WHERE}
     `;
         const [topPickRows, newlyListed, popularRows] = await Promise.all([
-            // Top Picks — weighted ranking: host tier + rating + log(reviews) + freshness
+            // Top Picks — weighted ranking: subscription tier + host tier + rating + log(reviews) + freshness
             database_1.AppDataSource.query(`
         SELECT property.id
         ${BASE_FROM}
         ORDER BY (
-          CASE host."hostTier"
+          CASE host."subscriptionTier"
+            WHEN 'elite' THEN 15
+            WHEN 'pro'   THEN 5
+            ELSE 0
+          END
+          + CASE host."hostTier"
             WHEN 'top_host' THEN 30
             WHEN 'trusted_host' THEN 15
             ELSE 0
@@ -221,6 +310,33 @@ class PropertyService {
             .getRawMany();
         return rows.map((r) => r.type);
     }
+    // Returns one representative property (best-rated) per approved available type
+    async getTypeRepresentatives() {
+        const rows = await database_1.AppDataSource.query(`
+      SELECT DISTINCT ON (LOWER(property."propertyType"))
+        property.id,
+        LOWER(property."propertyType") AS type
+      FROM properties property
+      INNER JOIN users host ON host.id = property."hostId"
+      WHERE property."isAvailable" = true
+        AND property.status = 'approved'
+        AND (host."kycStatus" = 'approved' OR host.role = 'admin')
+      ORDER BY LOWER(property."propertyType"), property."averageRating" DESC, property."totalReviews" DESC
+    `);
+        if (!rows.length)
+            return [];
+        const props = await this.propertyRepository.find({
+            where: { id: (0, typeorm_1.In)(rows.map((r) => r.id)) },
+            relations: ["images"],
+        });
+        return rows
+            .map((row) => {
+            const prop = props.find((p) => p.id === row.id);
+            const image = prop?.images?.[0]?.url;
+            return image ? { type: row.type, propertyId: row.id, image } : null;
+        })
+            .filter((r) => r !== null);
+    }
     async updateProperty(id, updateData, hostId, removeImagePublicIds, files) {
         const property = await this.getPropertyById(id);
         if (property.hostId !== hostId) {
@@ -247,6 +363,11 @@ class PropertyService {
         const { removeImagePublicIds: _removed, ...textFields } = updateData;
         if (textFields.propertyType)
             textFields.propertyType = textFields.propertyType.toLowerCase();
+        if ("cautionFee" in textFields) {
+            textFields.cautionFee = textFields.cautionFee === "" || textFields.cautionFee == null
+                ? null
+                : Number(textFields.cautionFee);
+        }
         if (Object.keys(textFields).length) {
             await this.propertyRepository.update(id, textFields);
         }

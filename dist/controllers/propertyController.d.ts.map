@@ -1,1 +1,1 @@
-{"version":3,"file":"propertyController.d.ts","sourceRoot":"","sources":["../../src/controllers/propertyController.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAY5C,eAAO,MAAM,kBAAkB;;;;;;;;;;;CAoI9B,CAAC"}
+{"version":3,"file":"propertyController.d.ts","sourceRoot":"","sources":["../../src/controllers/propertyController.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAe5C,eAAO,MAAM,kBAAkB;;;;;;;;IA6G7B,mEAAmE;;;;;;IAgEnE,kFAAkF;;IA8ClF,0EAA0E;;CAmB3E,CAAC"}

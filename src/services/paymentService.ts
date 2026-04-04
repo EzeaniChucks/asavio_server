@@ -6,6 +6,8 @@ import { Booking } from "../entities/Booking";
 import { AppError } from "../utils/AppError";
 import { emailService } from "./emailService";
 import { notificationService } from "./notificationService";
+import { subscriptionService } from "./subscriptionService";
+import { SubscriptionTier, BillingCycle } from "../constants/subscriptionTiers";
 
 interface PaystackInitResponse {
   status: boolean;
@@ -204,11 +206,29 @@ export class PaymentService {
 
     const event = JSON.parse(rawBody.toString()) as {
       event: string;
-      data: { reference: string; status: string };
+      data: Record<string, any>;
     };
 
+    // ── Booking payment ────────────────────────────────────────────────────
     if (event.event === "charge.success") {
-      const { reference } = event.data;
+      const meta = event.data.metadata as Record<string, unknown> | undefined;
+
+      // If metadata has type = 'subscription_initiate' this is the first
+      // subscription charge — activate the subscription record.
+      if (meta?.type === "subscription_initiate") {
+        const hostId = meta.hostId as string;
+        const tier = meta.subscriptionTier as SubscriptionTier;
+        const cycle = meta.billingCycle as BillingCycle;
+        const planCode = meta.planCode as string;
+        const subData = event.data.subscription ?? event.data;
+        await subscriptionService
+          .activateSubscription({ hostId, tier, cycle, planCode, subscriptionData: subData })
+          .catch(console.error);
+        return;
+      }
+
+      // Regular booking charge
+      const { reference } = event.data as { reference: string };
       const booking = await this.bookingRepo.findOne({
         where: { paystackReference: reference },
         relations: ["user", "property"],
@@ -238,7 +258,6 @@ export class PaymentService {
         })
         .catch(console.error);
 
-      // In-app to guest
       notificationService.send({
         userId: booking.user.id,
         type: "booking_confirmed",
@@ -247,7 +266,6 @@ export class PaymentService {
         data: { url: `/bookings/${booking.id}`, urlLabel: "View booking" },
       }).catch(console.error);
 
-      // In-app to host
       if (booking.property?.hostId) {
         notificationService.send({
           userId: booking.property.hostId,
@@ -256,6 +274,22 @@ export class PaymentService {
           body: `Payment confirmed for a booking at "${booking.property.title}". Check your dashboard.`,
           data: { url: `/dashboard/host`, urlLabel: "View bookings" },
         }).catch(console.error);
+      }
+    }
+
+    // ── Subscription renewal ───────────────────────────────────────────────
+    if (event.event === "invoice.payment_failed") {
+      const subCode = event.data?.subscription?.subscription_code as string | undefined;
+      if (subCode) {
+        await subscriptionService.markPastDue(subCode).catch(console.error);
+      }
+    }
+
+    // ── Subscription disabled (cancel confirmed by Paystack) ───────────────
+    if (event.event === "subscription.disable" || event.event === "subscription.not_renew") {
+      const subCode = event.data?.subscription_code as string | undefined;
+      if (subCode) {
+        await subscriptionService.expireSubscription(subCode).catch(console.error);
       }
     }
   }

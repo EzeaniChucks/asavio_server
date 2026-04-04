@@ -78,6 +78,22 @@ export class Vehicle {
   @Column({ type: "text", nullable: true })
   checkInInstructions?: string;
 
+  // ── Caution fee (advisory — collected by host offline) ───────────────────
+
+  /** Optional refundable caution fee amount displayed to guests. Not processed by Asavio. */
+  @Column("decimal", { precision: 10, scale: 2, nullable: true })
+  cautionFee: number | null;
+
+  // ── Feature video (Pro/Elite tier only) ─────────────────────────────────
+
+  /** Cloudinary secure URL of the feature video, if uploaded */
+  @Column({ type: "text", nullable: true })
+  featureVideoUrl: string | null;
+
+  /** Cloudinary public_id of the feature video, for deletion */
+  @Column({ type: "varchar", nullable: true })
+  featureVideoPublicId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

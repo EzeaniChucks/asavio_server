@@ -3,7 +3,28 @@ export declare class PropertyService {
     private propertyRepository;
     private imageRepository;
     createProperty(propertyData: any, hostId: string, images?: any[]): Promise<Property>;
-    getPropertyById(id: string): Promise<Property>;
+    getPropertyById(id: string, trackView?: boolean): Promise<Property>;
+    /**
+     * Returns analytics data for a host's portfolio.
+     * Used by the host earnings/analytics dashboard.
+     */
+    getHostAnalytics(hostId: string): Promise<{
+        totalRevenue: number;
+        totalViews: number;
+        totalBookings: number;
+        conversionRate: number;
+        revenueByDay: Array<{
+            date: string;
+            revenue: number;
+        }>;
+        topListings: Array<{
+            propertyId: string;
+            title: string;
+            revenue: number;
+            views: number;
+            bookings: number;
+        }>;
+    }>;
     getMyProperties(hostId: string): Promise<Property[]>;
     getAllProperties(filters: any): Promise<Property[]>;
     /**
@@ -19,6 +40,11 @@ export declare class PropertyService {
         popular: Property[];
     }>;
     getAvailablePropertyTypes(): Promise<string[]>;
+    getTypeRepresentatives(): Promise<Array<{
+        type: string;
+        image: string;
+        propertyId: string;
+    }>>;
     updateProperty(id: string, updateData: any, hostId: string, removeImagePublicIds?: string[], files?: Express.Multer.File[]): Promise<Property>;
     deleteProperty(id: string, hostId: string): Promise<void>;
     /**

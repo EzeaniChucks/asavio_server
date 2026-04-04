@@ -99,6 +99,18 @@ __decorate([
     __metadata("design:type", String)
 ], Vehicle.prototype, "checkInInstructions", void 0);
 __decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, nullable: true }),
+    __metadata("design:type", Object)
+], Vehicle.prototype, "cautionFee", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", Object)
+], Vehicle.prototype, "featureVideoUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], Vehicle.prototype, "featureVideoPublicId", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], Vehicle.prototype, "createdAt", void 0);

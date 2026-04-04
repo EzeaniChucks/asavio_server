@@ -242,6 +242,20 @@ exports.emailService = {
       `),
         });
     },
+    async sendAdminInvite(to, firstName, setPasswordUrl) {
+        await send({
+            to,
+            replyTo: REPLY.hello,
+            subject: `You've been added as an ${APP_NAME} admin`,
+            html: wrap(`
+        <h2 style="margin-top:0">Welcome to the ${APP_NAME} admin team</h2>
+        <p>Hi ${firstName}, you've been granted admin access to the ${APP_NAME} platform.</p>
+        <p>Click the button below to set your password and get started. This link expires in <strong>72 hours</strong>.</p>
+        <a href="${setPasswordUrl}" class="btn">Set your password</a>
+        <p style="margin-top:24px;color:#6B7280;font-size:13px">If you weren't expecting this, you can safely ignore this email.</p>
+      `),
+        });
+    },
     async sendVerificationEmail(to, firstName, verifyUrl) {
         await send({
             to,
@@ -303,6 +317,57 @@ exports.emailService = {
         <p>Hi ${firstName},</p>
         <p>${body}</p>
         ${ctaUrl ? `<a href="${base}${ctaUrl}" class="btn">${ctaLabel ?? "View"}</a>` : ""}
+      `),
+        });
+    },
+    // ── Subscription emails ───────────────────────────────────────────────────
+    async sendSubscriptionConfirmation(opts) {
+        const { to, firstName, tier, cycle, renewalDate } = opts;
+        await send({
+            to,
+            replyTo: REPLY.hello,
+            subject: `Your ${tier} plan is now active — ${APP_NAME}`,
+            html: wrap(`
+        <h2 style="margin-top:0">You're on ${APP_NAME} ${tier}! 🎉</h2>
+        <p>Hi ${escapeHtml(firstName)},</p>
+        <p>Your <strong>${escapeHtml(tier)}</strong> plan (${escapeHtml(cycle)}) is now active. Here's what you unlocked:</p>
+        <ul>
+          <li>Reduced platform commission</li>
+          <li>More listing slots and photos per listing</li>
+          ${tier === "Elite" ? "<li>Homepage featured placement</li>" : ""}
+          ${tier !== "Starter" ? "<li>Feature video uploads per listing</li>" : ""}
+        </ul>
+        <p>Your plan renews on <strong>${escapeHtml(renewalDate)}</strong>.</p>
+        <a href="${BASE_URL}/dashboard/host/subscription" class="btn">Manage subscription</a>
+      `),
+        });
+    },
+    async sendSubscriptionCancelled(opts) {
+        const { to, firstName, tier, accessUntil } = opts;
+        await send({
+            to,
+            replyTo: REPLY.support,
+            subject: `Your ${tier} plan cancellation confirmed — ${APP_NAME}`,
+            html: wrap(`
+        <h2 style="margin-top:0">Subscription cancelled</h2>
+        <p>Hi ${escapeHtml(firstName)},</p>
+        <p>Your <strong>${escapeHtml(tier)}</strong> plan has been cancelled. You'll keep access to all ${escapeHtml(tier)} features until <strong>${escapeHtml(accessUntil)}</strong>, after which your account will revert to the Starter tier.</p>
+        <p>Changed your mind? You can resubscribe any time from your dashboard.</p>
+        <a href="${BASE_URL}/dashboard/host/subscription" class="btn">View subscription</a>
+      `),
+        });
+    },
+    async sendSubscriptionPaymentFailed(opts) {
+        const { to, firstName, tier } = opts;
+        await send({
+            to,
+            replyTo: REPLY.support,
+            subject: `Action needed: ${tier} plan renewal failed — ${APP_NAME}`,
+            html: wrap(`
+        <h2 style="margin-top:0">Payment failed</h2>
+        <p>Hi ${escapeHtml(firstName)},</p>
+        <p>We couldn't process the renewal payment for your <strong>${escapeHtml(tier)}</strong> plan. Please update your payment method to avoid losing access to your plan features.</p>
+        <a href="${BASE_URL}/dashboard/host/subscription" class="btn">Update payment method</a>
       `),
         });
     },

@@ -2,6 +2,8 @@
 import { AppDataSource } from "../config/database";
 import { PlatformSettings } from "../entities/PlatformSettings";
 import { AppError } from "../utils/AppError";
+import { User } from "../entities/User";
+import { TIER_CONFIG } from "../constants/subscriptionTiers";
 
 const SINGLETON_ID = 1;
 
@@ -36,6 +38,7 @@ class SettingsService {
   /**
    * Returns the effective commission rate for a given host.
    * Uses the host's override if set, otherwise falls back to the global rate.
+   * @deprecated Prefer getEffectiveRateForHost() which respects subscription tiers.
    */
   async getEffectiveRate(hostCommissionRateOverride: number | null): Promise<number> {
     if (hostCommissionRateOverride !== null && hostCommissionRateOverride !== undefined) {
@@ -43,6 +46,20 @@ class SettingsService {
     }
     const settings = await this.getSettings();
     return Number(settings.commissionRate);
+  }
+
+  /**
+   * Returns the effective commission rate for a host, checking in priority order:
+   * 1. Admin-set per-host override (commissionRateOverride)
+   * 2. Subscription tier rate (from TIER_CONFIG)
+   * 3. Global platform rate (PlatformSettings)
+   */
+  async getEffectiveRateForHost(host: User): Promise<number> {
+    if (host.commissionRateOverride !== null && host.commissionRateOverride !== undefined) {
+      return Number(host.commissionRateOverride);
+    }
+    const tier = host.subscriptionTier ?? "starter";
+    return TIER_CONFIG[tier].commissionRate;
   }
 }
 

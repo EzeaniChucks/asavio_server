@@ -26,7 +26,15 @@ declare class IamService {
         kycReviewedAt: Date | null;
         kycRejectionReason: string;
         hostTier: "new_host" | "trusted_host" | "top_host";
+        subscriptionTier: import("../constants/subscriptionTiers").SubscriptionTier;
         responseRate: number;
+        bio: string | null;
+        languages: string[] | null;
+        occupation: string | null;
+        city: string | null;
+        whyIHost: string | null;
+        school: string | null;
+        profileImagePublicId: string | null;
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;
@@ -45,7 +53,6 @@ declare class IamService {
         email: string;
         firstName: string;
         lastName: string;
-        password: string;
         adminPermissions: AdminPermission[];
     }): Promise<{
         id: string;
@@ -70,7 +77,15 @@ declare class IamService {
         kycReviewedAt: Date | null;
         kycRejectionReason: string;
         hostTier: "new_host" | "trusted_host" | "top_host";
+        subscriptionTier: import("../constants/subscriptionTiers").SubscriptionTier;
         responseRate: number;
+        bio: string | null;
+        languages: string[] | null;
+        occupation: string | null;
+        city: string | null;
+        whyIHost: string | null;
+        school: string | null;
+        profileImagePublicId: string | null;
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;
@@ -108,7 +123,15 @@ declare class IamService {
         kycReviewedAt: Date | null;
         kycRejectionReason: string;
         hostTier: "new_host" | "trusted_host" | "top_host";
+        subscriptionTier: import("../constants/subscriptionTiers").SubscriptionTier;
         responseRate: number;
+        bio: string | null;
+        languages: string[] | null;
+        occupation: string | null;
+        city: string | null;
+        whyIHost: string | null;
+        school: string | null;
+        profileImagePublicId: string | null;
         lastSeen: Date | null;
         passwordResetToken: string;
         passwordResetExpires: Date | null;

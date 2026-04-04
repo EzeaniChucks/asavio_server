@@ -9,11 +9,6 @@ exports.adminValidation = {
         (0, express_validator_1.body)("firstName").trim().notEmpty().withMessage("First name is required").isLength({ max: 50 }),
         (0, express_validator_1.body)("lastName").trim().notEmpty().withMessage("Last name is required").isLength({ max: 50 }),
         (0, express_validator_1.body)("email").trim().notEmpty().withMessage("Email is required").isEmail().withMessage("Valid email required"),
-        (0, express_validator_1.body)("password")
-            .notEmpty().withMessage("Password is required")
-            .isLength({ min: 8 }).withMessage("Password must be at least 8 characters")
-            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .withMessage("Password must contain uppercase, lowercase, and a number"),
         (0, express_validator_1.body)("adminPermissions")
             .isArray().withMessage("adminPermissions must be an array")
             .custom((perms) => {

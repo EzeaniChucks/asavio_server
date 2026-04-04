@@ -5,16 +5,27 @@ const propertyService_1 = require("../services/propertyService");
 const cloudinaryService_1 = require("../services/cloudinaryService");
 const emailService_1 = require("../services/emailService");
 const notificationService_1 = require("../services/notificationService");
+const subscriptionService_1 = require("../services/subscriptionService");
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
+const AppError_1 = require("../utils/AppError");
 const catchAsync_1 = require("../utils/catchAsync");
+const subscriptionTiers_1 = require("../constants/subscriptionTiers");
 const propertyService = new propertyService_1.PropertyService();
 const cloudinaryService = new cloudinaryService_1.CloudinaryService();
 exports.propertyController = {
     createProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        // Check listing limit before doing anything
+        await subscriptionService_1.subscriptionService.checkListingLimit(req.user.id, "property");
         const files = req.files;
         let uploadedImages = [];
         if (files && files.length > 0) {
+            // Enforce photo limit based on subscription tier
+            const tier = req.user.subscriptionTier ?? "starter";
+            const maxPhotos = subscriptionTiers_1.TIER_CONFIG[tier].maxPhotos;
+            if (files.length > maxPhotos) {
+                throw new AppError_1.AppError(`Your ${subscriptionTiers_1.TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`, 400);
+            }
             uploadedImages = await cloudinaryService.uploadMultipleImages(files, "properties");
         }
         const property = await propertyService.createProperty(req.body, req.user.id, uploadedImages);
@@ -43,7 +54,8 @@ exports.propertyController = {
         });
     }),
     getProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {
-        const property = await propertyService.getPropertyById(req.params.id);
+        // trackView=true increments viewCount asynchronously
+        const property = await propertyService.getPropertyById(req.params.id, true);
         res.status(200).json({
             status: "success",
             data: { property },
@@ -76,6 +88,15 @@ exports.propertyController = {
             data: { types },
         });
     }),
+    getTypeRepresentatives: (0, catchAsync_1.catchAsync)(async (_req, res) => {
+        const representatives = await propertyService.getTypeRepresentatives();
+        res.status(200).json({ status: "success", data: { representatives } });
+    }),
+    /** GET /api/properties/analytics — host's analytics (Pro/Elite) */
+    getAnalytics: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const analytics = await propertyService.getHostAnalytics(req.user.id);
+        res.status(200).json({ status: "success", data: analytics });
+    }),
     updateProperty: (0, catchAsync_1.catchAsync)(async (req, res) => {
         const files = req.files ?? [];
         let removeImagePublicIds = [];
@@ -85,6 +106,18 @@ exports.propertyController = {
                 removeImagePublicIds = Array.isArray(raw) ? raw : [raw];
         }
         catch { /* ignore */ }
+        // Photo limit check: existing images (minus removed) + new files
+        if (files.length > 0) {
+            const existing = await propertyService.getPropertyById(req.params.id);
+            const currentCount = (existing.images?.length ?? 0) - removeImagePublicIds.length;
+            const newTotal = currentCount + files.length;
+            const tier = req.user.subscriptionTier ?? "starter";
+            const maxPhotos = subscriptionTiers_1.TIER_CONFIG[tier].maxPhotos;
+            if (newTotal > maxPhotos) {
+                throw new AppError_1.AppError(`Your ${subscriptionTiers_1.TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing. ` +
+                    `You currently have ${currentCount} and are adding ${files.length}.`, 400);
+            }
+        }
         const property = await propertyService.updateProperty(req.params.id, req.body, req.user.id, removeImagePublicIds, files.length ? files : undefined);
         res.status(200).json({ status: "success", data: { property } });
     }),
@@ -106,6 +139,46 @@ exports.propertyController = {
             return;
         }
         await propertyService.updateBlockedDates(req.params.id, req.user.id, blockedDates);
+        res.json({ status: "success", data: null });
+    }),
+    /** POST /api/properties/:id/feature-video — upload a feature video (Pro/Elite) */
+    uploadFeatureVideo: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const file = req.file;
+        if (!file)
+            throw new AppError_1.AppError("No video file uploaded", 400);
+        const tier = req.user.subscriptionTier ?? "starter";
+        const tierCfg = subscriptionTiers_1.TIER_CONFIG[tier];
+        const maxSizeBytes = tierCfg.videoMaxSizeMB * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            throw new AppError_1.AppError(`Video file is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). ` +
+                `Your ${tierCfg.label} plan allows up to ${tierCfg.videoMaxSizeMB} MB.`, 400);
+        }
+        // Verify the host owns this property
+        const property = await propertyService.getPropertyById(req.params.id);
+        if (property.hostId !== req.user.id && req.user.role !== "admin") {
+            throw new AppError_1.AppError("You can only update your own listings", 403);
+        }
+        // Delete old video from Cloudinary if present
+        if (property.featureVideoPublicId) {
+            await cloudinaryService.deleteVideo(property.featureVideoPublicId).catch(() => { });
+        }
+        const uploaded = await cloudinaryService.uploadVideo(file, "listing-videos", tierCfg.videoMaxSeconds);
+        const updated = await propertyService.updateProperty(property.id, {
+            featureVideoUrl: uploaded.url,
+            featureVideoPublicId: uploaded.publicId,
+        }, req.user.id);
+        res.json({ status: "success", data: { property: updated } });
+    }),
+    /** DELETE /api/properties/:id/feature-video — remove the feature video */
+    deleteFeatureVideo: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const property = await propertyService.getPropertyById(req.params.id);
+        if (property.hostId !== req.user.id && req.user.role !== "admin") {
+            throw new AppError_1.AppError("You can only update your own listings", 403);
+        }
+        if (property.featureVideoPublicId) {
+            await cloudinaryService.deleteVideo(property.featureVideoPublicId).catch(() => { });
+        }
+        await propertyService.updateProperty(property.id, { featureVideoUrl: null, featureVideoPublicId: null }, req.user.id);
         res.json({ status: "success", data: null });
     }),
 };

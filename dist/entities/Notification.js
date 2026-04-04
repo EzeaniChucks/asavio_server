@@ -47,6 +47,9 @@ __decorate([
             "listing_submitted",
             "payout_transferred",
             "payout_failed",
+            "subscription_activated",
+            "subscription_cancelled",
+            "subscription_payment_failed",
         ],
     }),
     __metadata("design:type", String)

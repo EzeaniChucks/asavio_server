@@ -23,7 +23,10 @@ export type NotificationType =
   | "listing_rejected"
   | "listing_submitted"
   | "payout_transferred"
-  | "payout_failed";
+  | "payout_failed"
+  | "subscription_activated"
+  | "subscription_cancelled"
+  | "subscription_payment_failed";
 
 @Entity("notifications")
 export class Notification {
@@ -54,6 +57,9 @@ export class Notification {
       "listing_submitted",
       "payout_transferred",
       "payout_failed",
+      "subscription_activated",
+      "subscription_cancelled",
+      "subscription_payment_failed",
     ],
   })
   type: NotificationType;

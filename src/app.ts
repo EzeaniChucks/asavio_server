@@ -20,6 +20,9 @@ import kycRouter from "./routers/kycRouter";
 import conversationRouter from "./routers/conversationRouter";
 import notificationRouter from "./routers/notificationRouter";
 import savedItemRouter from "./routers/savedItemRouter";
+import subscriptionRouter from "./routers/subscriptionRouter";
+import hostProfileRouter from "./routers/hostProfileRouter";
+import userRouter from "./routers/userRouter";
 import { errorHandler } from "./middleware/errorHandler";
 import dotenv from "dotenv";
 
@@ -105,6 +108,9 @@ app.use("/api/kyc", kycRouter);
 app.use("/api/conversations", conversationRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/saved", savedItemRouter);
+app.use("/api/subscriptions", subscriptionRouter);
+app.use("/api/hosts", hostProfileRouter);
+app.use("/api/users", userRouter);
 
 // Health check
 app.get("/health", (_req, res) => {

@@ -119,7 +119,9 @@ export class BookingService {
       const totalPrice = nightlyRate * nights;
 
       const host = await AppDataSource.getRepository(User).findOne({ where: { id: property.hostId } });
-      const commissionRate = await settingsService.getEffectiveRate(host?.commissionRateOverride ?? null);
+      const commissionRate = host
+        ? await settingsService.getEffectiveRateForHost(host)
+        : await settingsService.getEffectiveRate(null);
       const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
       const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
 
@@ -173,7 +175,9 @@ export class BookingService {
     const totalPrice = dailyRate * nights;
 
     const host = await AppDataSource.getRepository(User).findOne({ where: { id: vehicle.hostId } });
-    const commissionRate = await settingsService.getEffectiveRate(host?.commissionRateOverride ?? null);
+    const commissionRate = host
+      ? await settingsService.getEffectiveRateForHost(host)
+      : await settingsService.getEffectiveRate(null);
     const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
     const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
 

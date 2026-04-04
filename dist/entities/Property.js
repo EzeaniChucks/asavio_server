@@ -60,6 +60,10 @@ __decorate([
     __metadata("design:type", Array)
 ], Property.prototype, "amenities", void 0);
 __decorate([
+    (0, typeorm_1.Column)("jsonb", { nullable: true }),
+    __metadata("design:type", Object)
+], Property.prototype, "nearbyPlaces", void 0);
+__decorate([
     (0, typeorm_1.Column)("jsonb"),
     __metadata("design:type", Object)
 ], Property.prototype, "location", void 0);
@@ -116,6 +120,22 @@ __decorate([
     (0, typeorm_1.Column)({ default: 0 }),
     __metadata("design:type", Number)
 ], Property.prototype, "totalReviews", void 0);
+__decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, nullable: true }),
+    __metadata("design:type", Object)
+], Property.prototype, "cautionFee", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", Object)
+], Property.prototype, "featureVideoUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], Property.prototype, "featureVideoPublicId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 0 }),
+    __metadata("design:type", Number)
+], Property.prototype, "viewCount", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

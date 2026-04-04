@@ -6,6 +6,7 @@ const database_1 = require("../config/database");
 const Vehicle_1 = require("../entities/Vehicle");
 const AppError_1 = require("../utils/AppError");
 const cloudinaryService_1 = require("./cloudinaryService");
+const typeorm_1 = require("typeorm");
 const cloudinaryService = new cloudinaryService_1.CloudinaryService();
 class VehicleService {
     get repo() {
@@ -22,6 +23,7 @@ class VehicleService {
             year: Number(input.year),
             pricePerDay: Number(input.pricePerDay),
             priceWithDriverPerDay: input.priceWithDriverPerDay != null ? Number(input.priceWithDriverPerDay) : null,
+            cautionFee: input.cautionFee === "" || input.cautionFee == null ? null : Number(input.cautionFee),
             seats: Number(input.seats),
             withDriver: input.withDriver ?? false,
             features: input.features ?? [],
@@ -38,6 +40,26 @@ class VehicleService {
             .orderBy("vehicle.vehicleType", "ASC")
             .getRawMany();
         return rows.map((r) => r.type);
+    }
+    // Returns one representative vehicle (best-rated) per available type
+    async getVehicleTypeRepresentatives() {
+        const rows = await database_1.AppDataSource.query(`
+      SELECT DISTINCT ON (LOWER(v."vehicleType")) v.id
+      FROM vehicles v
+      INNER JOIN users host ON host.id = v."hostId"
+      WHERE v."isAvailable" = true
+        AND host."kycStatus" = 'approved'
+      ORDER BY LOWER(v."vehicleType"), v."averageRating" DESC, v."createdAt" DESC
+    `);
+        if (!rows.length)
+            return [];
+        const ids = rows.map((r) => r.id);
+        const vehicles = await this.repo.find({
+            where: { id: (0, typeorm_1.In)(ids) },
+            relations: ["host"],
+        });
+        // Preserve DISTINCT ON ordering
+        return ids.map((id) => vehicles.find((v) => v.id === id)).filter(Boolean);
     }
     async getVehicles(filters = {}) {
         const { vehicleType, minPrice, maxPrice, withDriver, location, seats, sort = "newest", page = 1, limit = 12, } = filters;
@@ -120,6 +142,11 @@ class VehicleService {
         }
         // Strip removeImagePublicIds before applying remaining field updates
         const { removeImagePublicIds: _r, ...cleanUpdates } = updates;
+        if ("cautionFee" in cleanUpdates) {
+            cleanUpdates.cautionFee = cleanUpdates.cautionFee === "" || cleanUpdates.cautionFee == null
+                ? null
+                : Number(cleanUpdates.cautionFee);
+        }
         Object.assign(vehicle, cleanUpdates);
         return this.repo.save(vehicle);
     }
