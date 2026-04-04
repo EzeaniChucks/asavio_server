@@ -254,6 +254,40 @@ export const emailService = {
     });
   },
 
+  async sendVehicleStatusUpdate(opts: {
+    to: string;
+    hostName: string;
+    vehicleTitle: string;
+    status: "approved" | "rejected";
+    rejectionReason?: string;
+    vehicleId: string;
+  }): Promise<void> {
+    const { to, hostName, vehicleTitle, status, rejectionReason, vehicleId } = opts;
+    const approved = status === "approved";
+    await send({
+      to,
+      replyTo: approved ? REPLY.hello : REPLY.support,
+      subject: approved
+        ? `Your vehicle listing is live — ${vehicleTitle}`
+        : `Vehicle listing not approved — ${vehicleTitle}`,
+      html: wrap(
+        approved
+          ? `
+            <h2 style="margin-top:0">Your vehicle listing is live! 🎉</h2>
+            <p>Hi ${hostName}, great news — <strong>${vehicleTitle}</strong> has been approved and is now visible to guests.</p>
+            <a href="${BASE_URL}/vehicles/${vehicleId}" class="btn">View your listing</a>
+          `
+          : `
+            <h2 style="margin-top:0">Vehicle listing not approved</h2>
+            <p>Hi ${hostName}, unfortunately <strong>${vehicleTitle}</strong> was not approved at this time.</p>
+            ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
+            <p>Please review the feedback, make the necessary updates, and resubmit your listing.</p>
+            <a href="${BASE_URL}/dashboard/host" class="btn">Go to your dashboard</a>
+          `
+      ),
+    });
+  },
+
   async sendKycSubmitted(opts: {
     to: string;
     hostName: string;

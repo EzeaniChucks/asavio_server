@@ -58,6 +58,12 @@ export class Vehicle {
   @Column({ default: false })
   withDriver: boolean;
 
+  @Column({ default: "pending" })
+  status: "pending" | "approved" | "rejected";
+
+  @Column({ type: "text", nullable: true })
+  rejectionReason: string | null;
+
   @Column("float", { default: 0 })
   averageRating: number;
 

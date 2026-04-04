@@ -176,6 +176,9 @@ class AdminService {
         if (search) {
             qb.andWhere("(LOWER(v.make) LIKE :q OR LOWER(v.model) LIKE :q OR LOWER(v.location) LIKE :q)", { q: `%${search.toLowerCase()}%` });
         }
+        if (opts.status) {
+            qb.andWhere("v.status = :vstatus", { vstatus: opts.status });
+        }
         const total = await qb.getCount();
         const vehicles = await qb
             .skip((page - 1) * limit)
@@ -185,11 +188,26 @@ class AdminService {
     }
     async updateVehicle(id, updates) {
         const repo = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle);
-        const vehicle = await repo.findOne({ where: { id } });
+        const vehicle = await repo.findOne({ where: { id }, relations: ["host"] });
         if (!vehicle)
             throw new AppError_1.AppError("Vehicle not found", 404);
+        const prevStatus = vehicle.status;
         Object.assign(vehicle, updates);
-        return repo.save(vehicle);
+        const saved = await repo.save(vehicle);
+        const newStatus = updates.status;
+        if (newStatus && newStatus !== prevStatus && vehicle.host) {
+            emailService_1.emailService
+                .sendVehicleStatusUpdate({
+                to: vehicle.host.email,
+                hostName: vehicle.host.firstName,
+                vehicleTitle: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                status: newStatus,
+                rejectionReason: updates.rejectionReason,
+                vehicleId: id,
+            })
+                .catch(console.error);
+        }
+        return saved;
     }
     async deleteVehicle(id) {
         const repo = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle);

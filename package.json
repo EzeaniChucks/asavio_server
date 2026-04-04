@@ -16,7 +16,8 @@
     "migration:show": "npm run typeorm migration:show -- -d src/config/database.ts",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
     "seed:reviews": "ts-node src/scripts/seedReviews.ts",
-    "seed:vehicle-reviews": "ts-node src/scripts/seedVehicleReviews.ts"
+    "seed:vehicle-reviews": "ts-node src/scripts/seedVehicleReviews.ts",
+    "seed:new-hosts": "ts-node src/scripts/seedNewHosts.ts"
   },
   "keywords": [],
   "author": "",

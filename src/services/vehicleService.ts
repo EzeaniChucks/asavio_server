@@ -58,6 +58,8 @@ class VehicleService {
       cautionFee: input.cautionFee === "" || input.cautionFee == null ? null : Number(input.cautionFee),
       seats: Number(input.seats),
       withDriver: input.withDriver ?? false,
+      status: "pending" as any,
+      isAvailable: false,
       features: input.features ?? [],
       images: uploadedImages,
       hostId,
@@ -71,6 +73,7 @@ class VehicleService {
       .createQueryBuilder("vehicle")
       .select("DISTINCT vehicle.vehicleType", "type")
       .where("vehicle.isAvailable = :isAvailable", { isAvailable: true })
+      .andWhere("vehicle.status = :status", { status: "approved" })
       .orderBy("vehicle.vehicleType", "ASC")
       .getRawMany();
     return rows.map((r) => r.type as string);
@@ -82,7 +85,7 @@ class VehicleService {
       SELECT DISTINCT ON (LOWER(v."vehicleType")) v.id
       FROM vehicles v
       INNER JOIN users host ON host.id = v."hostId"
-      WHERE v."isAvailable" = true
+      WHERE v."isAvailable" = true AND v."status" = 'approved'
         AND host."kycStatus" = 'approved'
       ORDER BY LOWER(v."vehicleType"), v."averageRating" DESC, v."createdAt" DESC
     `);
@@ -116,6 +119,7 @@ class VehicleService {
       .createQueryBuilder("v")
       .innerJoinAndSelect("v.host", "host")
       .where("v.isAvailable = :avail", { avail: true })
+      .andWhere("v.status = :vstatus", { vstatus: "approved" })
       .andWhere("host.kycStatus = :kycStatus", { kycStatus: "approved" });
 
     if (vehicleType) qb.andWhere("v.vehicleType = :vehicleType", { vehicleType });

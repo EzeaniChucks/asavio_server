@@ -205,7 +205,7 @@ class AdminService {
 
   // ── Vehicles ─────────────────────────────────────────────────
 
-  async getVehicles(opts: { page?: number; limit?: number; search?: string }) {
+  async getVehicles(opts: { page?: number; limit?: number; search?: string; status?: string }) {
     const { page = 1, search } = opts;
     const limit = Math.min(opts.limit ?? 20, 100);
     const qb = AppDataSource.getRepository(Vehicle)
@@ -220,6 +220,10 @@ class AdminService {
       );
     }
 
+    if (opts.status) {
+      qb.andWhere("v.status = :vstatus", { vstatus: opts.status });
+    }
+
     const total = await qb.getCount();
     const vehicles = await qb
       .skip((page - 1) * limit)
@@ -229,12 +233,29 @@ class AdminService {
     return { vehicles, total };
   }
 
-  async updateVehicle(id: string, updates: { isAvailable?: boolean }) {
+  async updateVehicle(id: string, updates: Record<string, any>) {
     const repo = AppDataSource.getRepository(Vehicle);
-    const vehicle = await repo.findOne({ where: { id } });
+    const vehicle = await repo.findOne({ where: { id }, relations: ["host"] });
     if (!vehicle) throw new AppError("Vehicle not found", 404);
+    const prevStatus = vehicle.status;
     Object.assign(vehicle, updates);
-    return repo.save(vehicle);
+    const saved = await repo.save(vehicle);
+
+    const newStatus = updates.status as string | undefined;
+    if (newStatus && newStatus !== prevStatus && vehicle.host) {
+      emailService
+        .sendVehicleStatusUpdate({
+          to: vehicle.host.email,
+          hostName: vehicle.host.firstName,
+          vehicleTitle: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+          status: newStatus as "approved" | "rejected",
+          rejectionReason: updates.rejectionReason,
+          vehicleId: id,
+        })
+        .catch(console.error);
+    }
+
+    return saved;
   }
 
   async deleteVehicle(id: string) {

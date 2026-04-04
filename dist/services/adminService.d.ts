@@ -186,13 +186,12 @@ declare class AdminService {
         page?: number;
         limit?: number;
         search?: string;
+        status?: string;
     }): Promise<{
         vehicles: Vehicle[];
         total: number;
     }>;
-    updateVehicle(id: string, updates: {
-        isAvailable?: boolean;
-    }): Promise<Vehicle>;
+    updateVehicle(id: string, updates: Record<string, any>): Promise<Vehicle>;
     deleteVehicle(id: string): Promise<void>;
     getBookings(opts: {
         page?: number;

@@ -84,11 +84,12 @@ export const adminController = {
   }),
 
   getVehicles: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, limit, search } = req.query;
+    const { page, limit, search, status } = req.query;
     const result = await adminService.getVehicles({
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
       search: search as string,
+      status: status as string | undefined,
     });
     res.json({ status: "success", data: result });
   }),

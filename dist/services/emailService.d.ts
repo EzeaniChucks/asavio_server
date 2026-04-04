@@ -57,6 +57,14 @@ export declare const emailService: {
         rejectionReason?: string;
         propertyId: string;
     }): Promise<void>;
+    sendVehicleStatusUpdate(opts: {
+        to: string;
+        hostName: string;
+        vehicleTitle: string;
+        status: "approved" | "rejected";
+        rejectionReason?: string;
+        vehicleId: string;
+    }): Promise<void>;
     sendKycSubmitted(opts: {
         to: string;
         hostName: string;

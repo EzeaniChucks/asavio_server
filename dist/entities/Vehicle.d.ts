@@ -20,6 +20,8 @@ export declare class Vehicle {
     location: string;
     seats: number;
     withDriver: boolean;
+    status: "pending" | "approved" | "rejected";
+    rejectionReason: string | null;
     averageRating: number;
     totalReviews: number;
     host: User;

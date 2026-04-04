@@ -74,6 +74,14 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Vehicle.prototype, "withDriver", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: "pending" }),
+    __metadata("design:type", String)
+], Vehicle.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", Object)
+], Vehicle.prototype, "rejectionReason", void 0);
+__decorate([
     (0, typeorm_1.Column)("float", { default: 0 }),
     __metadata("design:type", Number)
 ], Vehicle.prototype, "averageRating", void 0);
