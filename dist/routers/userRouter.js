@@ -10,8 +10,9 @@ const auth_1 = require("../middleware/auth");
 const upload_1 = require("../middleware/upload");
 const router = express_1.default.Router();
 router.use(auth_1.protect);
-router.use((0, auth_1.restrictTo)("host", "admin"));
-router.patch("/profile", hostProfileController_1.hostProfileController.updateProfile);
+// Photo upload — all authenticated users
 router.post("/profile/photo", upload_1.upload.single("profileImage"), hostProfileController_1.hostProfileController.uploadProfilePhoto);
+// Host-only profile fields (bio, languages, occupation, etc.)
+router.patch("/profile", (0, auth_1.restrictTo)("host", "admin"), hostProfileController_1.hostProfileController.updateProfile);
 exports.default = router;
 //# sourceMappingURL=userRouter.js.map

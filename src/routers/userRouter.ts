@@ -7,9 +7,11 @@ import { upload } from "../middleware/upload";
 const router = express.Router();
 
 router.use(protect);
-router.use(restrictTo("host", "admin"));
 
-router.patch("/profile", hostProfileController.updateProfile);
+// Photo upload — all authenticated users
 router.post("/profile/photo", upload.single("profileImage"), hostProfileController.uploadProfilePhoto);
+
+// Host-only profile fields (bio, languages, occupation, etc.)
+router.patch("/profile", restrictTo("host", "admin"), hostProfileController.updateProfile);
 
 export default router;
