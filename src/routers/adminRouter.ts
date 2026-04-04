@@ -16,6 +16,7 @@ router.get("/stats", adminController.getStats);
 
 // Users
 router.get("/users",             hasPermission(P.MANAGE_USERS), adminController.getUsers);
+router.get("/users/:id",         hasPermission(P.MANAGE_USERS), adminController.getUser);
 router.patch("/users/:id",       hasPermission(P.MANAGE_USERS), adminController.updateUser);
 router.delete("/users/:id",      hasPermission(P.MANAGE_USERS), adminController.deleteUser);
 router.get("/users/:id/properties", hasPermission(P.MANAGE_USERS), adminController.getHostProperties);

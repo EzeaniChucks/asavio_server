@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 export declare const adminController: {
     getStats: (req: Request, res: Response, next: NextFunction) => void;
     getUsers: (req: Request, res: Response, next: NextFunction) => void;
+    getUser: (req: Request, res: Response, next: NextFunction) => void;
     updateUser: (req: Request, res: Response, next: NextFunction) => void;
     deleteUser: (req: Request, res: Response, next: NextFunction) => void;
     getProperties: (req: Request, res: Response, next: NextFunction) => void;

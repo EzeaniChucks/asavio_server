@@ -41,6 +41,14 @@ class AdminService {
         };
     }
     // ── Users ────────────────────────────────────────────────────
+    async getUser(id) {
+        const repo = database_1.AppDataSource.getRepository(User_1.User);
+        const user = await repo.findOne({ where: { id } });
+        if (!user)
+            throw new AppError_1.AppError("User not found", 404);
+        const { password: _pw, ...safe } = user;
+        return safe;
+    }
     async getUsers(opts) {
         const { page = 1, role, search } = opts;
         const limit = Math.min(opts.limit ?? 20, 100);

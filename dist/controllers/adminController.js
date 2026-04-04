@@ -35,6 +35,10 @@ exports.adminController = {
         });
         res.json({ status: "success", data: result });
     }),
+    getUser: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const user = await adminService_1.adminService.getUser(req.params.id);
+        res.json({ status: "success", data: { user } });
+    }),
     updateUser: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const user = await adminService_1.adminService.updateUser(req.params.id, req.body);
         audit(req, "update_user", "user", req.params.id, req.body);
