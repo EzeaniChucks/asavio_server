@@ -207,6 +207,11 @@ declare class AdminService {
     previewAudienceCount(audience: "all" | "users" | "hosts" | "verified_hosts" | "unverified_hosts" | "guests_with_bookings"): Promise<{
         count: number;
     }>;
+    sendDirectEmail(opts: {
+        userId: string;
+        subject: string;
+        message: string;
+    }): Promise<void>;
     sendBroadcast(opts: {
         audience: "all" | "users" | "hosts" | "verified_hosts" | "unverified_hosts" | "guests_with_bookings";
         subject: string;

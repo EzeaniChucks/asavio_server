@@ -34,6 +34,7 @@ router.delete("/reviews/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERM
 // Email broadcast
 router.post("/email/broadcast", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_MARKETING), adminController_1.adminController.sendBroadcast);
 router.get("/email/audience-count", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_MARKETING), adminController_1.adminController.previewAudienceCount);
+router.post("/email/direct", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.sendDirectEmail);
 // Platform settings
 router.get("/settings", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_SETTINGS), adminController_1.adminController.getSettings);
 router.patch("/settings", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_SETTINGS), (0, validation_1.validate)(adminValidation_1.adminValidation.updateSettings), adminController_1.adminController.updateSettings);

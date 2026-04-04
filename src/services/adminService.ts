@@ -52,6 +52,14 @@ class AdminService {
 
   // ── Users ────────────────────────────────────────────────────
 
+  async getUser(id: string) {
+    const repo = AppDataSource.getRepository(User);
+    const user = await repo.findOne({ where: { id } });
+    if (!user) throw new AppError("User not found", 404);
+    const { password: _pw, ...safe } = user;
+    return safe;
+  }
+
   async getUsers(opts: {
     page?: number;
     limit?: number;
@@ -358,6 +366,16 @@ class AdminService {
   ) {
     const recipients = await this.getAudienceRecipients(audience);
     return { count: recipients.length };
+  }
+
+  async sendDirectEmail(opts: { userId: string; subject: string; message: string }) {
+    const user = await AppDataSource.getRepository(User).findOne({ where: { id: opts.userId } });
+    if (!user) throw new AppError("User not found", 404);
+    await emailService.sendAdminBroadcast({
+      to: user.email,
+      subject: opts.subject,
+      message: opts.message,
+    });
   }
 
   async sendBroadcast(opts: {

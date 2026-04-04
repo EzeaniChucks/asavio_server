@@ -13,6 +13,7 @@ export declare const adminController: {
     getBookings: (req: Request, res: Response, next: NextFunction) => void;
     updateBookingStatus: (req: Request, res: Response, next: NextFunction) => void;
     deleteReview: (req: Request, res: Response, next: NextFunction) => void;
+    sendDirectEmail: (req: Request, res: Response, next: NextFunction) => void;
     sendBroadcast: (req: Request, res: Response, next: NextFunction) => void;
     previewAudienceCount: (req: Request, res: Response, next: NextFunction) => void;
     getSettings: (req: Request, res: Response, next: NextFunction) => void;

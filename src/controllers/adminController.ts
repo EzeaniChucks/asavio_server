@@ -131,6 +131,13 @@ export const adminController = {
     res.status(204).send();
   }),
 
+  sendDirectEmail: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { userId, subject, message } = req.body;
+    await adminService.sendDirectEmail({ userId, subject, message });
+    audit(req, "send_direct_email", "user", userId, { subject });
+    res.json({ status: "success", data: { sent: true } });
+  }),
+
   sendBroadcast: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const result = await adminService.sendBroadcast(req.body);
     audit(req, "send_broadcast", undefined, undefined, { audience: req.body.audience, subject: req.body.subject, sent: result.sent });

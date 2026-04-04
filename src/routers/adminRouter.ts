@@ -41,6 +41,7 @@ router.delete("/reviews/:id",    hasPermission(P.MANAGE_REVIEWS), adminControlle
 // Email broadcast
 router.post("/email/broadcast",        hasPermission(P.MANAGE_MARKETING), adminController.sendBroadcast);
 router.get("/email/audience-count",    hasPermission(P.MANAGE_MARKETING), adminController.previewAudienceCount);
+router.post("/email/direct",           hasPermission(P.MANAGE_USERS),     adminController.sendDirectEmail);
 
 // Platform settings
 router.get("/settings",          hasPermission(P.MANAGE_SETTINGS), adminController.getSettings);

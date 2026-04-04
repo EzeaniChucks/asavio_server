@@ -107,6 +107,12 @@ exports.adminController = {
         audit(req, "delete_review", "review", req.params.id);
         res.status(204).send();
     }),
+    sendDirectEmail: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const { userId, subject, message } = req.body;
+        await adminService_1.adminService.sendDirectEmail({ userId, subject, message });
+        audit(req, "send_direct_email", "user", userId, { subject });
+        res.json({ status: "success", data: { sent: true } });
+    }),
     sendBroadcast: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const result = await adminService_1.adminService.sendBroadcast(req.body);
         audit(req, "send_broadcast", undefined, undefined, { audience: req.body.audience, subject: req.body.subject, sent: result.sent });

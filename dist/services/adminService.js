@@ -295,6 +295,16 @@ class AdminService {
         const recipients = await this.getAudienceRecipients(audience);
         return { count: recipients.length };
     }
+    async sendDirectEmail(opts) {
+        const user = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: opts.userId } });
+        if (!user)
+            throw new AppError_1.AppError("User not found", 404);
+        await emailService_1.emailService.sendAdminBroadcast({
+            to: user.email,
+            subject: opts.subject,
+            message: opts.message,
+        });
+    }
     async sendBroadcast(opts) {
         const { audience, subject, message, htmlBody } = opts;
         const recipients = await this.getAudienceRecipients(audience);
