@@ -12,6 +12,7 @@ export const ADMIN_PERMISSIONS = {
   MANAGE_KYC:        "manage_kyc",
   MANAGE_ADMINS:     "manage_admins",
   VIEW_AUDIT_LOGS:   "view_audit_logs",
+  MANAGE_SUPPORT:    "manage_support",
 } as const;
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
@@ -30,4 +31,5 @@ export const PERMISSION_LABELS: Record<AdminPermission, string> = {
   manage_kyc:        "KYC Review",
   manage_admins:     "Admin Management (IAM)",
   view_audit_logs:   "View Audit Logs",
+  manage_support:    "Guest Support & Complaints",
 };

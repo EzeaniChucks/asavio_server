@@ -33,8 +33,15 @@ router.patch("/vehicles/:id",    hasPermission(P.MANAGE_VEHICLES), adminControll
 router.delete("/vehicles/:id",   hasPermission(P.MANAGE_VEHICLES), adminController.deleteVehicle);
 
 // Bookings
-router.get("/bookings",                  hasPermission(P.MANAGE_BOOKINGS), adminController.getBookings);
-router.patch("/bookings/:id/status",     hasPermission(P.MANAGE_BOOKINGS), adminController.updateBookingStatus);
+router.get("/bookings",                       hasPermission(P.MANAGE_BOOKINGS), adminController.getBookings);
+router.patch("/bookings/:id/status",          hasPermission(P.MANAGE_BOOKINGS), adminController.updateBookingStatus);
+router.post("/bookings/:id/verify-payment",   hasPermission(P.MANAGE_BOOKINGS), adminController.verifyBookingPayment);
+
+// Support Tickets
+router.get("/support",             hasPermission(P.MANAGE_SUPPORT), adminController.getSupportTickets);
+router.get("/support/:id",         hasPermission(P.MANAGE_SUPPORT), adminController.getSupportTicket);
+router.post("/support/:id/respond",hasPermission(P.MANAGE_SUPPORT), adminController.respondToSupportTicket);
+router.patch("/support/:id/status",hasPermission(P.MANAGE_SUPPORT), adminController.updateSupportTicketStatus);
 
 // Reviews
 router.delete("/reviews/:id",    hasPermission(P.MANAGE_REVIEWS), adminController.deleteReview);

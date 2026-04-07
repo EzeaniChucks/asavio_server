@@ -8,6 +8,7 @@ import { Review } from "../entities/Review";
 import { AppError } from "../utils/AppError";
 import { emailService } from "./emailService";
 import { notificationService } from "./notificationService";
+import { paymentService } from "./paymentService";
 
 class AdminService {
   // ── Stats ────────────────────────────────────────────────────
@@ -293,6 +294,15 @@ class AdminService {
       .getMany();
 
     return { bookings, total };
+  }
+
+  async verifyBookingPayment(id: string): Promise<Booking> {
+    const repo = AppDataSource.getRepository(Booking);
+    const booking = await repo.findOne({ where: { id } });
+    if (!booking) throw new AppError("Booking not found", 404);
+    if (!booking.paystackReference) throw new AppError("This booking has no Paystack reference to verify", 400);
+    // Delegates to paymentService which calls Paystack and updates booking status
+    return paymentService.verifyPayment(booking.paystackReference);
   }
 
   async updateBookingStatus(id: string, status: string) {

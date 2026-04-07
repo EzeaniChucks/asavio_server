@@ -532,4 +532,88 @@ export const emailService = {
       `),
     });
   },
+
+  // ── Support Tickets ──────────────────────────────────────────────────────────
+
+  /** Sent to the guest confirming their ticket was received */
+  async sendSupportTicketReceived(opts: {
+    to: string;
+    firstName: string;
+    subject: string;
+    ticketId: string;
+  }): Promise<void> {
+    const { to, firstName, subject, ticketId } = opts;
+    await send({
+      to,
+      replyTo: REPLY.support,
+      subject: `We've received your message — ${APP_NAME} Support`,
+      html: wrap(`
+        <h2 style="margin-top:0">We've got your message</h2>
+        <p>Hi ${escapeHtml(firstName)},</p>
+        <p>Thanks for reaching out. We've received your support request and our team will get back to you as soon as possible.</p>
+        <hr class="divider" />
+        <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+        <p><strong>Ticket ID:</strong> <span class="pill">${ticketId}</span></p>
+        <hr class="divider" />
+        <p style="color:#6B7280;font-size:13px">You can track your ticket in the <a href="${BASE_URL}/support" style="color:#000">Support section</a> of your account. If you have more to add, reply to this email.</p>
+      `),
+    });
+  },
+
+  /** Sent to admin/support inbox when a new ticket is submitted */
+  async sendAdminSupportAlert(opts: {
+    to: string;
+    guestName: string;
+    guestEmail: string;
+    subject: string;
+    category: string;
+    message: string;
+    ticketId: string;
+  }): Promise<void> {
+    const { to, guestName, guestEmail, subject, category, message, ticketId } = opts;
+    await send({
+      to,
+      replyTo: guestEmail,
+      subject: `[Support] New ticket: ${subject}`,
+      html: wrap(`
+        <h2 style="margin-top:0">New support ticket</h2>
+        <p>A guest has submitted a support request.</p>
+        <hr class="divider" />
+        <p><strong>Guest:</strong> ${escapeHtml(guestName)} (${escapeHtml(guestEmail)})</p>
+        <p><strong>Category:</strong> <span class="pill">${escapeHtml(category)}</span></p>
+        <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+        <hr class="divider" />
+        <p style="background:#F9FAFB;border-radius:8px;padding:16px;line-height:1.7;white-space:pre-wrap">${escapeHtml(message)}</p>
+        <hr class="divider" />
+        <a href="${BASE_URL}/dashboard/admin/support?ticket=${ticketId}" class="btn">View &amp; respond in dashboard</a>
+      `),
+    });
+  },
+
+  /** Sent to guest when admin responds to their ticket */
+  async sendSupportTicketResponse(opts: {
+    to: string;
+    firstName: string;
+    subject: string;
+    response: string;
+    ticketId: string;
+  }): Promise<void> {
+    const { to, firstName, subject, response, ticketId } = opts;
+    const safeResponse = escapeHtml(response).replace(/\n/g, "<br />");
+    await send({
+      to,
+      replyTo: REPLY.support,
+      subject: `Re: ${subject} — ${APP_NAME} Support`,
+      html: wrap(`
+        <h2 style="margin-top:0">Response to your support request</h2>
+        <p>Hi ${escapeHtml(firstName)},</p>
+        <p>Our support team has responded to your request.</p>
+        <hr class="divider" />
+        <p style="background:#F9FAFB;border-radius:8px;padding:16px;line-height:1.7">${safeResponse}</p>
+        <hr class="divider" />
+        <a href="${BASE_URL}/support?ticket=${ticketId}" class="btn">View your ticket</a>
+        <p style="margin-top:16px;font-size:12px;color:#9CA3AF">If this doesn't resolve your issue, reply to this email or submit a new request.</p>
+      `),
+    });
+  },
 };

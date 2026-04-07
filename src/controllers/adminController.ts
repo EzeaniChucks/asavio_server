@@ -3,8 +3,10 @@ import { Request, Response, NextFunction } from "express";
 import { adminService } from "../services/adminService";
 import { settingsService } from "../services/settingsService";
 import { iamService } from "../services/iamService";
+import { supportService } from "../services/supportService";
 import { catchAsync } from "../utils/catchAsync";
 import type { AdminPermission } from "../constants/permissions";
+import type { TicketStatus } from "../entities/SupportTicket";
 
 /** Fire-and-forget audit log helper */
 function audit(
@@ -128,6 +130,53 @@ export const adminController = {
     );
     audit(req, "update_booking_status", "booking", req.params.id, { status: req.body.status });
     res.json({ status: "success", data: { booking } });
+  }),
+
+  verifyBookingPayment: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const booking = await adminService.verifyBookingPayment(req.params.id as string);
+    audit(req, "verify_booking_payment", "booking", req.params.id, { paymentStatus: booking.paymentStatus });
+    res.json({ status: "success", data: { booking } });
+  }),
+
+  // ── Support Tickets ───────────────────────────────────────────
+
+  getSupportTickets: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { page, limit, status } = req.query;
+    const result = await supportService.getTickets({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+      status: status as string,
+    });
+    res.json({ status: "success", data: result });
+  }),
+
+  getSupportTicket: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const ticket = await supportService.getTicket(req.params.id as string);
+    res.json({ status: "success", data: { ticket } });
+  }),
+
+  respondToSupportTicket: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { response, status } = req.body;
+    if (!response) {
+      res.status(400).json({ status: "error", message: "response is required" });
+      return;
+    }
+    const ticket = await supportService.respondToTicket(
+      req.user.id,
+      req.params.id as string,
+      { response, status: (status ?? "resolved") as TicketStatus }
+    );
+    audit(req, "respond_support_ticket", "support_ticket", req.params.id, { status: ticket.status });
+    res.json({ status: "success", data: { ticket } });
+  }),
+
+  updateSupportTicketStatus: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const ticket = await supportService.updateTicketStatus(
+      req.params.id as string,
+      req.body.status as TicketStatus
+    );
+    audit(req, "update_support_ticket_status", "support_ticket", req.params.id, { status: req.body.status });
+    res.json({ status: "success", data: { ticket } });
   }),
 
   deleteReview: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {

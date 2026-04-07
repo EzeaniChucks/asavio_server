@@ -19,6 +19,7 @@ const ALWAYS_EMAIL = new Set<NotificationType>([
   "listing_submitted",
   "payout_transferred",
   "payout_failed",
+  "support_ticket",
 ]);
 
 export const notificationService = {
