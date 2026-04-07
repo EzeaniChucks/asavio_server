@@ -30,6 +30,12 @@ router.delete("/vehicles/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PER
 // Bookings
 router.get("/bookings", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_BOOKINGS), adminController_1.adminController.getBookings);
 router.patch("/bookings/:id/status", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_BOOKINGS), adminController_1.adminController.updateBookingStatus);
+router.post("/bookings/:id/verify-payment", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_BOOKINGS), adminController_1.adminController.verifyBookingPayment);
+// Support Tickets
+router.get("/support", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_SUPPORT), adminController_1.adminController.getSupportTickets);
+router.get("/support/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_SUPPORT), adminController_1.adminController.getSupportTicket);
+router.post("/support/:id/respond", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_SUPPORT), adminController_1.adminController.respondToSupportTicket);
+router.patch("/support/:id/status", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_SUPPORT), adminController_1.adminController.updateSupportTicketStatus);
 // Reviews
 router.delete("/reviews/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_REVIEWS), adminController_1.adminController.deleteReview);
 // Email broadcast

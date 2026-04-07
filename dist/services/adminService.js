@@ -11,6 +11,7 @@ const Review_1 = require("../entities/Review");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
 const notificationService_1 = require("./notificationService");
+const paymentService_1 = require("./paymentService");
 class AdminService {
     // ── Stats ────────────────────────────────────────────────────
     async getStats() {
@@ -241,6 +242,16 @@ class AdminService {
             .take(limit)
             .getMany();
         return { bookings, total };
+    }
+    async verifyBookingPayment(id) {
+        const repo = database_1.AppDataSource.getRepository(Booking_1.Booking);
+        const booking = await repo.findOne({ where: { id } });
+        if (!booking)
+            throw new AppError_1.AppError("Booking not found", 404);
+        if (!booking.paystackReference)
+            throw new AppError_1.AppError("This booking has no Paystack reference to verify", 400);
+        // Delegates to paymentService which calls Paystack and updates booking status
+        return paymentService_1.paymentService.verifyPayment(booking.paystackReference);
     }
     async updateBookingStatus(id, status) {
         const repo = database_1.AppDataSource.getRepository(Booking_1.Booking);

@@ -247,6 +247,7 @@ declare class AdminService {
         bookings: Booking[];
         total: number;
     }>;
+    verifyBookingPayment(id: string): Promise<Booking>;
     updateBookingStatus(id: string, status: string): Promise<Booking>;
     deleteReview(id: string): Promise<void>;
     getAudienceRecipients(audience: "all" | "users" | "hosts" | "verified_hosts" | "unverified_hosts" | "guests_with_bookings"): Promise<User[]>;

@@ -9,73 +9,71 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Notification = void 0;
-// src/entities/Notification.ts
+exports.SupportTicket = void 0;
+// src/entities/SupportTicket.ts
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
-let Notification = class Notification {
+let SupportTicket = class SupportTicket {
 };
-exports.Notification = Notification;
+exports.SupportTicket = SupportTicket;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)("uuid"),
     __metadata("design:type", String)
-], Notification.prototype, "id", void 0);
+], SupportTicket.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => User_1.User, { onDelete: "CASCADE" }),
     (0, typeorm_1.JoinColumn)({ name: "userId" }),
     __metadata("design:type", User_1.User)
-], Notification.prototype, "user", void 0);
+], SupportTicket.prototype, "user", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Notification.prototype, "userId", void 0);
+], SupportTicket.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], SupportTicket.prototype, "subject", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: "enum",
-        enum: [
-            "message",
-            "booking_request",
-            "booking_confirmed",
-            "booking_cancelled",
-            "booking_completed",
-            "review_received",
-            "kyc_approved",
-            "kyc_rejected",
-            "kyc_submitted",
-            "listing_approved",
-            "listing_rejected",
-            "listing_submitted",
-            "payout_transferred",
-            "payout_failed",
-            "subscription_activated",
-            "subscription_cancelled",
-            "subscription_payment_failed",
-            "support_ticket",
-        ],
+        enum: ["payment", "booking", "listing", "account", "other"],
+        default: "other",
     }),
     __metadata("design:type", String)
-], Notification.prototype, "type", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Notification.prototype, "title", void 0);
+], SupportTicket.prototype, "category", void 0);
 __decorate([
     (0, typeorm_1.Column)("text"),
     __metadata("design:type", String)
-], Notification.prototype, "body", void 0);
+], SupportTicket.prototype, "message", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: "jsonb", nullable: true }),
+    (0, typeorm_1.Column)({
+        type: "enum",
+        enum: ["open", "in_progress", "resolved", "closed"],
+        default: "open",
+    }),
+    __metadata("design:type", String)
+], SupportTicket.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
     __metadata("design:type", Object)
-], Notification.prototype, "data", void 0);
+], SupportTicket.prototype, "adminResponse", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], Notification.prototype, "isRead", void 0);
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], SupportTicket.prototype, "respondedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", nullable: true }),
+    __metadata("design:type", Object)
+], SupportTicket.prototype, "respondedByAdminId", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], Notification.prototype, "createdAt", void 0);
-exports.Notification = Notification = __decorate([
-    (0, typeorm_1.Entity)("notifications")
-], Notification);
-//# sourceMappingURL=Notification.js.map
+], SupportTicket.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], SupportTicket.prototype, "updatedAt", void 0);
+exports.SupportTicket = SupportTicket = __decorate([
+    (0, typeorm_1.Entity)("support_tickets")
+], SupportTicket);
+//# sourceMappingURL=SupportTicket.js.map

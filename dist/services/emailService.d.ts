@@ -124,5 +124,30 @@ export declare const emailService: {
         firstName: string;
         tier: string;
     }): Promise<void>;
+    /** Sent to the guest confirming their ticket was received */
+    sendSupportTicketReceived(opts: {
+        to: string;
+        firstName: string;
+        subject: string;
+        ticketId: string;
+    }): Promise<void>;
+    /** Sent to admin/support inbox when a new ticket is submitted */
+    sendAdminSupportAlert(opts: {
+        to: string;
+        guestName: string;
+        guestEmail: string;
+        subject: string;
+        category: string;
+        message: string;
+        ticketId: string;
+    }): Promise<void>;
+    /** Sent to guest when admin responds to their ticket */
+    sendSupportTicketResponse(opts: {
+        to: string;
+        firstName: string;
+        subject: string;
+        response: string;
+        ticketId: string;
+    }): Promise<void>;
 };
 //# sourceMappingURL=emailService.d.ts.map

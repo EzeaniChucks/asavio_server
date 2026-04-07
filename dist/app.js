@@ -28,6 +28,7 @@ const savedItemRouter_1 = __importDefault(require("./routers/savedItemRouter"));
 const subscriptionRouter_1 = __importDefault(require("./routers/subscriptionRouter"));
 const hostProfileRouter_1 = __importDefault(require("./routers/hostProfileRouter"));
 const userRouter_1 = __importDefault(require("./routers/userRouter"));
+const supportRouter_1 = __importDefault(require("./routers/supportRouter"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -100,6 +101,7 @@ app.use("/api/saved", savedItemRouter_1.default);
 app.use("/api/subscriptions", subscriptionRouter_1.default);
 app.use("/api/hosts", hostProfileRouter_1.default);
 app.use("/api/users", userRouter_1.default);
+app.use("/api/support", supportRouter_1.default);
 // Health check
 app.get("/health", (_req, res) => {
     res.status(200).json({ status: "OK", message: "Server is running" });

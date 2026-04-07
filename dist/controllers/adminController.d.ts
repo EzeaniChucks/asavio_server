@@ -13,6 +13,11 @@ export declare const adminController: {
     deleteVehicle: (req: Request, res: Response, next: NextFunction) => void;
     getBookings: (req: Request, res: Response, next: NextFunction) => void;
     updateBookingStatus: (req: Request, res: Response, next: NextFunction) => void;
+    verifyBookingPayment: (req: Request, res: Response, next: NextFunction) => void;
+    getSupportTickets: (req: Request, res: Response, next: NextFunction) => void;
+    getSupportTicket: (req: Request, res: Response, next: NextFunction) => void;
+    respondToSupportTicket: (req: Request, res: Response, next: NextFunction) => void;
+    updateSupportTicketStatus: (req: Request, res: Response, next: NextFunction) => void;
     deleteReview: (req: Request, res: Response, next: NextFunction) => void;
     sendDirectEmail: (req: Request, res: Response, next: NextFunction) => void;
     sendBroadcast: (req: Request, res: Response, next: NextFunction) => void;

@@ -10,6 +10,7 @@ export declare const ADMIN_PERMISSIONS: {
     readonly MANAGE_KYC: "manage_kyc";
     readonly MANAGE_ADMINS: "manage_admins";
     readonly VIEW_AUDIT_LOGS: "view_audit_logs";
+    readonly MANAGE_SUPPORT: "manage_support";
 };
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
 export declare const ALL_PERMISSIONS: AdminPermission[];

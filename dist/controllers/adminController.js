@@ -4,6 +4,7 @@ exports.adminController = void 0;
 const adminService_1 = require("../services/adminService");
 const settingsService_1 = require("../services/settingsService");
 const iamService_1 = require("../services/iamService");
+const supportService_1 = require("../services/supportService");
 const catchAsync_1 = require("../utils/catchAsync");
 /** Fire-and-forget audit log helper */
 function audit(req, action, targetType, targetId, details) {
@@ -105,6 +106,40 @@ exports.adminController = {
         const booking = await adminService_1.adminService.updateBookingStatus(req.params.id, req.body.status);
         audit(req, "update_booking_status", "booking", req.params.id, { status: req.body.status });
         res.json({ status: "success", data: { booking } });
+    }),
+    verifyBookingPayment: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const booking = await adminService_1.adminService.verifyBookingPayment(req.params.id);
+        audit(req, "verify_booking_payment", "booking", req.params.id, { paymentStatus: booking.paymentStatus });
+        res.json({ status: "success", data: { booking } });
+    }),
+    // ── Support Tickets ───────────────────────────────────────────
+    getSupportTickets: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const { page, limit, status } = req.query;
+        const result = await supportService_1.supportService.getTickets({
+            page: page ? Number(page) : 1,
+            limit: limit ? Number(limit) : 20,
+            status: status,
+        });
+        res.json({ status: "success", data: result });
+    }),
+    getSupportTicket: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const ticket = await supportService_1.supportService.getTicket(req.params.id);
+        res.json({ status: "success", data: { ticket } });
+    }),
+    respondToSupportTicket: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const { response, status } = req.body;
+        if (!response) {
+            res.status(400).json({ status: "error", message: "response is required" });
+            return;
+        }
+        const ticket = await supportService_1.supportService.respondToTicket(req.user.id, req.params.id, { response, status: (status ?? "resolved") });
+        audit(req, "respond_support_ticket", "support_ticket", req.params.id, { status: ticket.status });
+        res.json({ status: "success", data: { ticket } });
+    }),
+    updateSupportTicketStatus: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const ticket = await supportService_1.supportService.updateTicketStatus(req.params.id, req.body.status);
+        audit(req, "update_support_ticket_status", "support_ticket", req.params.id, { status: req.body.status });
+        res.json({ status: "success", data: { ticket } });
     }),
     deleteReview: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         await adminService_1.adminService.deleteReview(req.params.id);

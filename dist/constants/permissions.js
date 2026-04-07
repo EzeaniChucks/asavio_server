@@ -14,6 +14,7 @@ exports.ADMIN_PERMISSIONS = {
     MANAGE_KYC: "manage_kyc",
     MANAGE_ADMINS: "manage_admins",
     VIEW_AUDIT_LOGS: "view_audit_logs",
+    MANAGE_SUPPORT: "manage_support",
 };
 exports.ALL_PERMISSIONS = Object.values(exports.ADMIN_PERMISSIONS);
 exports.PERMISSION_LABELS = {
@@ -28,5 +29,6 @@ exports.PERMISSION_LABELS = {
     manage_kyc: "KYC Review",
     manage_admins: "Admin Management (IAM)",
     view_audit_logs: "View Audit Logs",
+    manage_support: "Guest Support & Complaints",
 };
 //# sourceMappingURL=permissions.js.map

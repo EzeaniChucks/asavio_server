@@ -20,6 +20,7 @@ const ALWAYS_EMAIL = new Set([
     "listing_submitted",
     "payout_transferred",
     "payout_failed",
+    "support_ticket",
 ]);
 exports.notificationService = {
     /** Create a notification and dispatch it: socket if online, email otherwise (30s delay). */
