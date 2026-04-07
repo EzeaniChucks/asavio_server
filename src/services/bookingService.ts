@@ -395,7 +395,7 @@ export class BookingService {
       .where("b.vehicleId = :vehicleId", { vehicleId })
       .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
       .andWhere(
-        "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.createdAt > :cutoff)",
+        "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)",
         { cutoff }
       )
       .getMany();

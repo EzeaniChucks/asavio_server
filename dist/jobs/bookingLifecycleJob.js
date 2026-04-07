@@ -103,12 +103,15 @@ async function sendCheckInReminders() {
 async function cancelAbandonedBookings() {
     const repo = database_1.AppDataSource.getRepository(Booking_1.Booking);
     const cutoff = new Date(Date.now() - 45 * 60 * 1000);
-    // awaiting_payment + never paid + created more than 45 minutes ago = abandoned
+    // Only cancel bookings where the customer never reached Paystack at all
+    // (no paystackReference). If a reference exists the customer was redirected
+    // to Paystack and may have paid — those need admin review, not auto-cancel.
     const abandoned = await repo
         .createQueryBuilder("b")
         .where("b.status = :status", { status: "awaiting_payment" })
         .andWhere("b.paymentStatus = :pStatus", { pStatus: "pending" })
         .andWhere("b.createdAt < :cutoff", { cutoff })
+        .andWhere("b.paystackReference IS NULL")
         .getMany();
     for (const booking of abandoned) {
         try {

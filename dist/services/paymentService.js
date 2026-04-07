@@ -128,12 +128,18 @@ class PaymentService {
         if (!booking)
             throw new AppError_1.AppError("Booking not found for this reference", 404);
         if (response.data.status === "success") {
+            // Only reinstate to confirmed if the booking hasn't been deliberately cancelled
+            // after already being paid (e.g. admin issued a refund then cancelled).
+            // A cancelled booking with paymentStatus still "pending" means it was cancelled
+            // before we knew the payment outcome — safe to reinstate.
+            const shouldReinstate = booking.status !== "cancelled" || booking.paymentStatus !== "paid";
+            const newStatus = shouldReinstate ? "confirmed" : booking.status;
             await this.bookingRepo.update(booking.id, {
                 paymentStatus: "paid",
-                status: "confirmed",
+                status: newStatus,
             });
             booking.paymentStatus = "paid";
-            booking.status = "confirmed";
+            booking.status = newStatus;
             // Send confirmation email (deferred from booking creation)
             const nights = Math.ceil((new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) /
                 (1000 * 60 * 60 * 24));

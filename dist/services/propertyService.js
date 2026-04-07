@@ -404,8 +404,9 @@ class PropertyService {
                 .where("b.propertyId = :propertyId", { propertyId })
                 .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
                 .andWhere(
-            // confirmed always included; awaiting_payment only if paid OR created within 45 min
-            "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.createdAt > :cutoff)", { cutoff })
+            // confirmed always included; awaiting_payment only if paid, has a Paystack reference
+            // (customer reached checkout), or was created within the 45-min window
+            "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)", { cutoff })
                 .getMany(),
             this.propertyRepository.findOne({ where: { id: propertyId }, select: ["blockedDates"] }),
         ]);
