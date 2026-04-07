@@ -180,40 +180,58 @@ class PaymentService {
             .createHmac("sha512", secret)
             .update(rawBody)
             .digest("hex");
+        console.log("[Webhook] HMAC computed:", hash.slice(0, 16) + "...");
         if (hash !== signature) {
+            console.error("[Webhook] Signature mismatch — possible tampered payload or wrong secret key");
             throw new AppError_1.AppError("Invalid webhook signature", 400);
         }
+        console.log("[Webhook] Signature verified OK");
         const event = JSON.parse(rawBody.toString());
+        console.log("[Webhook] Event type:", event.event);
         // ── Booking payment ────────────────────────────────────────────────────
         if (event.event === "charge.success") {
             const meta = event.data.metadata;
+            console.log("[Webhook] charge.success — metadata:", JSON.stringify(meta));
             // If metadata has type = 'subscription_initiate' this is the first
             // subscription charge — activate the subscription record.
             if (meta?.type === "subscription_initiate") {
+                console.log("[Webhook] Routing to subscriptionService.activateSubscription");
                 const hostId = meta.hostId;
                 const tier = meta.subscriptionTier;
                 const cycle = meta.billingCycle;
                 const planCode = meta.planCode;
                 const subData = event.data.subscription ?? event.data;
+                console.log("[Webhook] Subscription activate payload — hostId:", hostId, "tier:", tier, "cycle:", cycle, "planCode:", planCode);
                 await subscriptionService_1.subscriptionService
                     .activateSubscription({ hostId, tier, cycle, planCode, subscriptionData: subData })
-                    .catch(console.error);
+                    .catch((err) => console.error("[Webhook] activateSubscription failed:", err));
+                console.log("[Webhook] activateSubscription call completed");
                 return;
             }
             // Regular booking charge
             const { reference } = event.data;
+            console.log("[Webhook] Booking charge — reference:", reference);
             const booking = await this.bookingRepo.findOne({
                 where: { paystackReference: reference },
                 relations: ["user", "property"],
             });
-            if (!booking || booking.paymentStatus === "paid")
+            if (!booking) {
+                console.warn("[Webhook] No booking found for reference:", reference, "— ignoring");
                 return;
+            }
+            if (booking.paymentStatus === "paid") {
+                console.log("[Webhook] Booking", booking.id, "already marked paid — skipping (idempotent)");
+                return;
+            }
+            console.log("[Webhook] Marking booking", booking.id, "as paid");
             await this.bookingRepo.update(booking.id, {
                 paymentStatus: "paid",
                 status: "confirmed",
             });
+            console.log("[Webhook] Booking", booking.id, "updated to paid/confirmed");
             const webhookNights = Math.ceil((new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) /
                 (1000 * 60 * 60 * 24));
+            console.log("[Webhook] Sending confirmation email to", booking.user.email);
             emailService_1.emailService
                 .sendBookingConfirmation({
                 to: booking.user.email,
@@ -225,36 +243,48 @@ class PaymentService {
                 totalPrice: Number(booking.totalPrice),
                 bookingId: booking.id,
             })
-                .catch(console.error);
+                .catch((err) => console.error("[Webhook] sendBookingConfirmation failed:", err));
+            console.log("[Webhook] Sending in-app notification to guest", booking.user.id);
             notificationService_1.notificationService.send({
                 userId: booking.user.id,
                 type: "booking_confirmed",
                 title: "Booking confirmed ✓",
                 body: `Payment received. Your booking for "${booking.property?.title ?? "your property"}" is confirmed.`,
                 data: { url: `/bookings/${booking.id}`, urlLabel: "View booking" },
-            }).catch(console.error);
+            }).catch((err) => console.error("[Webhook] Guest notification failed:", err));
             if (booking.property?.hostId) {
+                console.log("[Webhook] Sending in-app notification to host", booking.property.hostId);
                 notificationService_1.notificationService.send({
                     userId: booking.property.hostId,
                     type: "booking_confirmed",
                     title: "Booking payment received",
                     body: `Payment confirmed for a booking at "${booking.property.title}". Check your dashboard.`,
                     data: { url: `/dashboard/host`, urlLabel: "View bookings" },
-                }).catch(console.error);
+                }).catch((err) => console.error("[Webhook] Host notification failed:", err));
             }
         }
         // ── Subscription renewal ───────────────────────────────────────────────
         if (event.event === "invoice.payment_failed") {
             const subCode = event.data?.subscription?.subscription_code;
+            console.log("[Webhook] invoice.payment_failed — subCode:", subCode);
             if (subCode) {
-                await subscriptionService_1.subscriptionService.markPastDue(subCode).catch(console.error);
+                await subscriptionService_1.subscriptionService.markPastDue(subCode).catch((err) => console.error("[Webhook] markPastDue failed:", err));
+                console.log("[Webhook] markPastDue called for", subCode);
+            }
+            else {
+                console.warn("[Webhook] invoice.payment_failed — no subscription_code found in payload");
             }
         }
         // ── Subscription disabled (cancel confirmed by Paystack) ───────────────
         if (event.event === "subscription.disable" || event.event === "subscription.not_renew") {
             const subCode = event.data?.subscription_code;
+            console.log("[Webhook]", event.event, "— subCode:", subCode);
             if (subCode) {
-                await subscriptionService_1.subscriptionService.expireSubscription(subCode).catch(console.error);
+                await subscriptionService_1.subscriptionService.expireSubscription(subCode).catch((err) => console.error("[Webhook] expireSubscription failed:", err));
+                console.log("[Webhook] expireSubscription called for", subCode);
+            }
+            else {
+                console.warn("[Webhook]", event.event, "— no subscription_code found in payload");
             }
         }
     }

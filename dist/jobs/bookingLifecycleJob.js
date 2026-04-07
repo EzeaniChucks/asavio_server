@@ -100,15 +100,42 @@ async function sendCheckInReminders() {
         }
     }
 }
+async function cancelAbandonedBookings() {
+    const repo = database_1.AppDataSource.getRepository(Booking_1.Booking);
+    const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+    // awaiting_payment + never paid + created more than 45 minutes ago = abandoned
+    const abandoned = await repo
+        .createQueryBuilder("b")
+        .where("b.status = :status", { status: "awaiting_payment" })
+        .andWhere("b.paymentStatus = :pStatus", { pStatus: "pending" })
+        .andWhere("b.createdAt < :cutoff", { cutoff })
+        .getMany();
+    for (const booking of abandoned) {
+        try {
+            await repo.update(booking.id, { status: "cancelled" });
+            console.log(`[Lifecycle] Cancelled abandoned booking ${booking.id} (created ${booking.createdAt.toISOString()})`);
+        }
+        catch (err) {
+            console.error(`[Lifecycle] Failed to cancel abandoned booking ${booking.id}:`, err);
+        }
+    }
+    if (abandoned.length > 0) {
+        console.log(`[Lifecycle] Cancelled ${abandoned.length} abandoned booking(s)`);
+    }
+}
 // ── Scheduler ────────────────────────────────────────────────────────────────
 function startBookingLifecycleJob() {
     // Runs every day at 01:00 UTC
     node_cron_1.default.schedule("0 1 * * *", async () => {
-        console.log("[Lifecycle] Running booking lifecycle job…");
+        console.log("[Lifecycle] Running daily booking lifecycle job…");
         await completeExpiredBookings();
         await sendCheckInReminders();
-        console.log("[Lifecycle] Done.");
+        console.log("[Lifecycle] Daily job done.");
     });
-    console.log("[Lifecycle] Booking lifecycle job scheduled (daily at 01:00 UTC)");
+    // Runs every 15 minutes — cleans up abandoned unpaid bookings to free the calendar
+    node_cron_1.default.schedule("*/15 * * * *", async () => {
+        await cancelAbandonedBookings();
+    });
+    console.log("[Lifecycle] Booking lifecycle jobs scheduled (daily at 01:00 UTC + abandoned cleanup every 15 min)");
 }
 //# sourceMappingURL=bookingLifecycleJob.js.map

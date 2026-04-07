@@ -11,7 +11,6 @@ const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
 const notificationService_1 = require("./notificationService");
 const settingsService_1 = require("./settingsService");
-const typeorm_1 = require("typeorm");
 class BookingService {
     constructor() {
         this.bookingRepo = database_1.AppDataSource.getRepository(Booking_1.Booking);
@@ -325,10 +324,14 @@ class BookingService {
     }
     /** Returns booked date ranges for a vehicle (for calendar display) */
     async getVehicleBookedDates(vehicleId) {
-        const bookings = await this.bookingRepo.find({
-            where: { vehicleId, status: (0, typeorm_1.In)(["awaiting_payment", "confirmed"]) },
-            select: ["checkIn", "checkOut"],
-        });
+        const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+        const bookings = await this.bookingRepo
+            .createQueryBuilder("b")
+            .select(["b.checkIn", "b.checkOut"])
+            .where("b.vehicleId = :vehicleId", { vehicleId })
+            .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+            .andWhere("(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.createdAt > :cutoff)", { cutoff })
+            .getMany();
         return bookings.map((b) => ({
             checkIn: String(b.checkIn).split("T")[0],
             checkOut: String(b.checkOut).split("T")[0],

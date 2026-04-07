@@ -393,11 +393,20 @@ class PropertyService {
      */
     async getBookedDates(propertyId) {
         const bookingRepo = database_1.AppDataSource.getRepository(Booking_1.Booking);
+        // Cut-off: awaiting_payment bookings older than 45 min with no payment are treated as
+        // abandoned — don't block the calendar. Paid awaiting_payment (charged but not yet
+        // admin-confirmed) are always included.
+        const cutoff = new Date(Date.now() - 45 * 60 * 1000);
         const [bookings, property] = await Promise.all([
-            bookingRepo.find({
-                where: { propertyId, status: (0, typeorm_1.In)(["awaiting_payment", "confirmed"]) },
-                select: ["checkIn", "checkOut"],
-            }),
+            bookingRepo
+                .createQueryBuilder("b")
+                .select(["b.checkIn", "b.checkOut"])
+                .where("b.propertyId = :propertyId", { propertyId })
+                .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+                .andWhere(
+            // confirmed always included; awaiting_payment only if paid OR created within 45 min
+            "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.createdAt > :cutoff)", { cutoff })
+                .getMany(),
             this.propertyRepository.findOne({ where: { id: propertyId }, select: ["blockedDates"] }),
         ]);
         const booked = bookings.map((b) => ({

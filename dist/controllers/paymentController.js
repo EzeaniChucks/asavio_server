@@ -21,14 +21,19 @@ exports.paymentController = {
         res.json({ status: "success", data: { booking } });
     }),
     webhook: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        console.log("[Webhook] Incoming request from Paystack");
         const signature = req.headers["x-paystack-signature"];
         if (!signature) {
+            console.warn("[Webhook] Missing x-paystack-signature header — rejected");
             res.status(400).json({ status: "error", message: "Missing signature" });
             return;
         }
+        console.log("[Webhook] Signature present:", signature.slice(0, 16) + "...");
         // rawBody is attached by the express.json verify callback in app.ts
         const rawBody = req.rawBody;
+        console.log("[Webhook] Raw body length:", rawBody?.length ?? "undefined");
         await paymentService_1.paymentService.handleWebhook(rawBody, signature);
+        console.log("[Webhook] Handled successfully — responding 200");
         res.status(200).json({ status: "success" });
     }),
 };

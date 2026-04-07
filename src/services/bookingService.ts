@@ -388,10 +388,17 @@ export class BookingService {
 
   /** Returns booked date ranges for a vehicle (for calendar display) */
   async getVehicleBookedDates(vehicleId: string): Promise<{ checkIn: string; checkOut: string }[]> {
-    const bookings = await this.bookingRepo.find({
-      where: { vehicleId, status: In(["awaiting_payment", "confirmed"]) },
-      select: ["checkIn", "checkOut"],
-    });
+    const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+    const bookings = await this.bookingRepo
+      .createQueryBuilder("b")
+      .select(["b.checkIn", "b.checkOut"])
+      .where("b.vehicleId = :vehicleId", { vehicleId })
+      .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+      .andWhere(
+        "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.createdAt > :cutoff)",
+        { cutoff }
+      )
+      .getMany();
     return bookings.map((b) => ({
       checkIn: String(b.checkIn).split("T")[0],
       checkOut: String(b.checkOut).split("T")[0],
