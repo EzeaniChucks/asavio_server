@@ -213,7 +213,7 @@ class PropertyService {
                     .addOrderBy("property.averageRating", "DESC");
                 break;
             default:
-                queryBuilder.orderBy("property.createdAt", "DESC");
+                queryBuilder.orderBy("RANDOM()");
         }
         if (filters.limit) {
             queryBuilder.take(Number(filters.limit));

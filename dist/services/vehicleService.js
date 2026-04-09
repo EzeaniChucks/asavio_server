@@ -95,7 +95,7 @@ class VehicleService {
                 qb.orderBy("v.averageRating", "DESC");
                 break;
             default:
-                qb.orderBy("v.createdAt", "DESC");
+                qb.orderBy("RANDOM()");
         }
         const total = await qb.getCount();
         const vehicles = await qb
