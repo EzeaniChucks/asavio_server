@@ -222,6 +222,7 @@ declare class AdminService {
         limit?: number;
         search?: string;
         status?: string;
+        isAvailable?: boolean;
     }): Promise<{
         properties: Property[];
         total: number;
@@ -233,6 +234,7 @@ declare class AdminService {
         limit?: number;
         search?: string;
         status?: string;
+        isAvailable?: boolean;
     }): Promise<{
         vehicles: Vehicle[];
         total: number;

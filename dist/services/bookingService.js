@@ -47,7 +47,8 @@ class BookingService {
         return blockedDates.some((r) => {
             const from = new Date(r.from);
             const to = new Date(r.to);
-            return checkIn < to && checkOut > from;
+            // "to" is inclusive — a blocked range of Apr 9→12 means Apr 12 is blocked
+            return checkIn <= to && checkOut > from;
         });
     }
     // ── Create ────────────────────────────────────────────────────────────────

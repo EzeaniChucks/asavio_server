@@ -118,8 +118,11 @@ class AdminService {
         if (status) {
             qb.andWhere("p.status = :status", { status });
         }
+        if (opts.isAvailable !== undefined) {
+            qb.andWhere("p.isAvailable = :isAvail", { isAvail: opts.isAvailable });
+        }
         if (search) {
-            qb.andWhere("(LOWER(p.title) LIKE :q OR LOWER(p.location->>'city') LIKE :q)", { q: `%${search.toLowerCase()}%` });
+            qb.andWhere("(LOWER(p.title) LIKE :q OR LOWER(p.location->>'city') LIKE :q OR LOWER(host.firstName) LIKE :q OR LOWER(host.lastName) LIKE :q OR LOWER(CONCAT(host.firstName, ' ', host.lastName)) LIKE :q)", { q: `%${search.toLowerCase()}%` });
         }
         const total = await qb.getCount();
         const properties = await qb
@@ -183,10 +186,13 @@ class AdminService {
             .leftJoinAndSelect("v.host", "host")
             .orderBy("v.createdAt", "DESC");
         if (search) {
-            qb.andWhere("(LOWER(v.make) LIKE :q OR LOWER(v.model) LIKE :q OR LOWER(v.location) LIKE :q)", { q: `%${search.toLowerCase()}%` });
+            qb.andWhere("(LOWER(v.make) LIKE :q OR LOWER(v.model) LIKE :q OR LOWER(v.location) LIKE :q OR LOWER(host.firstName) LIKE :q OR LOWER(host.lastName) LIKE :q OR LOWER(CONCAT(host.firstName, ' ', host.lastName)) LIKE :q)", { q: `%${search.toLowerCase()}%` });
         }
         if (opts.status) {
             qb.andWhere("v.status = :vstatus", { vstatus: opts.status });
+        }
+        if (opts.isAvailable !== undefined) {
+            qb.andWhere("v.isAvailable = :isAvail", { isAvail: opts.isAvailable });
         }
         const total = await qb.getCount();
         const vehicles = await qb

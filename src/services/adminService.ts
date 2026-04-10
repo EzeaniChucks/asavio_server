@@ -152,7 +152,7 @@ class AdminService {
 
     if (search) {
       qb.andWhere(
-        "(LOWER(p.title) LIKE :q OR LOWER(p.location->>'city') LIKE :q)",
+        "(LOWER(p.title) LIKE :q OR LOWER(p.location->>'city') LIKE :q OR LOWER(host.firstName) LIKE :q OR LOWER(host.lastName) LIKE :q OR LOWER(CONCAT(host.firstName, ' ', host.lastName)) LIKE :q)",
         { q: `%${search.toLowerCase()}%` }
       );
     }
@@ -228,7 +228,7 @@ class AdminService {
 
     if (search) {
       qb.andWhere(
-        "(LOWER(v.make) LIKE :q OR LOWER(v.model) LIKE :q OR LOWER(v.location) LIKE :q)",
+        "(LOWER(v.make) LIKE :q OR LOWER(v.model) LIKE :q OR LOWER(v.location) LIKE :q OR LOWER(host.firstName) LIKE :q OR LOWER(host.lastName) LIKE :q OR LOWER(CONCAT(host.firstName, ' ', host.lastName)) LIKE :q)",
         { q: `%${search.toLowerCase()}%` }
       );
     }
