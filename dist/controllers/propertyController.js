@@ -138,7 +138,7 @@ exports.propertyController = {
             res.status(400).json({ status: "error", message: "blockedDates must be an array" });
             return;
         }
-        await propertyService.updateBlockedDates(req.params.id, req.user.id, blockedDates);
+        await propertyService.updateBlockedDates(req.params.id, req.user.id, blockedDates, req.user.role);
         res.json({ status: "success", data: null });
     }),
     /** POST /api/properties/:id/feature-video — upload a feature video (Pro/Elite) */

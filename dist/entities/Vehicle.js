@@ -103,6 +103,10 @@ __decorate([
     __metadata("design:type", Array)
 ], Vehicle.prototype, "bookings", void 0);
 __decorate([
+    (0, typeorm_1.Column)("jsonb", { default: [] }),
+    __metadata("design:type", Array)
+], Vehicle.prototype, "blockedDates", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: "text", nullable: true }),
     __metadata("design:type", String)
 ], Vehicle.prototype, "checkInInstructions", void 0);

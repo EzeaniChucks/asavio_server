@@ -1,7 +1,6 @@
 // src/routers/vehicleRouter.ts
 import { Router } from "express";
 import { vehicleController } from "../controllers/vehicleController";
-import { bookingController } from "../controllers/bookingController";
 import { protect, restrictTo } from "../middleware/auth";
 import { validate } from "../middleware/validation";
 import { vehicleValidation } from "../validations/vehicleValidation";
@@ -14,8 +13,8 @@ const router = Router();
 router.get("/types", vehicleController.getAvailableVehicleTypes);
 router.get("/type-representatives", vehicleController.getVehicleTypeRepresentatives);
 router.get("/", vehicleController.listVehicles);
-// Must be before /:id
-router.get("/:vehicleId/booked-dates", bookingController.getVehicleBookedDates);
+// Must be before /:id — returns bookings + blocked ranges combined
+router.get("/:id/booked-dates", vehicleController.getBookedDates);
 router.get("/:id", vehicleController.getVehicle);
 
 // Protected — host/admin only for mutations
@@ -45,6 +44,12 @@ router.patch(
   "/:id/toggle-availability",
   restrictTo("host", "admin"),
   vehicleController.toggleAvailability
+);
+
+router.patch(
+  "/:id/blocked-dates",
+  restrictTo("host", "admin"),
+  vehicleController.updateBlockedDates
 );
 
 // Feature video — Pro/Elite tier required

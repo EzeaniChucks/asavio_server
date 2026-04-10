@@ -27,6 +27,14 @@ export declare class Vehicle {
     host: User;
     hostId: string;
     bookings: Booking[];
+    /**
+     * Host-blocked date ranges — guests cannot book dates that fall within any of these.
+     * Format: [{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }]  (to is exclusive)
+     */
+    blockedDates: {
+        from: string;
+        to: string;
+    }[];
     /** Private check-in/pickup instructions sent to the guest 24 h before pickup. */
     checkInInstructions?: string;
     /** Optional refundable caution fee amount displayed to guests. Not processed by Asavio. */

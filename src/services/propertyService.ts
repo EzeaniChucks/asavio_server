@@ -496,15 +496,16 @@ export class PropertyService {
     return [...booked, ...blocked];
   }
 
-  /** Host: replace the full blockedDates array for a property */
+  /** Host/admin: replace the full blockedDates array for a property */
   async updateBlockedDates(
     propertyId: string,
     hostId: string,
-    blockedDates: { from: string; to: string }[]
+    blockedDates: { from: string; to: string }[],
+    role?: string
   ): Promise<void> {
     const property = await this.propertyRepository.findOne({ where: { id: propertyId } });
     if (!property) throw new AppError("Property not found", 404);
-    if (property.hostId !== hostId) throw new AppError("Not your property", 403);
+    if (role !== "admin" && property.hostId !== hostId) throw new AppError("Not your property", 403);
     await this.propertyRepository.update(propertyId, { blockedDates });
   }
 }

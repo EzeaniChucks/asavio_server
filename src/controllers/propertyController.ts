@@ -183,7 +183,7 @@ export const propertyController = {
       res.status(400).json({ status: "error", message: "blockedDates must be an array" });
       return;
     }
-    await propertyService.updateBlockedDates(req.params.id as string, req.user.id, blockedDates);
+    await propertyService.updateBlockedDates(req.params.id as string, req.user.id, blockedDates, req.user.role);
     res.json({ status: "success", data: null });
   }),
 

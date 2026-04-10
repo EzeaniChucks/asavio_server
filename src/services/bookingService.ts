@@ -166,6 +166,9 @@ export class BookingService {
     if (!vehicle) throw new AppError("Vehicle not found", 404);
     if (!vehicle.isAvailable) throw new AppError("This vehicle is not available for booking", 400);
 
+    if (this.isBlocked(checkIn, checkOut, vehicle.blockedDates)) {
+      throw new AppError("These dates are not available — the host has blocked them", 400);
+    }
     if (await this.hasConflict("vehicleId", vehicleId!, checkIn, checkOut)) {
       throw new AppError("This vehicle is not available for these dates", 409);
     }
@@ -371,7 +374,9 @@ export class BookingService {
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
-    const conflict = await this.hasConflict("vehicleId", vehicleId, checkInDate, checkOutDate);
+    const conflict =
+      this.isBlocked(checkInDate, checkOutDate, vehicle.blockedDates) ||
+      await this.hasConflict("vehicleId", vehicleId, checkInDate, checkOutDate);
     const days = this.nightsBetween(checkInDate, checkOutDate);
 
     const useDriver = withDriver && vehicle.priceWithDriverPerDay != null;

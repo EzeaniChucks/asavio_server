@@ -80,6 +80,13 @@ export class Vehicle {
   @OneToMany(() => Booking, (booking) => booking.vehicle)
   bookings: Booking[];
 
+  /**
+   * Host-blocked date ranges — guests cannot book dates that fall within any of these.
+   * Format: [{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }]  (to is exclusive)
+   */
+  @Column("jsonb", { default: [] })
+  blockedDates: { from: string; to: string }[];
+
   /** Private check-in/pickup instructions sent to the guest 24 h before pickup. */
   @Column({ type: "text", nullable: true })
   checkInInstructions?: string;

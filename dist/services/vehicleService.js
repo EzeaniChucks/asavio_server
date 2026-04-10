@@ -4,6 +4,7 @@ exports.vehicleService = void 0;
 // src/services/vehicleService.ts
 const database_1 = require("../config/database");
 const Vehicle_1 = require("../entities/Vehicle");
+const Booking_1 = require("../entities/Booking");
 const AppError_1 = require("../utils/AppError");
 const cloudinaryService_1 = require("./cloudinaryService");
 const typeorm_1 = require("typeorm");
@@ -171,6 +172,42 @@ class VehicleService {
             throw new AppError_1.AppError("Not authorised", 403);
         vehicle.isAvailable = !vehicle.isAvailable;
         return this.repo.save(vehicle);
+    }
+    /**
+     * Returns all booked date ranges (confirmed/awaiting_payment) PLUS host-blocked
+     * date ranges for a given vehicle, combined into a single list for calendar display.
+     */
+    async getBookedDates(vehicleId) {
+        const bookingRepo = database_1.AppDataSource.getRepository(Booking_1.Booking);
+        // Cut-off: awaiting_payment bookings older than 45 min with no payment are abandoned.
+        const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+        const [bookings, vehicle] = await Promise.all([
+            bookingRepo
+                .createQueryBuilder("b")
+                .select(["b.checkIn", "b.checkOut"])
+                .where("b.vehicleId = :vehicleId", { vehicleId })
+                .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+                .andWhere("(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)", { cutoff })
+                .getMany(),
+            this.repo.findOne({ where: { id: vehicleId }, select: ["id", "blockedDates"] }),
+        ]);
+        const booked = bookings.map((b) => ({
+            checkIn: String(b.checkIn).split("T")[0],
+            checkOut: String(b.checkOut).split("T")[0],
+        }));
+        const blocked = (vehicle?.blockedDates ?? []).map((r) => ({
+            checkIn: r.from,
+            checkOut: r.to,
+        }));
+        return [...booked, ...blocked];
+    }
+    /** Host/admin: replace the full blockedDates array for a vehicle */
+    async updateBlockedDates(vehicleId, hostId, role, blockedDates) {
+        const vehicle = await this.getVehicleById(vehicleId);
+        if (role !== "admin" && vehicle.hostId !== hostId) {
+            throw new AppError_1.AppError("Not authorised to update this vehicle", 403);
+        }
+        await this.repo.update(vehicleId, { blockedDates });
     }
 }
 exports.vehicleService = new VehicleService();

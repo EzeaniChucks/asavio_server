@@ -56,10 +56,10 @@ export declare class PropertyService {
         checkIn: string;
         checkOut: string;
     }[]>;
-    /** Host: replace the full blockedDates array for a property */
+    /** Host/admin: replace the full blockedDates array for a property */
     updateBlockedDates(propertyId: string, hostId: string, blockedDates: {
         from: string;
         to: string;
-    }[]): Promise<void>;
+    }[], role?: string): Promise<void>;
 }
 //# sourceMappingURL=propertyService.d.ts.map

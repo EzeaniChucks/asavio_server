@@ -9,6 +9,10 @@ export declare const vehicleController: {
     deleteVehicle: (req: Request, res: Response, next: NextFunction) => void;
     toggleAvailability: (req: Request, res: Response, next: NextFunction) => void;
     getMyVehicles: (req: Request, res: Response, next: NextFunction) => void;
+    /** GET /api/vehicles/:id/booked-dates — booked + blocked ranges for calendar display */
+    getBookedDates: (req: Request, res: Response, next: NextFunction) => void;
+    /** PATCH /api/vehicles/:id/blocked-dates — host/admin sets manual unavailability */
+    updateBlockedDates: (req: Request, res: Response, next: NextFunction) => void;
     /** POST /api/vehicles/:id/feature-video — upload a feature video (Pro/Elite) */
     uploadFeatureVideo: (req: Request, res: Response, next: NextFunction) => void;
     /** DELETE /api/vehicles/:id/feature-video — remove the feature video */

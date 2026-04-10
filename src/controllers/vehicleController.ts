@@ -109,6 +109,28 @@ export const vehicleController = {
     res.json({ status: "success", data: { vehicles } });
   }),
 
+  /** GET /api/vehicles/:id/booked-dates — booked + blocked ranges for calendar display */
+  getBookedDates: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const bookedDates = await vehicleService.getBookedDates(req.params.id as string);
+    res.json({ status: "success", data: { bookedDates } });
+  }),
+
+  /** PATCH /api/vehicles/:id/blocked-dates — host/admin sets manual unavailability */
+  updateBlockedDates: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { blockedDates } = req.body;
+    if (!Array.isArray(blockedDates)) {
+      res.status(400).json({ status: "error", message: "blockedDates must be an array" });
+      return;
+    }
+    await vehicleService.updateBlockedDates(
+      req.params.id as string,
+      req.user!.id,
+      req.user!.role,
+      blockedDates
+    );
+    res.json({ status: "success", data: null });
+  }),
+
   /** POST /api/vehicles/:id/feature-video — upload a feature video (Pro/Elite) */
   uploadFeatureVideo: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const file = req.file;

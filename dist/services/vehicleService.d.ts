@@ -40,6 +40,19 @@ declare class VehicleService {
     }, files?: Express.Multer.File[]): Promise<Vehicle>;
     deleteVehicle(id: string, hostId: string, role: string): Promise<void>;
     toggleAvailability(id: string, hostId: string): Promise<Vehicle>;
+    /**
+     * Returns all booked date ranges (confirmed/awaiting_payment) PLUS host-blocked
+     * date ranges for a given vehicle, combined into a single list for calendar display.
+     */
+    getBookedDates(vehicleId: string): Promise<{
+        checkIn: string;
+        checkOut: string;
+    }[]>;
+    /** Host/admin: replace the full blockedDates array for a vehicle */
+    updateBlockedDates(vehicleId: string, hostId: string, role: string, blockedDates: {
+        from: string;
+        to: string;
+    }[]): Promise<void>;
 }
 export declare const vehicleService: VehicleService;
 export {};

@@ -420,12 +420,12 @@ class PropertyService {
         }));
         return [...booked, ...blocked];
     }
-    /** Host: replace the full blockedDates array for a property */
-    async updateBlockedDates(propertyId, hostId, blockedDates) {
+    /** Host/admin: replace the full blockedDates array for a property */
+    async updateBlockedDates(propertyId, hostId, blockedDates, role) {
         const property = await this.propertyRepository.findOne({ where: { id: propertyId } });
         if (!property)
             throw new AppError_1.AppError("Property not found", 404);
-        if (property.hostId !== hostId)
+        if (role !== "admin" && property.hostId !== hostId)
             throw new AppError_1.AppError("Not your property", 403);
         await this.propertyRepository.update(propertyId, { blockedDates });
     }
