@@ -488,10 +488,13 @@ export class PropertyService {
       checkOut: String(b.checkOut).split("T")[0],
     }));
 
-    const blocked = (property?.blockedDates ?? []).map((r) => ({
-      checkIn: r.from,
-      checkOut: r.to,
-    }));
+    // "to" is inclusive — shift it +1 day so the frontend's exclusive `< checkOut` check
+    // correctly blocks the "to" date itself.
+    const blocked = (property?.blockedDates ?? []).map((r) => {
+      const to = new Date(r.to);
+      to.setUTCDate(to.getUTCDate() + 1);
+      return { checkIn: r.from, checkOut: to.toISOString().split("T")[0] };
+    });
 
     return [...booked, ...blocked];
   }

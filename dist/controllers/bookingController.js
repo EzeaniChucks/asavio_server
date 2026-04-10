@@ -52,8 +52,8 @@ exports.bookingController = {
         res.status(200).json({ status: "success", data: result });
     }),
     checkVehicleAvailability: (0, catchAsync_1.catchAsync)(async (req, res) => {
-        const { vehicleId, checkIn, checkOut, withDriver } = req.query;
-        const result = await bookingService.checkVehicleAvailability(vehicleId, checkIn, checkOut, withDriver === "true");
+        const { vehicleId, checkIn, checkOut, withDriver, travelScope } = req.query;
+        const result = await bookingService.checkVehicleAvailability(vehicleId, checkIn, checkOut, withDriver === "true", travelScope);
         res.status(200).json({ status: "success", data: result });
     }),
     getVehicleBookedDates: (0, catchAsync_1.catchAsync)(async (req, res) => {

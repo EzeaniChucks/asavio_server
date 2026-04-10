@@ -21,6 +21,10 @@ interface CreateVehicleInput {
   withDriver?: boolean;
   location?: string;
   features?: string[];
+  cancellationPolicy?: string;
+  travelZone?: string;
+  allowInterstate?: boolean | string;
+  interstateSurchargePerDay?: number | string | null;
 }
 
 interface VehicleFilters {
@@ -59,6 +63,11 @@ class VehicleService {
       cautionFee: input.cautionFee === "" || input.cautionFee == null ? null : Number(input.cautionFee),
       seats: Number(input.seats),
       withDriver: input.withDriver ?? false,
+      allowInterstate: input.allowInterstate === "true" || input.allowInterstate === true,
+      interstateSurchargePerDay:
+        input.interstateSurchargePerDay === "" || input.interstateSurchargePerDay == null
+          ? null
+          : Number(input.interstateSurchargePerDay),
       status: "pending" as any,
       isAvailable: false,
       features: input.features ?? [],
@@ -145,9 +154,11 @@ class VehicleService {
     }
 
     const total = await qb.getCount();
+    // Use limit/offset (not take/skip) to avoid TypeORM's DISTINCT pagination wrapper
+    // which breaks when combined with RANDOM() ordering in PostgreSQL.
     const vehicles = await qb
-      .skip((page - 1) * limit)
-      .take(limit)
+      .offset((page - 1) * limit)
+      .limit(limit)
       .getMany();
 
     return { vehicles, total };
@@ -211,6 +222,15 @@ class VehicleService {
         ? null
         : Number(cleanUpdates.cautionFee);
     }
+    if ("allowInterstate" in cleanUpdates) {
+      cleanUpdates.allowInterstate = cleanUpdates.allowInterstate === "true" || cleanUpdates.allowInterstate === true;
+    }
+    if ("interstateSurchargePerDay" in cleanUpdates) {
+      cleanUpdates.interstateSurchargePerDay =
+        cleanUpdates.interstateSurchargePerDay === "" || cleanUpdates.interstateSurchargePerDay == null
+          ? null
+          : Number(cleanUpdates.interstateSurchargePerDay);
+    }
     Object.assign(vehicle, cleanUpdates);
     return this.repo.save(vehicle) as unknown as Vehicle;
   }
@@ -264,10 +284,13 @@ class VehicleService {
       checkOut: String(b.checkOut).split("T")[0],
     }));
 
-    const blocked = (vehicle?.blockedDates ?? []).map((r) => ({
-      checkIn: r.from,
-      checkOut: r.to,
-    }));
+    // "to" is inclusive — shift it +1 day so the frontend's exclusive `< checkOut` check
+    // correctly blocks the "to" date itself.
+    const blocked = (vehicle?.blockedDates ?? []).map((r) => {
+      const to = new Date(r.to);
+      to.setUTCDate(to.getUTCDate() + 1);
+      return { checkIn: r.from, checkOut: to.toISOString().split("T")[0] };
+    });
 
     return [...booked, ...blocked];
   }

@@ -80,12 +80,13 @@ export const bookingController = {
   }),
 
   checkVehicleAvailability: catchAsync(async (req: Request, res: Response) => {
-    const { vehicleId, checkIn, checkOut, withDriver } = req.query as Record<string, string>;
+    const { vehicleId, checkIn, checkOut, withDriver, travelScope } = req.query as Record<string, string>;
     const result = await bookingService.checkVehicleAvailability(
       vehicleId,
       checkIn,
       checkOut,
-      withDriver === "true"
+      withDriver === "true",
+      travelScope as "local" | "interstate" | undefined
     );
     res.status(200).json({ status: "success", data: result });
   }),

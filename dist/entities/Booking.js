@@ -149,6 +149,14 @@ __decorate([
     __metadata("design:type", Object)
 ], Booking.prototype, "cancellationReason", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 20, nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "travelScope", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 200, nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "destination", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], Booking.prototype, "createdAt", void 0);

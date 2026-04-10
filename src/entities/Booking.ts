@@ -143,6 +143,16 @@ export class Booking {
   @Column({ type: "text", nullable: true })
   cancellationReason: string | null;
 
+  // ── Vehicle travel scope ─────────────────────────────────────────────────
+
+  /** "local" = within the vehicle's travelZone; "interstate" = cross-state travel */
+  @Column({ type: "varchar", length: 20, nullable: true })
+  travelScope: "local" | "interstate" | null;
+
+  /** Guest-declared destination for interstate trips (free text) */
+  @Column({ type: "varchar", length: 200, nullable: true })
+  destination: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

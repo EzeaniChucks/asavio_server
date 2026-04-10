@@ -46,6 +46,10 @@ export declare class Booking {
     cancelledBy: "guest" | "host" | "admin" | null;
     /** Optional free-text reason for cancellation */
     cancellationReason: string | null;
+    /** "local" = within the vehicle's travelZone; "interstate" = cross-state travel */
+    travelScope: "local" | "interstate" | null;
+    /** Guest-declared destination for interstate trips (free text) */
+    destination: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

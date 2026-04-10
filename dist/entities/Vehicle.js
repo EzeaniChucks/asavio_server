@@ -107,6 +107,18 @@ __decorate([
     __metadata("design:type", String)
 ], Vehicle.prototype, "cancellationPolicy", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: "Lagos" }),
+    __metadata("design:type", String)
+], Vehicle.prototype, "travelZone", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], Vehicle.prototype, "allowInterstate", void 0);
+__decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, nullable: true }),
+    __metadata("design:type", Object)
+], Vehicle.prototype, "interstateSurchargePerDay", void 0);
+__decorate([
     (0, typeorm_1.Column)("jsonb", { default: [] }),
     __metadata("design:type", Array)
 ], Vehicle.prototype, "blockedDates", void 0);

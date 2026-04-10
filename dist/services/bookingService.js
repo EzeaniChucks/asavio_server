@@ -52,7 +52,7 @@ class BookingService {
     }
     // ── Create ────────────────────────────────────────────────────────────────
     async createBooking(userId, input) {
-        const { propertyId, vehicleId, checkIn: checkInStr, checkOut: checkOutStr, guests, purpose, specialRequests, withDriver } = input;
+        const { propertyId, vehicleId, checkIn: checkInStr, checkOut: checkOutStr, guests, purpose, specialRequests, withDriver, travelScope, destination } = input;
         if (!propertyId && !vehicleId)
             throw new AppError_1.AppError("Either propertyId or vehicleId is required", 400);
         if (propertyId && vehicleId)
@@ -145,8 +145,17 @@ class BookingService {
         if (await this.hasConflict("vehicleId", vehicleId, checkIn, checkOut)) {
             throw new AppError_1.AppError("This vehicle is not available for these dates", 409);
         }
+        // Travel zone validation
+        const resolvedScope = travelScope ?? "local";
+        if (resolvedScope === "interstate" && !vehicle.allowInterstate) {
+            throw new AppError_1.AppError("This vehicle is not available for interstate travel", 400);
+        }
         const useDriver = withDriver && vehicle.priceWithDriverPerDay != null;
-        const dailyRate = useDriver ? Number(vehicle.priceWithDriverPerDay) : Number(vehicle.pricePerDay);
+        const baseDailyRate = useDriver ? Number(vehicle.priceWithDriverPerDay) : Number(vehicle.pricePerDay);
+        const surcharge = resolvedScope === "interstate" && vehicle.interstateSurchargePerDay
+            ? Number(vehicle.interstateSurchargePerDay)
+            : 0;
+        const dailyRate = baseDailyRate + surcharge;
         const totalPrice = dailyRate * nights;
         const host = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: vehicle.hostId } });
         const commissionRate = host
@@ -161,6 +170,8 @@ class BookingService {
             appliedCommissionRate: commissionRate,
             specialRequests, paymentMethod: "paystack",
             status: "awaiting_payment",
+            travelScope: resolvedScope,
+            destination: destination ?? null,
         });
         const saved = await this.bookingRepo.save(booking);
         const full = await this.getBookingById(saved.id, userId);
@@ -410,7 +421,7 @@ class BookingService {
             purposePricing: property.purposePricing ?? null,
         };
     }
-    async checkVehicleAvailability(vehicleId, checkIn, checkOut, withDriver) {
+    async checkVehicleAvailability(vehicleId, checkIn, checkOut, withDriver, travelScope) {
         const vehicle = await this.vehicleRepo.findOne({ where: { id: vehicleId } });
         if (!vehicle)
             throw new AppError_1.AppError("Vehicle not found", 404);
@@ -420,13 +431,21 @@ class BookingService {
             await this.hasConflict("vehicleId", vehicleId, checkInDate, checkOutDate);
         const days = this.nightsBetween(checkInDate, checkOutDate);
         const useDriver = withDriver && vehicle.priceWithDriverPerDay != null;
-        const dailyRate = useDriver ? Number(vehicle.priceWithDriverPerDay) : Number(vehicle.pricePerDay);
+        const baseDailyRate = useDriver ? Number(vehicle.priceWithDriverPerDay) : Number(vehicle.pricePerDay);
+        const surcharge = travelScope === "interstate" && vehicle.interstateSurchargePerDay
+            ? Number(vehicle.interstateSurchargePerDay)
+            : 0;
+        const effectiveDailyRate = baseDailyRate + surcharge;
         return {
             available: vehicle.isAvailable && !conflict,
             pricePerDay: Number(vehicle.pricePerDay),
             priceWithDriverPerDay: vehicle.priceWithDriverPerDay ? Number(vehicle.priceWithDriverPerDay) : null,
+            interstateSurchargePerDay: vehicle.interstateSurchargePerDay ? Number(vehicle.interstateSurchargePerDay) : null,
+            effectiveDailyRate,
+            travelZone: vehicle.travelZone,
+            allowInterstate: vehicle.allowInterstate,
             days,
-            totalPrice: conflict ? 0 : dailyRate * days,
+            totalPrice: conflict ? 0 : effectiveDailyRate * days,
         };
     }
     /** Returns booked date ranges for a vehicle (for calendar display) */

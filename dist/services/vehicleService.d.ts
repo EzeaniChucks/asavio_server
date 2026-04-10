@@ -12,6 +12,10 @@ interface CreateVehicleInput {
     withDriver?: boolean;
     location?: string;
     features?: string[];
+    cancellationPolicy?: string;
+    travelZone?: string;
+    allowInterstate?: boolean | string;
+    interstateSurchargePerDay?: number | string | null;
 }
 interface VehicleFilters {
     vehicleType?: string;

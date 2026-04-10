@@ -27,6 +27,10 @@ class VehicleService {
             cautionFee: input.cautionFee === "" || input.cautionFee == null ? null : Number(input.cautionFee),
             seats: Number(input.seats),
             withDriver: input.withDriver ?? false,
+            allowInterstate: input.allowInterstate === "true" || input.allowInterstate === true,
+            interstateSurchargePerDay: input.interstateSurchargePerDay === "" || input.interstateSurchargePerDay == null
+                ? null
+                : Number(input.interstateSurchargePerDay),
             status: "pending",
             isAvailable: false,
             features: input.features ?? [],
@@ -99,9 +103,11 @@ class VehicleService {
                 qb.orderBy("RANDOM()");
         }
         const total = await qb.getCount();
+        // Use limit/offset (not take/skip) to avoid TypeORM's DISTINCT pagination wrapper
+        // which breaks when combined with RANDOM() ordering in PostgreSQL.
         const vehicles = await qb
-            .skip((page - 1) * limit)
-            .take(limit)
+            .offset((page - 1) * limit)
+            .limit(limit)
             .getMany();
         return { vehicles, total };
     }
@@ -151,6 +157,15 @@ class VehicleService {
             cleanUpdates.cautionFee = cleanUpdates.cautionFee === "" || cleanUpdates.cautionFee == null
                 ? null
                 : Number(cleanUpdates.cautionFee);
+        }
+        if ("allowInterstate" in cleanUpdates) {
+            cleanUpdates.allowInterstate = cleanUpdates.allowInterstate === "true" || cleanUpdates.allowInterstate === true;
+        }
+        if ("interstateSurchargePerDay" in cleanUpdates) {
+            cleanUpdates.interstateSurchargePerDay =
+                cleanUpdates.interstateSurchargePerDay === "" || cleanUpdates.interstateSurchargePerDay == null
+                    ? null
+                    : Number(cleanUpdates.interstateSurchargePerDay);
         }
         Object.assign(vehicle, cleanUpdates);
         return this.repo.save(vehicle);

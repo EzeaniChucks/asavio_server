@@ -88,6 +88,26 @@ export class Vehicle {
   @Column({ default: "flexible" })
   cancellationPolicy: string;
 
+  // ── Travel zone ──────────────────────────────────────────────────────────
+
+  /**
+   * The base zone this vehicle operates within (e.g. "Lagos", "Abuja").
+   * Guests booking within this zone pay the base pricePerDay.
+   */
+  @Column({ default: "Lagos" })
+  travelZone: string;
+
+  /** Whether guests may take this vehicle on interstate trips */
+  @Column({ default: false })
+  allowInterstate: boolean;
+
+  /**
+   * Additional charge per day for interstate travel.
+   * Null means no surcharge even if allowInterstate is true.
+   */
+  @Column("decimal", { precision: 10, scale: 2, nullable: true })
+  interstateSurchargePerDay: number | null;
+
   /**
    * Host-blocked date ranges — guests cannot book dates that fall within any of these.
    * Format: [{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }]  (to is exclusive)

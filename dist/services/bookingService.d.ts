@@ -9,6 +9,8 @@ interface CreateBookingInput {
     withDriver?: boolean;
     purpose?: string;
     specialRequests?: string;
+    travelScope?: "local" | "interstate";
+    destination?: string;
 }
 export declare class BookingService {
     private bookingRepo;
@@ -39,10 +41,14 @@ export declare class BookingService {
         totalPrice: number;
         purposePricing: Record<string, number> | null;
     }>;
-    checkVehicleAvailability(vehicleId: string, checkIn: string, checkOut: string, withDriver?: boolean): Promise<{
+    checkVehicleAvailability(vehicleId: string, checkIn: string, checkOut: string, withDriver?: boolean, travelScope?: "local" | "interstate"): Promise<{
         available: boolean;
         pricePerDay: number;
         priceWithDriverPerDay: number | null;
+        interstateSurchargePerDay: number | null;
+        effectiveDailyRate: number;
+        travelZone: string;
+        allowInterstate: boolean;
         days: number;
         totalPrice: number;
     }>;

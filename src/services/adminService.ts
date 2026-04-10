@@ -133,7 +133,7 @@ class AdminService {
 
   // ── Properties ───────────────────────────────────────────────
 
-  async getProperties(opts: { page?: number; limit?: number; search?: string; status?: string }) {
+  async getProperties(opts: { page?: number; limit?: number; search?: string; status?: string; isAvailable?: boolean }) {
     const { page = 1, search, status } = opts;
     const limit = Math.min(opts.limit ?? 20, 100);
     const qb = AppDataSource.getRepository(Property)
@@ -144,6 +144,10 @@ class AdminService {
 
     if (status) {
       qb.andWhere("p.status = :status", { status });
+    }
+
+    if (opts.isAvailable !== undefined) {
+      qb.andWhere("p.isAvailable = :isAvail", { isAvail: opts.isAvailable });
     }
 
     if (search) {
@@ -214,7 +218,7 @@ class AdminService {
 
   // ── Vehicles ─────────────────────────────────────────────────
 
-  async getVehicles(opts: { page?: number; limit?: number; search?: string; status?: string }) {
+  async getVehicles(opts: { page?: number; limit?: number; search?: string; status?: string; isAvailable?: boolean }) {
     const { page = 1, search } = opts;
     const limit = Math.min(opts.limit ?? 20, 100);
     const qb = AppDataSource.getRepository(Vehicle)
@@ -231,6 +235,10 @@ class AdminService {
 
     if (opts.status) {
       qb.andWhere("v.status = :vstatus", { vstatus: opts.status });
+    }
+
+    if (opts.isAvailable !== undefined) {
+      qb.andWhere("v.isAvailable = :isAvail", { isAvail: opts.isAvailable });
     }
 
     const total = await qb.getCount();
