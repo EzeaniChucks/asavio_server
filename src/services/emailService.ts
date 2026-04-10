@@ -130,6 +130,45 @@ export const emailService = {
     });
   },
 
+  async sendCancellationRefund(opts: {
+    to: string;
+    firstName: string;
+    listingTitle: string;
+    checkIn: string;
+    checkOut: string;
+    refundAmount: number;
+    totalPaid: number;
+    reason: string;
+    bookingId: string;
+  }): Promise<void> {
+    const { to, firstName, listingTitle, checkIn, checkOut, refundAmount, totalPaid, reason, bookingId } = opts;
+    const hasRefund = refundAmount > 0;
+    await send({
+      to,
+      replyTo: REPLY.support,
+      subject: `Booking cancelled – ${listingTitle}`,
+      html: wrap(`
+        <h2 style="margin-top:0">Booking cancelled ❌</h2>
+        <p>Hi ${escapeHtml(firstName)}, your booking for <strong>${escapeHtml(listingTitle)}</strong> has been cancelled.</p>
+        <hr class="divider" />
+        <p><strong>Check-in:</strong> ${escapeHtml(checkIn)}</p>
+        <p><strong>Check-out:</strong> ${escapeHtml(checkOut)}</p>
+        <p><strong>Amount paid:</strong> ₦${Number(totalPaid).toLocaleString("en-NG")}</p>
+        <hr class="divider" />
+        ${hasRefund
+          ? `<p style="font-size:16px;font-weight:700;color:#059669">Refund: ₦${Number(refundAmount).toLocaleString("en-NG")}</p>
+             <p style="color:#6B7280;font-size:14px">${escapeHtml(reason)}</p>
+             <p style="color:#6B7280;font-size:13px">Refunds are processed via Paystack and typically appear within 5–7 business days depending on your bank.</p>`
+          : `<p style="font-size:16px;font-weight:700;color:#DC2626">No refund</p>
+             <p style="color:#6B7280;font-size:14px">${escapeHtml(reason)}</p>`
+        }
+        <hr class="divider" />
+        <a href="${BASE_URL}/bookings/${bookingId}" class="btn">View booking</a>
+        <p style="margin-top:16px;font-size:13px;color:#9CA3AF">If you have questions, reply to this email — our support team is here to help.</p>
+      `),
+    });
+  },
+
   async sendHostNewBooking(opts: {
     to: string;
     hostName: string;

@@ -1,4 +1,5 @@
 import { Booking, BookingStatus } from "../entities/Booking";
+import { RefundEstimate } from "../constants/cancellationPolicies";
 interface CreateBookingInput {
     propertyId?: string;
     vehicleId?: string;
@@ -22,7 +23,15 @@ export declare class BookingService {
     getBookingById(id: string, requesterId: string, requesterRole?: string): Promise<Booking>;
     getUserBookings(userId: string): Promise<Booking[]>;
     getHostBookings(hostId: string): Promise<Booking[]>;
-    updateBookingStatus(id: string, status: BookingStatus, requesterId: string, requesterRole: string): Promise<Booking | null>;
+    updateBookingStatus(id: string, status: BookingStatus, requesterId: string, requesterRole: string, cancellationReason?: string): Promise<Booking | null>;
+    /**
+     * Returns a refund estimate for a booking without modifying anything.
+     * Used so the frontend can show the guest what they'll receive before they confirm cancellation.
+     */
+    getCancellationEstimate(id: string, requesterId: string, requesterRole: string): Promise<RefundEstimate & {
+        listingTitle: string;
+        totalPaid: number;
+    }>;
     checkAvailability(propertyId: string, checkIn: string, checkOut: string, purpose?: string): Promise<{
         available: boolean;
         pricePerNight: number;

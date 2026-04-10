@@ -125,6 +125,24 @@ export class Booking {
   @Column({ nullable: true })
   specialRequests: string;
 
+  // ── Cancellation tracking ────────────────────────────────────────────────
+
+  /** Amount refunded to the guest when the booking was cancelled (null = no refund yet) */
+  @Column("decimal", { precision: 10, scale: 2, nullable: true })
+  refundedAmount: number | null;
+
+  /** When the booking was cancelled */
+  @Column({ type: "timestamptz", nullable: true })
+  cancelledAt: Date | null;
+
+  /** Who initiated the cancellation: "guest" | "host" | "admin" */
+  @Column({ type: "varchar", length: 10, nullable: true })
+  cancelledBy: "guest" | "host" | "admin" | null;
+
+  /** Optional free-text reason for cancellation */
+  @Column({ type: "text", nullable: true })
+  cancellationReason: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

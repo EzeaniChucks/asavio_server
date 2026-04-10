@@ -11,6 +11,8 @@ const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
 const notificationService_1 = require("./notificationService");
 const settingsService_1 = require("./settingsService");
+const paymentService_1 = require("./paymentService");
+const cancellationPolicies_1 = require("../constants/cancellationPolicies");
 class BookingService {
     constructor() {
         this.bookingRepo = database_1.AppDataSource.getRepository(Booking_1.Booking);
@@ -223,9 +225,8 @@ class BookingService {
             .getMany();
     }
     // ── Update ────────────────────────────────────────────────────────────────
-    async updateBookingStatus(id, status, requesterId, requesterRole) {
+    async updateBookingStatus(id, status, requesterId, requesterRole, cancellationReason) {
         const booking = await this.getBookingById(id, requesterId, requesterRole);
-        // Only host/admin can confirm or complete; user can only cancel
         const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
         const isAdmin = requesterRole === "admin";
         const isGuest = booking.userId === requesterId;
@@ -241,13 +242,89 @@ class BookingService {
             if (booking.status === "completed") {
                 throw new AppError_1.AppError("Completed bookings cannot be cancelled", 400);
             }
+            if (booking.status === "cancelled") {
+                throw new AppError_1.AppError("This booking is already cancelled", 400);
+            }
         }
+        // ── Cancellation with refund logic ───────────────────────────────────────
+        if (status === "cancelled") {
+            const cancelledBy = isAdmin ? "admin" : isHost ? "host" : "guest";
+            const listingTitle = booking.property?.title ??
+                (booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "your booking");
+            const policy = booking.property?.cancellationPolicy ??
+                booking.vehicle?.cancellationPolicy ??
+                "flexible";
+            let refundEstimate = {
+                refundAmount: 0,
+                inGracePeriod: false,
+                reason: "No payment was made — no refund required.",
+                policy,
+            };
+            if (booking.paymentStatus === "paid" && booking.paystackReference) {
+                refundEstimate = (0, cancellationPolicies_1.calculateRefund)({
+                    totalPrice: Number(booking.totalPrice),
+                    hostPayout: Number(booking.hostPayout),
+                    checkIn: new Date(booking.checkIn),
+                    createdAt: new Date(booking.createdAt),
+                    policy,
+                    cancelledBy,
+                });
+                if (refundEstimate.refundAmount > 0) {
+                    // Process Paystack refund (best-effort — don't block cancellation if it fails)
+                    try {
+                        await paymentService_1.paymentService.refundTransaction(booking.paystackReference, refundEstimate.refundAmount);
+                    }
+                    catch (err) {
+                        console.error("[Cancellation] Paystack refund failed for booking", id, err);
+                        // Record the failed attempt in notes — admin can retry manually
+                        refundEstimate.reason += " [Paystack refund call failed — manual action required]";
+                    }
+                }
+            }
+            // Persist cancellation fields
+            await this.bookingRepo.update(id, {
+                status: "cancelled",
+                paymentStatus: refundEstimate.refundAmount > 0 ? "refunded" : booking.paymentStatus,
+                refundedAmount: refundEstimate.refundAmount > 0 ? refundEstimate.refundAmount : null,
+                cancelledAt: new Date(),
+                cancelledBy,
+                cancellationReason: cancellationReason ?? null,
+            });
+            const updated = await this.bookingRepo.findOne({
+                where: { id },
+                relations: ["property", "property.images", "vehicle", "user"],
+            });
+            if (updated?.user) {
+                // Cancellation + refund email
+                emailService_1.emailService.sendCancellationRefund({
+                    to: updated.user.email,
+                    firstName: updated.user.firstName,
+                    listingTitle,
+                    checkIn: new Date(booking.checkIn).toLocaleDateString("en-GB"),
+                    checkOut: new Date(booking.checkOut).toLocaleDateString("en-GB"),
+                    refundAmount: refundEstimate.refundAmount,
+                    totalPaid: Number(booking.totalPrice),
+                    reason: refundEstimate.reason,
+                    bookingId: id,
+                }).catch(console.error);
+                notificationService_1.notificationService.send({
+                    userId: updated.user.id,
+                    type: "booking_cancelled",
+                    title: "Booking cancelled",
+                    body: refundEstimate.refundAmount > 0
+                        ? `Your booking for "${listingTitle}" was cancelled. Refund of ₦${Number(refundEstimate.refundAmount).toLocaleString("en-NG")} is being processed.`
+                        : `Your booking for "${listingTitle}" has been cancelled.`,
+                    data: { url: `/bookings/${id}`, urlLabel: "View booking" },
+                }).catch(console.error);
+            }
+            return updated;
+        }
+        // ── Non-cancellation status updates ─────────────────────────────────────
         await this.bookingRepo.update(id, { status });
         const updated = await this.bookingRepo.findOne({
             where: { id },
             relations: ["property", "property.images", "user"],
         });
-        // Notify guest of status change (best-effort)
         if (updated?.user) {
             emailService_1.emailService.sendBookingStatusUpdate({
                 to: updated.user.email,
@@ -256,10 +333,8 @@ class BookingService {
                 status,
                 bookingId: id,
             }).catch(console.error);
-            // In-app notification to guest
             const typeMap = {
                 confirmed: "booking_confirmed",
-                cancelled: "booking_cancelled",
                 completed: "booking_completed",
             };
             const notifType = typeMap[status];
@@ -267,21 +342,49 @@ class BookingService {
                 notificationService_1.notificationService.send({
                     userId: updated.user.id,
                     type: notifType,
-                    title: status === "confirmed"
-                        ? "Booking confirmed ✓"
-                        : status === "cancelled"
-                            ? "Booking cancelled"
-                            : "Booking completed",
+                    title: status === "confirmed" ? "Booking confirmed ✓" : "Booking completed",
                     body: status === "confirmed"
                         ? `Your booking for "${updated.property?.title ?? "your property"}" has been confirmed.`
-                        : status === "cancelled"
-                            ? `Your booking for "${updated.property?.title ?? "your property"}" has been cancelled.`
-                            : `Your stay at "${updated.property?.title ?? "your property"}" is now complete. We hope you enjoyed it!`,
+                        : `Your stay at "${updated.property?.title ?? "your property"}" is now complete. We hope you enjoyed it!`,
                     data: { url: `/bookings/${id}`, urlLabel: "View booking" },
                 }).catch(console.error);
             }
         }
         return updated;
+    }
+    /**
+     * Returns a refund estimate for a booking without modifying anything.
+     * Used so the frontend can show the guest what they'll receive before they confirm cancellation.
+     */
+    async getCancellationEstimate(id, requesterId, requesterRole) {
+        const booking = await this.getBookingById(id, requesterId, requesterRole);
+        const isAdmin = requesterRole === "admin";
+        const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+        const cancelledBy = isAdmin ? "admin" : isHost ? "host" : "guest";
+        const listingTitle = booking.property?.title ??
+            (booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "your booking");
+        const policy = booking.property?.cancellationPolicy ??
+            booking.vehicle?.cancellationPolicy ??
+            "flexible";
+        if (booking.paymentStatus !== "paid") {
+            return {
+                refundAmount: 0,
+                inGracePeriod: false,
+                reason: "No payment was made — no refund will be issued.",
+                policy,
+                listingTitle,
+                totalPaid: Number(booking.totalPrice),
+            };
+        }
+        const estimate = (0, cancellationPolicies_1.calculateRefund)({
+            totalPrice: Number(booking.totalPrice),
+            hostPayout: Number(booking.hostPayout),
+            checkIn: new Date(booking.checkIn),
+            createdAt: new Date(booking.createdAt),
+            policy,
+            cancelledBy,
+        });
+        return { ...estimate, listingTitle, totalPaid: Number(booking.totalPrice) };
     }
     // ── Check availability (public helper) ───────────────────────────────────
     async checkAvailability(propertyId, checkIn, checkOut, purpose) {

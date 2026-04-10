@@ -36,11 +36,15 @@ exports.bookingController = {
         });
     }),
     updateBookingStatus: (0, catchAsync_1.catchAsync)(async (req, res) => {
-        const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status, req.user.id, req.user.role);
+        const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status, req.user.id, req.user.role, req.body.cancellationReason);
         res.status(200).json({
             status: "success",
             data: { booking },
         });
+    }),
+    getCancellationEstimate: (0, catchAsync_1.catchAsync)(async (req, res) => {
+        const estimate = await bookingService.getCancellationEstimate(req.params.id, req.user.id, req.user.role);
+        res.json({ status: "success", data: estimate });
     }),
     checkAvailability: (0, catchAsync_1.catchAsync)(async (req, res) => {
         const { propertyId, checkIn, checkOut, purpose } = req.query;

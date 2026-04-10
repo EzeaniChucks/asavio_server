@@ -38,6 +38,14 @@ export declare class Booking {
     /** Purpose of the booking — used for purpose-based pricing (e.g. "Birthday party") */
     purpose: string;
     specialRequests: string;
+    /** Amount refunded to the guest when the booking was cancelled (null = no refund yet) */
+    refundedAmount: number | null;
+    /** When the booking was cancelled */
+    cancelledAt: Date | null;
+    /** Who initiated the cancellation: "guest" | "host" | "admin" */
+    cancelledBy: "guest" | "host" | "admin" | null;
+    /** Optional free-text reason for cancellation */
+    cancellationReason: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

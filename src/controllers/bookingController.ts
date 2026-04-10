@@ -54,13 +54,23 @@ export const bookingController = {
       req.params.id as string,
       req.body.status as BookingStatus,
       req.user.id,
-      req.user.role
+      req.user.role,
+      req.body.cancellationReason as string | undefined
     );
 
     res.status(200).json({
       status: "success",
       data: { booking },
     });
+  }),
+
+  getCancellationEstimate: catchAsync(async (req: Request, res: Response) => {
+    const estimate = await bookingService.getCancellationEstimate(
+      req.params.id as string,
+      req.user.id,
+      req.user.role
+    );
+    res.json({ status: "success", data: estimate });
   }),
 
   checkAvailability: catchAsync(async (req: Request, res: Response) => {

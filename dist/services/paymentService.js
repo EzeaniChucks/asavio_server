@@ -180,6 +180,23 @@ class PaymentService {
         }
         return booking;
     }
+    /**
+     * Issues a Paystack refund for the given reference.
+     * @param paystackReference  The original transaction reference stored on the booking
+     * @param amountNGN          Amount to refund in NGN (converted to kobo internally). Omit for full refund.
+     */
+    async refundTransaction(paystackReference, amountNGN) {
+        const amountInKobo = Math.round(amountNGN * 100);
+        const response = await paystackRequest("POST", "/refund", {
+            transaction: paystackReference,
+            amount: amountInKobo,
+            merchant_note: "Booking cancellation refund — Asavio",
+            customer_note: "Your booking has been cancelled and a refund has been processed.",
+        });
+        if (!response.status) {
+            throw new AppError_1.AppError(`Paystack refund failed: ${response.message}`, 502);
+        }
+    }
     async handleWebhook(rawBody, signature) {
         const secret = process.env.PAYSTACK_SECRET_KEY ?? "";
         const hash = crypto

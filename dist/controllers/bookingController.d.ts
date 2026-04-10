@@ -5,6 +5,7 @@ export declare const bookingController: {
     getHostBookings: (req: Request, res: Response, next: import("express").NextFunction) => void;
     getBooking: (req: Request, res: Response, next: import("express").NextFunction) => void;
     updateBookingStatus: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getCancellationEstimate: (req: Request, res: Response, next: import("express").NextFunction) => void;
     checkAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
     checkVehicleAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
     getVehicleBookedDates: (req: Request, res: Response, next: import("express").NextFunction) => void;

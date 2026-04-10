@@ -17,6 +17,17 @@ export declare const emailService: {
         status: string;
         bookingId: string;
     }): Promise<void>;
+    sendCancellationRefund(opts: {
+        to: string;
+        firstName: string;
+        listingTitle: string;
+        checkIn: string;
+        checkOut: string;
+        refundAmount: number;
+        totalPaid: number;
+        reason: string;
+        bookingId: string;
+    }): Promise<void>;
     sendHostNewBooking(opts: {
         to: string;
         hostName: string;

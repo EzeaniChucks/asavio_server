@@ -6,6 +6,12 @@ export declare class PaymentService {
         reference: string;
     }>;
     verifyPayment(reference: string): Promise<Booking>;
+    /**
+     * Issues a Paystack refund for the given reference.
+     * @param paystackReference  The original transaction reference stored on the booking
+     * @param amountNGN          Amount to refund in NGN (converted to kobo internally). Omit for full refund.
+     */
+    refundTransaction(paystackReference: string, amountNGN: number): Promise<void>;
     handleWebhook(rawBody: Buffer, signature: string): Promise<void>;
 }
 export declare const paymentService: PaymentService;

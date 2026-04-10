@@ -81,6 +81,14 @@ export class Vehicle {
   bookings: Booking[];
 
   /**
+   * Cancellation policy for this listing.
+   * One of: "flexible" | "moderate" | "firm" | "strict"
+   * Default: "flexible"
+   */
+  @Column({ default: "flexible" })
+  cancellationPolicy: string;
+
+  /**
    * Host-blocked date ranges — guests cannot book dates that fall within any of these.
    * Format: [{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }]  (to is exclusive)
    */

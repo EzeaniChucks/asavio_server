@@ -25,6 +25,9 @@ router.get("/host", restrictTo("host", "admin"), bookingController.getHostBookin
 // Single booking (guest/host/admin)
 router.get("/:id", bookingController.getBooking);
 
+// Cancellation refund estimate — shown to user before they confirm cancel
+router.get("/:id/cancellation-estimate", bookingController.getCancellationEstimate);
+
 // Status update (host/admin confirm or complete; cancel handled by service logic for guest too)
 router.patch(
   "/:id/status",

@@ -133,6 +133,22 @@ __decorate([
     __metadata("design:type", String)
 ], Booking.prototype, "specialRequests", void 0);
 __decorate([
+    (0, typeorm_1.Column)("decimal", { precision: 10, scale: 2, nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "refundedAmount", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "timestamptz", nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "cancelledAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 10, nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "cancelledBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "cancellationReason", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], Booking.prototype, "createdAt", void 0);
