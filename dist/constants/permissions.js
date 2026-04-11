@@ -15,6 +15,7 @@ exports.ADMIN_PERMISSIONS = {
     MANAGE_ADMINS: "manage_admins",
     VIEW_AUDIT_LOGS: "view_audit_logs",
     MANAGE_SUPPORT: "manage_support",
+    MANAGE_SUBSCRIPTIONS: "manage_subscriptions",
 };
 exports.ALL_PERMISSIONS = Object.values(exports.ADMIN_PERMISSIONS);
 exports.PERMISSION_LABELS = {
@@ -30,5 +31,6 @@ exports.PERMISSION_LABELS = {
     manage_admins: "Admin Management (IAM)",
     view_audit_logs: "View Audit Logs",
     manage_support: "Guest Support & Complaints",
+    manage_subscriptions: "Subscriptions",
 };
 //# sourceMappingURL=permissions.js.map

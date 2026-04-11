@@ -4,9 +4,9 @@ exports.vehicleController = void 0;
 const vehicleService_1 = require("../services/vehicleService");
 const cloudinaryService_1 = require("../services/cloudinaryService");
 const subscriptionService_1 = require("../services/subscriptionService");
+const settingsService_1 = require("../services/settingsService");
 const catchAsync_1 = require("../utils/catchAsync");
 const AppError_1 = require("../utils/AppError");
-const subscriptionTiers_1 = require("../constants/subscriptionTiers");
 const cloudinaryService = new cloudinaryService_1.CloudinaryService();
 exports.vehicleController = {
     getAvailableVehicleTypes: (0, catchAsync_1.catchAsync)(async (_req, res, _next) => {
@@ -43,9 +43,10 @@ exports.vehicleController = {
         // Enforce photo limit
         if (files.length > 0) {
             const tier = req.user.subscriptionTier ?? "starter";
-            const maxPhotos = subscriptionTiers_1.TIER_CONFIG[tier].maxPhotos;
+            const tierConfig = await settingsService_1.settingsService.getActiveTierConfig();
+            const { maxPhotos, label } = tierConfig[tier];
             if (files.length > maxPhotos) {
-                throw new AppError_1.AppError(`Your ${subscriptionTiers_1.TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`, 400);
+                throw new AppError_1.AppError(`Your ${label} plan allows up to ${maxPhotos} photos per listing.`, 400);
             }
         }
         const vehicle = await vehicleService_1.vehicleService.createVehicle(req.user.id, req.body, files);
@@ -62,9 +63,10 @@ exports.vehicleController = {
             const currentCount = (existing.images?.length ?? 0) - removePublicIds.length;
             const newTotal = currentCount + files.length;
             const tier = req.user.subscriptionTier ?? "starter";
-            const maxPhotos = subscriptionTiers_1.TIER_CONFIG[tier].maxPhotos;
+            const tierConfig = await settingsService_1.settingsService.getActiveTierConfig();
+            const { maxPhotos, label } = tierConfig[tier];
             if (newTotal > maxPhotos) {
-                throw new AppError_1.AppError(`Your ${subscriptionTiers_1.TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`, 400);
+                throw new AppError_1.AppError(`Your ${label} plan allows up to ${maxPhotos} photos per listing.`, 400);
             }
         }
         const vehicle = await vehicleService_1.vehicleService.updateVehicle(req.params.id, req.user.id, req.user.role, req.body, files.length ? files : undefined);
@@ -103,7 +105,8 @@ exports.vehicleController = {
         if (!file)
             throw new AppError_1.AppError("No video file uploaded", 400);
         const tier = req.user.subscriptionTier ?? "starter";
-        const tierCfg = subscriptionTiers_1.TIER_CONFIG[tier];
+        const allTierConfig = await settingsService_1.settingsService.getActiveTierConfig();
+        const tierCfg = allTierConfig[tier];
         const maxSizeBytes = tierCfg.videoMaxSizeMB * 1024 * 1024;
         if (file.size > maxSizeBytes) {
             throw new AppError_1.AppError(`Video file is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). ` +

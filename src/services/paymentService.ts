@@ -264,25 +264,41 @@ export class PaymentService {
     };
     console.log("[Webhook] Event type:", event.event);
 
-    // ── Booking payment ────────────────────────────────────────────────────
+    // ── charge.success ────────────────────────────────────────────────────
     if (event.event === "charge.success") {
       const meta = event.data.metadata as Record<string, unknown> | undefined;
       console.log("[Webhook] charge.success — metadata:", JSON.stringify(meta));
 
-      // If metadata has type = 'subscription_initiate' this is the first
-      // subscription charge — activate the subscription record.
+      // Initial subscription charge — metadata contains type:"subscription_initiate"
       if (meta?.type === "subscription_initiate") {
-        console.log("[Webhook] Routing to subscriptionService.activateSubscription");
-        const hostId = meta.hostId as string;
-        const tier = meta.subscriptionTier as SubscriptionTier;
-        const cycle = meta.billingCycle as BillingCycle;
+        console.log("[Webhook] Initial subscription charge — activating");
+        const hostId   = meta.hostId as string;
+        const tier     = meta.subscriptionTier as SubscriptionTier;
+        const cycle    = meta.billingCycle as BillingCycle;
         const planCode = meta.planCode as string;
-        const subData = event.data.subscription ?? event.data;
-        console.log("[Webhook] Subscription activate payload — hostId:", hostId, "tier:", tier, "cycle:", cycle, "planCode:", planCode);
+        // Paystack embeds subscription data inside charge.success when a plan is used
+        const subData  = event.data.subscription ?? {};
         await subscriptionService
           .activateSubscription({ hostId, tier, cycle, planCode, subscriptionData: subData })
           .catch((err) => console.error("[Webhook] activateSubscription failed:", err));
-        console.log("[Webhook] activateSubscription call completed");
+        console.log("[Webhook] activateSubscription completed");
+        return;
+      }
+
+      // Recurring subscription renewal — Paystack-initiated charge has event.data.plan set
+      // but no custom metadata (we never set metadata on Paystack's own recurring charges)
+      if (event.data.plan) {
+        const subCode      = event.data.subscription?.subscription_code as string | undefined;
+        const nextPayDate  = event.data.subscription?.next_payment_date as string | undefined;
+        console.log("[Webhook] Recurring subscription charge — subCode:", subCode, "nextPayment:", nextPayDate);
+        if (subCode) {
+          await subscriptionService
+            .renewSubscription(subCode, nextPayDate ?? "")
+            .catch((err) => console.error("[Webhook] renewSubscription failed:", err));
+          console.log("[Webhook] renewSubscription completed for", subCode);
+        } else {
+          console.warn("[Webhook] Recurring charge with plan but no subscription_code — ignoring");
+        }
         return;
       }
 
@@ -349,27 +365,53 @@ export class PaymentService {
       }
     }
 
-    // ── Subscription renewal ───────────────────────────────────────────────
+    // ── subscription.create — fired by Paystack when a subscription is created ──
+    // Use this as the authoritative source of subscription_code and email_token.
+    // It fires alongside charge.success on initial payment; we upsert the codes here.
+    if (event.event === "subscription.create") {
+      const subCode   = event.data?.subscription_code as string | undefined;
+      const emailToken = event.data?.email_token as string | undefined;
+      console.log("[Webhook] subscription.create — subCode:", subCode);
+      if (subCode) {
+        await subscriptionService
+          .storeSubscriptionCodes(subCode, emailToken ?? null, event.data?.customer?.customer_code ?? null)
+          .catch((err) => console.error("[Webhook] storeSubscriptionCodes failed:", err));
+      }
+    }
+
+    // ── invoice.payment_failed — recurring charge failed ──────────────────
     if (event.event === "invoice.payment_failed") {
       const subCode = event.data?.subscription?.subscription_code as string | undefined;
       console.log("[Webhook] invoice.payment_failed — subCode:", subCode);
       if (subCode) {
         await subscriptionService.markPastDue(subCode).catch((err) => console.error("[Webhook] markPastDue failed:", err));
-        console.log("[Webhook] markPastDue called for", subCode);
       } else {
-        console.warn("[Webhook] invoice.payment_failed — no subscription_code found in payload");
+        console.warn("[Webhook] invoice.payment_failed — no subscription_code in payload");
       }
     }
 
-    // ── Subscription disabled (cancel confirmed by Paystack) ───────────────
-    if (event.event === "subscription.disable" || event.event === "subscription.not_renew") {
+    // ── subscription.not_renew — customer has flagged for non-renewal ─────
+    // The subscription is still active until the end of the current period.
+    // Do NOT downgrade the user yet — that happens on subscription.disable.
+    if (event.event === "subscription.not_renew") {
       const subCode = event.data?.subscription_code as string | undefined;
-      console.log("[Webhook]", event.event, "— subCode:", subCode);
+      console.log("[Webhook] subscription.not_renew — subCode:", subCode);
       if (subCode) {
-        await subscriptionService.expireSubscription(subCode).catch((err) => console.error("[Webhook] expireSubscription failed:", err));
-        console.log("[Webhook] expireSubscription called for", subCode);
-      } else {
-        console.warn("[Webhook]", event.event, "— no subscription_code found in payload");
+        await subscriptionService
+          .markCancelledPendingExpiry(subCode)
+          .catch((err) => console.error("[Webhook] markCancelledPendingExpiry failed:", err));
+      }
+    }
+
+    // ── subscription.disable — subscription has fully ended ───────────────
+    // Fires at end of the final billing cycle. Now we downgrade to starter.
+    if (event.event === "subscription.disable") {
+      const subCode = event.data?.subscription_code as string | undefined;
+      console.log("[Webhook] subscription.disable — subCode:", subCode);
+      if (subCode) {
+        await subscriptionService
+          .expireSubscription(subCode)
+          .catch((err) => console.error("[Webhook] expireSubscription failed:", err));
       }
     }
   }

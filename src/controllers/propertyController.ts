@@ -5,6 +5,7 @@ import { CloudinaryService } from "../services/cloudinaryService";
 import { emailService } from "../services/emailService";
 import { notificationService } from "../services/notificationService";
 import { subscriptionService } from "../services/subscriptionService";
+import { settingsService } from "../services/settingsService";
 import { AppDataSource } from "../config/database";
 import { User } from "../entities/User";
 import { AppError } from "../utils/AppError";
@@ -23,12 +24,12 @@ export const propertyController = {
     let uploadedImages: { url: string; publicId: string }[] = [];
 
     if (files && files.length > 0) {
-      // Enforce photo limit based on subscription tier
       const tier = req.user.subscriptionTier ?? "starter";
-      const maxPhotos = TIER_CONFIG[tier].maxPhotos;
+      const tierConfig = await settingsService.getActiveTierConfig();
+      const { maxPhotos, label } = tierConfig[tier];
       if (files.length > maxPhotos) {
         throw new AppError(
-          `Your ${TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`,
+          `Your ${label} plan allows up to ${maxPhotos} photos per listing.`,
           400
         );
       }

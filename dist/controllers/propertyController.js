@@ -6,6 +6,7 @@ const cloudinaryService_1 = require("../services/cloudinaryService");
 const emailService_1 = require("../services/emailService");
 const notificationService_1 = require("../services/notificationService");
 const subscriptionService_1 = require("../services/subscriptionService");
+const settingsService_1 = require("../services/settingsService");
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const AppError_1 = require("../utils/AppError");
@@ -20,11 +21,11 @@ exports.propertyController = {
         const files = req.files;
         let uploadedImages = [];
         if (files && files.length > 0) {
-            // Enforce photo limit based on subscription tier
             const tier = req.user.subscriptionTier ?? "starter";
-            const maxPhotos = subscriptionTiers_1.TIER_CONFIG[tier].maxPhotos;
+            const tierConfig = await settingsService_1.settingsService.getActiveTierConfig();
+            const { maxPhotos, label } = tierConfig[tier];
             if (files.length > maxPhotos) {
-                throw new AppError_1.AppError(`Your ${subscriptionTiers_1.TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`, 400);
+                throw new AppError_1.AppError(`Your ${label} plan allows up to ${maxPhotos} photos per listing.`, 400);
             }
             uploadedImages = await cloudinaryService.uploadMultipleImages(files, "properties");
         }

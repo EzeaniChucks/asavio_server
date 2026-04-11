@@ -11,6 +11,7 @@ export declare const ADMIN_PERMISSIONS: {
     readonly MANAGE_ADMINS: "manage_admins";
     readonly VIEW_AUDIT_LOGS: "view_audit_logs";
     readonly MANAGE_SUPPORT: "manage_support";
+    readonly MANAGE_SUBSCRIPTIONS: "manage_subscriptions";
 };
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
 export declare const ALL_PERMISSIONS: AdminPermission[];

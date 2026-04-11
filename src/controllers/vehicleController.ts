@@ -3,9 +3,9 @@ import { Request, Response, NextFunction } from "express";
 import { vehicleService } from "../services/vehicleService";
 import { CloudinaryService } from "../services/cloudinaryService";
 import { subscriptionService } from "../services/subscriptionService";
+import { settingsService } from "../services/settingsService";
 import { catchAsync } from "../utils/catchAsync";
 import { AppError } from "../utils/AppError";
-import { TIER_CONFIG } from "../constants/subscriptionTiers";
 
 const cloudinaryService = new CloudinaryService();
 
@@ -50,10 +50,11 @@ export const vehicleController = {
     // Enforce photo limit
     if (files.length > 0) {
       const tier = req.user!.subscriptionTier ?? "starter";
-      const maxPhotos = TIER_CONFIG[tier].maxPhotos;
+      const tierConfig = await settingsService.getActiveTierConfig();
+      const { maxPhotos, label } = tierConfig[tier];
       if (files.length > maxPhotos) {
         throw new AppError(
-          `Your ${TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`,
+          `Your ${label} plan allows up to ${maxPhotos} photos per listing.`,
           400
         );
       }
@@ -75,10 +76,11 @@ export const vehicleController = {
       const currentCount = (existing.images?.length ?? 0) - removePublicIds.length;
       const newTotal = currentCount + files.length;
       const tier = req.user!.subscriptionTier ?? "starter";
-      const maxPhotos = TIER_CONFIG[tier].maxPhotos;
+      const tierConfig = await settingsService.getActiveTierConfig();
+      const { maxPhotos, label } = tierConfig[tier];
       if (newTotal > maxPhotos) {
         throw new AppError(
-          `Your ${TIER_CONFIG[tier].label} plan allows up to ${maxPhotos} photos per listing.`,
+          `Your ${label} plan allows up to ${maxPhotos} photos per listing.`,
           400
         );
       }
@@ -137,7 +139,8 @@ export const vehicleController = {
     if (!file) throw new AppError("No video file uploaded", 400);
 
     const tier = req.user!.subscriptionTier ?? "starter";
-    const tierCfg = TIER_CONFIG[tier];
+    const allTierConfig = await settingsService.getActiveTierConfig();
+    const tierCfg = allTierConfig[tier];
     const maxSizeBytes = tierCfg.videoMaxSizeMB * 1024 * 1024;
 
     if (file.size > maxSizeBytes) {
