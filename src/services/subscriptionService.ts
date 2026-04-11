@@ -223,7 +223,23 @@ class SubscriptionService {
     const host = await this.userRepo.findOne({ where: { id: hostId } });
     if (!host) return;
 
-    // Cancel any existing active subscriptions
+    // Deduplication: if a record for this subscription_code already exists (active or
+    // cancelled), reuse it rather than creating a second record. This prevents the
+    // duplicate-code problem caused by the verify callback and the webhook racing.
+    const subscriptionCode = subscriptionData.subscription_code;
+    if (subscriptionCode) {
+      const existingByCode = await this.subRepo.findOne({
+        where: { paystackSubscriptionCode: subscriptionCode },
+        order: { createdAt: "DESC" },
+      });
+      if (existingByCode) {
+        // Already recorded — just ensure tier and status are up-to-date on the user.
+        await this.userRepo.update(hostId, { subscriptionTier: tier });
+        return;
+      }
+    }
+
+    // Cancel any other active subscriptions for this host (upgrade/switch case)
     await this.subRepo.update(
       { hostId, status: "active" },
       { status: "cancelled", cancelledAt: new Date(), cancellationReason: "Upgraded/replaced" }
@@ -244,7 +260,7 @@ class SubscriptionService {
       tier,
       billingCycle: cycle,
       status: "active",
-      paystackSubscriptionCode: subscriptionData.subscription_code,
+      paystackSubscriptionCode: subscriptionCode,
       paystackCustomerCode: subscriptionData.customer?.customer_code,
       paystackPlanCode: planCode,
       paystackEmailToken: subscriptionData.email_token,
@@ -281,6 +297,7 @@ class SubscriptionService {
     const sub = await this.subRepo.findOne({
       where: { paystackSubscriptionCode: subscriptionCode },
       relations: ["host"],
+      order: { createdAt: "DESC" },
     });
     if (!sub) return;
 
@@ -299,6 +316,7 @@ class SubscriptionService {
     const sub = await this.subRepo.findOne({
       where: { paystackSubscriptionCode: subscriptionCode },
       relations: ["host"],
+      order: { createdAt: "DESC" },
     });
     if (!sub || !sub.host) return;
 
@@ -393,7 +411,10 @@ class SubscriptionService {
     customerCode: string | null
   ): Promise<void> {
     // If we already have this subscription code stored, nothing to do
-    const existing = await this.subRepo.findOne({ where: { paystackSubscriptionCode: subscriptionCode } });
+    const existing = await this.subRepo.findOne({
+      where: { paystackSubscriptionCode: subscriptionCode },
+      order: { createdAt: "DESC" },
+    });
     if (existing) {
       // Ensure email_token is up-to-date
       if (emailToken && !existing.paystackEmailToken) {
@@ -440,7 +461,10 @@ class SubscriptionService {
    * `subscription.disable` fires at end of billing period.
    */
   async markCancelledPendingExpiry(subscriptionCode: string): Promise<void> {
-    const sub = await this.subRepo.findOne({ where: { paystackSubscriptionCode: subscriptionCode } });
+    const sub = await this.subRepo.findOne({
+      where: { paystackSubscriptionCode: subscriptionCode },
+      order: { createdAt: "DESC" },
+    });
     if (!sub || sub.status === "cancelled" || sub.status === "expired") return;
 
     sub.status = "cancelled";
@@ -454,6 +478,7 @@ class SubscriptionService {
   async expireSubscription(subscriptionCode: string): Promise<void> {
     const sub = await this.subRepo.findOne({
       where: { paystackSubscriptionCode: subscriptionCode },
+      order: { createdAt: "DESC" },
     });
     if (!sub) return;
 
