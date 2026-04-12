@@ -1,5 +1,6 @@
 // src/validations/propertyValidation.ts
 import { body } from "express-validator";
+import { VALID_PROPERTY_TYPES } from "../constants/propertyTypes";
 
 // FormData sends everything as strings; parse JSON-encoded fields before validation
 const parseJson = (value: unknown) => {
@@ -26,7 +27,10 @@ export const propertyValidation = {
     body("propertyType")
       .trim()
       .notEmpty()
-      .withMessage("Property type is required"),
+      .withMessage("Property type is required")
+      .customSanitizer((v: string) => v.toLowerCase())
+      .isIn(VALID_PROPERTY_TYPES)
+      .withMessage(`Property type must be one of: ${VALID_PROPERTY_TYPES.join(", ")}`),
     body("bedrooms")
       .isInt({ min: 0 })
       .withMessage("Bedrooms must be a non-negative integer"),
@@ -89,6 +93,12 @@ export const propertyValidation = {
       .trim()
       .isLength({ min: 50 })
       .withMessage("Description must be at least 50 characters"),
+    body("propertyType")
+      .optional()
+      .trim()
+      .customSanitizer((v: string) => v.toLowerCase())
+      .isIn(VALID_PROPERTY_TYPES)
+      .withMessage(`Property type must be one of: ${VALID_PROPERTY_TYPES.join(", ")}`),
     body("bedrooms")
       .optional()
       .isInt({ min: 0 })

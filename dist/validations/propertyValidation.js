@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.propertyValidation = void 0;
 // src/validations/propertyValidation.ts
 const express_validator_1 = require("express-validator");
+const propertyTypes_1 = require("../constants/propertyTypes");
 // FormData sends everything as strings; parse JSON-encoded fields before validation
 const parseJson = (value) => {
     if (typeof value === "string") {
@@ -32,7 +33,10 @@ exports.propertyValidation = {
         (0, express_validator_1.body)("propertyType")
             .trim()
             .notEmpty()
-            .withMessage("Property type is required"),
+            .withMessage("Property type is required")
+            .customSanitizer((v) => v.toLowerCase())
+            .isIn(propertyTypes_1.VALID_PROPERTY_TYPES)
+            .withMessage(`Property type must be one of: ${propertyTypes_1.VALID_PROPERTY_TYPES.join(", ")}`),
         (0, express_validator_1.body)("bedrooms")
             .isInt({ min: 0 })
             .withMessage("Bedrooms must be a non-negative integer"),
@@ -95,6 +99,12 @@ exports.propertyValidation = {
             .trim()
             .isLength({ min: 50 })
             .withMessage("Description must be at least 50 characters"),
+        (0, express_validator_1.body)("propertyType")
+            .optional()
+            .trim()
+            .customSanitizer((v) => v.toLowerCase())
+            .isIn(propertyTypes_1.VALID_PROPERTY_TYPES)
+            .withMessage(`Property type must be one of: ${propertyTypes_1.VALID_PROPERTY_TYPES.join(", ")}`),
         (0, express_validator_1.body)("bedrooms")
             .optional()
             .isInt({ min: 0 })
