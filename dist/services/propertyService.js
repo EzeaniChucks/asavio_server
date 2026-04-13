@@ -146,7 +146,7 @@ class PropertyService {
             .andWhere("property.status = :status", { status: "approved" })
             .andWhere("(host.kycStatus = 'approved' OR host.role = 'admin')");
         if (filters.city) {
-            queryBuilder.andWhere("property.location->>'city' = :city", {
+            queryBuilder.andWhere("LOWER(property.location->>'city') = LOWER(:city)", {
                 city: filters.city,
             });
         }

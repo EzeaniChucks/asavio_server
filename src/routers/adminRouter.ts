@@ -20,6 +20,7 @@ router.get("/users/:id",         hasPermission(P.MANAGE_USERS), adminController.
 router.patch("/users/:id",       hasPermission(P.MANAGE_USERS), adminController.updateUser);
 router.delete("/users/:id",      hasPermission(P.MANAGE_USERS), adminController.deleteUser);
 router.get("/users/:id/properties", hasPermission(P.MANAGE_USERS), adminController.getHostProperties);
+router.get("/users/:id/vehicles",   hasPermission(P.MANAGE_USERS), adminController.getHostVehicles);
 router.patch("/users/:id/commission", hasPermission(P.MANAGE_PAYOUTS), validate(adminValidation.setHostCommission), adminController.setHostCommissionRate);
 
 // Properties

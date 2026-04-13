@@ -25,6 +25,7 @@ export declare const adminController: {
     getSettings: (req: Request, res: Response, next: NextFunction) => void;
     updateSettings: (req: Request, res: Response, next: NextFunction) => void;
     getHostProperties: (req: Request, res: Response, next: NextFunction) => void;
+    getHostVehicles: (req: Request, res: Response, next: NextFunction) => void;
     setHostCommissionRate: (req: Request, res: Response, next: NextFunction) => void;
     listAdmins: (req: Request, res: Response, next: NextFunction) => void;
     createAdmin: (req: Request, res: Response, next: NextFunction) => void;

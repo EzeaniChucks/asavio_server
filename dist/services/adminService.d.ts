@@ -217,6 +217,9 @@ declare class AdminService {
         };
         properties: Property[];
     }>;
+    getHostVehicles(hostId: string): Promise<{
+        vehicles: Vehicle[];
+    }>;
     getProperties(opts: {
         page?: number;
         limit?: number;

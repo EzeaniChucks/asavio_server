@@ -131,6 +131,17 @@ class AdminService {
     return { host: safeUser, properties };
   }
 
+  async getHostVehicles(hostId: string) {
+    const user = await AppDataSource.getRepository(User).findOne({ where: { id: hostId } });
+    if (!user) throw new AppError("User not found", 404);
+    const vehicles = await AppDataSource.getRepository(Vehicle).find({
+      where: { hostId },
+      relations: ["images"],
+      order: { createdAt: "DESC" },
+    });
+    return { vehicles };
+  }
+
   // ── Properties ───────────────────────────────────────────────
 
   async getProperties(opts: { page?: number; limit?: number; search?: string; status?: string; isAvailable?: boolean }) {

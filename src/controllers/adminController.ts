@@ -227,6 +227,11 @@ export const adminController = {
     res.json({ status: "success", data: result });
   }),
 
+  getHostVehicles: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const result = await adminService.getHostVehicles(req.params.id as string);
+    res.json({ status: "success", data: result });
+  }),
+
   // ── Per-host commission override ──────────────────────────────
 
   setHostCommissionRate: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {

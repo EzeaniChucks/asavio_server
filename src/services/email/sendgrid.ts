@@ -11,7 +11,7 @@ export class SendGridProvider implements EmailProvider {
     }
 
     sgMail.setApiKey(apiKey);
-    const from = process.env.SENDGRID_FROM_EMAIL || "noreply@asavio.com";
+    const from = process.env.SENDGRID_FROM_EMAIL || "noreply@asavio.app";
 
     await sgMail.send({
       ...payload,

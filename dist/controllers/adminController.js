@@ -180,6 +180,10 @@ exports.adminController = {
         const result = await adminService_1.adminService.getHostProperties(req.params.id);
         res.json({ status: "success", data: result });
     }),
+    getHostVehicles: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
+        const result = await adminService_1.adminService.getHostVehicles(req.params.id);
+        res.json({ status: "success", data: result });
+    }),
     // ── Per-host commission override ──────────────────────────────
     setHostCommissionRate: (0, catchAsync_1.catchAsync)(async (req, res, _next) => {
         const { commissionRateOverride } = req.body;

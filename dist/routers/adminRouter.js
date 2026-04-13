@@ -18,6 +18,7 @@ router.get("/users/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIO
 router.patch("/users/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.updateUser);
 router.delete("/users/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.deleteUser);
 router.get("/users/:id/properties", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.getHostProperties);
+router.get("/users/:id/vehicles", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.getHostVehicles);
 router.patch("/users/:id/commission", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_PAYOUTS), (0, validation_1.validate)(adminValidation_1.adminValidation.setHostCommission), adminController_1.adminController.setHostCommissionRate);
 // Properties
 router.get("/properties", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_PROPERTIES), adminController_1.adminController.getProperties);

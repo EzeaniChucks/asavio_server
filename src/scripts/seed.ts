@@ -123,7 +123,7 @@ const VEHICLE_REVIEW_POOL: { rating: number; comment: string }[] = [
 
 // ── Seed data ─────────────────────────────────────────────────────────────────
 
-// owner: "admin" = belongs to the admin account; "host" = belongs to Chidi (host@asavio.com)
+// owner: "admin" = belongs to the admin account; "host" = belongs to Chidi (host@asavio.app)
 const PROPERTIES = [
   {
     title: "The Lagos Skyline Penthouse",
@@ -239,7 +239,7 @@ const PROPERTIES = [
   },
 ];
 
-// owner: "admin" = belongs to admin; "host" = belongs to Chidi (host@asavio.com)
+// owner: "admin" = belongs to admin; "host" = belongs to Chidi (host@asavio.app)
 const VEHICLES = [
   {
     make: "Mercedes-Benz",
@@ -349,13 +349,13 @@ export async function runSeed(ds: DataSource) {
   }
 
   // ── Host user (also acts as the listing owner) ──────────────
-  let host = await userRepo.findOne({ where: { email: "host@asavio.com" } });
+  let host = await userRepo.findOne({ where: { email: "host@asavio.app" } });
 
   if (!host) {
     host = userRepo.create({
       firstName: "Chidi",
       lastName: "Okafor",
-      email: "host@asavio.com",
+      email: "host@asavio.app",
       password: await bcrypt.hash("Host123!", 12),
       role: "host",
       isVerified: true,
@@ -363,26 +363,26 @@ export async function runSeed(ds: DataSource) {
       phone: "+2348000000002",
     });
     await userRepo.save(host);
-    console.log("  ✓ Host   — host@asavio.com / Host123!");
+    console.log("  ✓ Host   — host@asavio.app / Host123!");
   } else {
     console.log("  — Host already exists, skipping");
   }
 
   // ── Guest user ──────────────────────────────────────────────
-  let guest = await userRepo.findOne({ where: { email: "guest@asavio.com" } });
+  let guest = await userRepo.findOne({ where: { email: "guest@asavio.app" } });
 
   if (!guest) {
     guest = userRepo.create({
       firstName: "Amaka",
       lastName: "Nwosu",
-      email: "guest@asavio.com",
+      email: "guest@asavio.app",
       password: await bcrypt.hash("Guest123!", 12),
       role: "user",
       isVerified: true,
       phone: "+2348000000003",
     });
     await userRepo.save(guest);
-    console.log("  ✓ Guest  — guest@asavio.com / Guest123!");
+    console.log("  ✓ Guest  — guest@asavio.app / Guest123!");
   } else {
     console.log("  — Guest already exists, skipping");
   }
@@ -527,8 +527,8 @@ export async function runSeed(ds: DataSource) {
   console.log("┌────────────────────────────────────────┐");
   console.log("│  Login credentials                     │");
   console.log("│  Admin:  asavioluxury@gmail.com / Admin123!  │");
-  console.log("│  Host:   host@asavio.com  / Host123!   │");
-  console.log("│  Guest:  guest@asavio.com / Guest123!  │");
+  console.log("│  Host:   host@asavio.app  / Host123!   │");
+  console.log("│  Guest:  guest@asavio.app / Guest123!  │");
   console.log("└────────────────────────────────────────┘\n");
 }
 

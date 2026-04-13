@@ -14,7 +14,7 @@ class SendGridProvider {
             return;
         }
         mail_1.default.setApiKey(apiKey);
-        const from = process.env.SENDGRID_FROM_EMAIL || "noreply@asavio.com";
+        const from = process.env.SENDGRID_FROM_EMAIL || "noreply@asavio.app";
         await mail_1.default.send({
             ...payload,
             from,
