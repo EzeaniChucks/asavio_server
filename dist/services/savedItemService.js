@@ -12,8 +12,14 @@ class SavedItemService {
         return database_1.AppDataSource.getRepository(SavedItem_1.SavedItem);
     }
     /** Toggle save. Returns { saved: true } if added, { saved: false } if removed. */
-    async toggle(userId, propertyId, vehicleId) {
-        const where = propertyId ? { userId, propertyId } : { userId, vehicleId };
+    async toggle(userId, propertyId, vehicleId, hotelId, eventCenterId) {
+        const where = propertyId
+            ? { userId, propertyId }
+            : vehicleId
+                ? { userId, vehicleId }
+                : hotelId
+                    ? { userId, hotelId }
+                    : { userId, eventCenterId };
         const existing = await this.repo.findOne({ where: where });
         if (existing) {
             await this.repo.remove(existing);
@@ -23,6 +29,8 @@ class SavedItemService {
             userId,
             propertyId: propertyId ?? null,
             vehicleId: vehicleId ?? null,
+            hotelId: hotelId ?? null,
+            eventCenterId: eventCenterId ?? null,
         });
         await this.repo.save(item);
         return { saved: true };
@@ -41,17 +49,19 @@ class SavedItemService {
         const filtered = items.filter((i) => i.propertyId !== null);
         return { items: filtered, total, page, limit: take };
     }
-    /** Returns the set of saved propertyIds and vehicleIds for a user — for bulk "is saved?" checks. */
+    /** Returns the set of saved IDs for a user — for bulk "is saved?" checks. */
     async getSavedIds(userId) {
         const items = await this.repo.find({
             where: { userId },
-            select: ["propertyId", "vehicleId"],
+            select: ["propertyId", "vehicleId", "hotelId", "eventCenterId"],
             take: MAX_SAVED_IDS,
             order: { createdAt: "DESC" },
         });
         return {
             propertyIds: items.filter((i) => i.propertyId).map((i) => i.propertyId),
             vehicleIds: items.filter((i) => i.vehicleId).map((i) => i.vehicleId),
+            hotelIds: items.filter((i) => i.hotelId).map((i) => i.hotelId),
+            eventCenterIds: items.filter((i) => i.eventCenterId).map((i) => i.eventCenterId),
         };
     }
 }

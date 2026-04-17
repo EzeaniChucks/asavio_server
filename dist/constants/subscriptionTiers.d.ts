@@ -7,6 +7,14 @@ export interface TierConfig {
     maxProperties: number;
     /** Max active vehicle listings (Infinity = unlimited) */
     maxVehicles: number;
+    /** Max active hotel listings (Infinity = unlimited) */
+    maxHotels: number;
+    /** Max room types a single hotel can have (Infinity = unlimited) */
+    maxRoomTypes: number;
+    /** Max active event center listings */
+    maxEventCenters: number;
+    /** Max spaces per event center */
+    maxEventSpaces: number;
     /** Max photos per listing */
     maxPhotos: number;
     /** Whether the feature video upload is available */

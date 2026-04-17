@@ -15,6 +15,8 @@ const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const Property_1 = require("./Property");
 const Vehicle_1 = require("./Vehicle");
+const Hotel_1 = require("./Hotel");
+const EventCenter_1 = require("./EventCenter");
 let Review = class Review {
 };
 exports.Review = Review;
@@ -60,6 +62,24 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Review.prototype, "vehicleId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Hotel_1.Hotel, { onDelete: "CASCADE", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "hotelId" }),
+    __metadata("design:type", Object)
+], Review.prototype, "hotel", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Review.prototype, "hotelId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => EventCenter_1.EventCenter, { onDelete: "CASCADE", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "eventCenterId" }),
+    __metadata("design:type", Object)
+], Review.prototype, "eventCenter", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Review.prototype, "eventCenterId", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

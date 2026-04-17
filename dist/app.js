@@ -29,6 +29,9 @@ const subscriptionRouter_1 = __importDefault(require("./routers/subscriptionRout
 const hostProfileRouter_1 = __importDefault(require("./routers/hostProfileRouter"));
 const userRouter_1 = __importDefault(require("./routers/userRouter"));
 const supportRouter_1 = __importDefault(require("./routers/supportRouter"));
+const hotelRouter_1 = __importDefault(require("./routers/hotelRouter"));
+const eventCenterRouter_1 = __importDefault(require("./routers/eventCenterRouter"));
+const eventBookingRouter_1 = __importDefault(require("./routers/eventBookingRouter"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -102,6 +105,9 @@ app.use("/api/subscriptions", subscriptionRouter_1.default);
 app.use("/api/hosts", hostProfileRouter_1.default);
 app.use("/api/users", userRouter_1.default);
 app.use("/api/support", supportRouter_1.default);
+app.use("/api/hotels", hotelRouter_1.default);
+app.use("/api/event-centers", eventCenterRouter_1.default);
+app.use("/api/event-bookings", eventBookingRouter_1.default);
 // Health check
 app.get("/health", (_req, res) => {
     res.status(200).json({ status: "OK", message: "Server is running" });

@@ -11,6 +11,14 @@ export const reviewValidation = {
       .optional()
       .isUUID()
       .withMessage("vehicleId must be a valid UUID"),
+    body("hotelId")
+      .optional()
+      .isUUID()
+      .withMessage("hotelId must be a valid UUID"),
+    body("eventCenterId")
+      .optional()
+      .isUUID()
+      .withMessage("eventCenterId must be a valid UUID"),
     body("rating")
       .isInt({ min: 1, max: 5 })
       .withMessage("Rating must be between 1 and 5"),

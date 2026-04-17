@@ -10,6 +10,8 @@ const router = Router();
 // Public
 router.get("/property/:propertyId", reviewController.getPropertyReviews);
 router.get("/vehicle/:vehicleId", reviewController.getVehicleReviews);
+router.get("/hotel/:hotelId", reviewController.getHotelReviews);
+router.get("/event-center/:eventCenterId", reviewController.getEventCenterReviews);
 
 // Protected
 router.use(protect);

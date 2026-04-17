@@ -11,6 +11,8 @@ import {
 import { User } from "./User";
 import { Property } from "./Property";
 import { Vehicle } from "./Vehicle";
+import { Hotel } from "./Hotel";
+import { RoomType } from "./RoomType";
 
 export type BookingStatus =
   | "awaiting_payment"
@@ -49,6 +51,28 @@ export class Booking {
 
   @Column({ nullable: true })
   vehicleId: string | null;
+
+  // ── Hotel bookings ───────────────────────────────────────────────────────
+  // For hotel bookings, `hotelId` and `roomTypeId` are set (and `propertyId`/`vehicleId` are null).
+  // `quantity` = how many rooms of that type the guest booked.
+
+  @ManyToOne(() => Hotel, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "hotelId" })
+  hotel: Hotel | null;
+
+  @Column({ nullable: true })
+  hotelId: string | null;
+
+  @ManyToOne(() => RoomType, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "roomTypeId" })
+  roomType: RoomType | null;
+
+  @Column({ nullable: true })
+  roomTypeId: string | null;
+
+  /** Number of rooms of the chosen room type (defaults to 1 for non-hotel bookings) */
+  @Column({ type: "smallint", default: 1 })
+  quantity: number;
 
   @Column({ type: "date" })
   checkIn: Date;

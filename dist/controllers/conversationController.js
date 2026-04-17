@@ -14,7 +14,7 @@ exports.conversationController = {
     }),
     /** POST /conversations — start or retrieve an existing conversation */
     getOrCreate: (0, catchAsync_1.catchAsync)(async (req, res) => {
-        const { hostId, propertyId, vehicleId } = req.body;
+        const { hostId, propertyId, vehicleId, hotelId, eventCenterId } = req.body;
         const guestId = req.user.id;
         if (!hostId)
             throw new AppError_1.AppError("hostId is required", 400);
@@ -28,6 +28,8 @@ exports.conversationController = {
             hostId,
             propertyId: propertyId ?? null,
             vehicleId: vehicleId ?? null,
+            hotelId: hotelId ?? null,
+            eventCenterId: eventCenterId ?? null,
         });
         res.json({ status: "success", data: { conversation } });
     }),

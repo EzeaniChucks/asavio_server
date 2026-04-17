@@ -13,6 +13,14 @@ exports.reviewValidation = {
             .optional()
             .isUUID()
             .withMessage("vehicleId must be a valid UUID"),
+        (0, express_validator_1.body)("hotelId")
+            .optional()
+            .isUUID()
+            .withMessage("hotelId must be a valid UUID"),
+        (0, express_validator_1.body)("eventCenterId")
+            .optional()
+            .isUUID()
+            .withMessage("eventCenterId must be a valid UUID"),
         (0, express_validator_1.body)("rating")
             .isInt({ min: 1, max: 5 })
             .withMessage("Rating must be between 1 and 5"),

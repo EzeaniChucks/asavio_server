@@ -99,7 +99,7 @@ declare class SubscriptionService {
         estimatedMRR: number;
     }>;
     adminCancelSubscription(subscriptionId: string): Promise<void>;
-    checkListingLimit(hostId: string, type: "property" | "vehicle"): Promise<void>;
+    checkListingLimit(hostId: string, type: "property" | "vehicle" | "hotel" | "event_center"): Promise<void>;
 }
 export declare const subscriptionService: SubscriptionService;
 export {};

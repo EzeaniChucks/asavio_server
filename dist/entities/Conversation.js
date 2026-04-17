@@ -15,6 +15,8 @@ const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const Property_1 = require("./Property");
 const Vehicle_1 = require("./Vehicle");
+const Hotel_1 = require("./Hotel");
+const EventCenter_1 = require("./EventCenter");
 const Message_1 = require("./Message");
 let Conversation = class Conversation {
 };
@@ -59,6 +61,24 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Object)
 ], Conversation.prototype, "vehicleId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Hotel_1.Hotel, { onDelete: "SET NULL", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "hotelId" }),
+    __metadata("design:type", Object)
+], Conversation.prototype, "hotel", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Conversation.prototype, "hotelId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => EventCenter_1.EventCenter, { onDelete: "SET NULL", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "eventCenterId" }),
+    __metadata("design:type", Object)
+], Conversation.prototype, "eventCenter", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Conversation.prototype, "eventCenterId", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => Message_1.Message, (m) => m.conversation),
     __metadata("design:type", Array)

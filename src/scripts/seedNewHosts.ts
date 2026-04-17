@@ -18,6 +18,15 @@ import { Vehicle }      from "../entities/Vehicle";
 import { Booking }      from "../entities/Booking";
 import { Conversation } from "../entities/Conversation";
 import { Message }      from "../entities/Message";
+import { Hotel }           from "../entities/Hotel";
+import { RoomType }        from "../entities/RoomType";
+import { HotelImage }      from "../entities/HotelImage";
+import { RoomTypeImage }   from "../entities/RoomTypeImage";
+import { EventCenter }     from "../entities/EventCenter";
+import { EventSpace }      from "../entities/EventSpace";
+import { EventBooking }    from "../entities/EventBooking";
+import { EventCenterImage } from "../entities/EventCenterImage";
+import { EventSpaceImage } from "../entities/EventSpaceImage";
 
 dotenv.config();
 
@@ -79,7 +88,7 @@ const ds = new DataSource({
     `postgres://${process.env.DB_USERNAME || "postgres"}:${process.env.DB_PASSWORD || "password"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_DATABASE || "asavio"}`,
   synchronize: false,
   logging: false,
-  entities: [User, Property, Image, Vehicle, Booking, Review, Conversation, Message],
+  entities: [User, Property, Image, Vehicle, Booking, Review, Conversation, Message, Hotel, RoomType, HotelImage, RoomTypeImage, EventCenter, EventSpace, EventBooking, EventCenterImage, EventSpaceImage],
 });
 
 // ─── main ─────────────────────────────────────────────────────────────────────

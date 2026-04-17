@@ -12,6 +12,8 @@ import {
 import { User } from "./User";
 import { Property } from "./Property";
 import { Vehicle } from "./Vehicle";
+import { Hotel } from "./Hotel";
+import { EventCenter } from "./EventCenter";
 import { Message } from "./Message";
 
 @Entity("conversations")
@@ -48,6 +50,22 @@ export class Conversation {
 
   @Column({ nullable: true })
   vehicleId: string | null;
+
+  /** Optional — conversation is about a specific hotel */
+  @ManyToOne(() => Hotel, { onDelete: "SET NULL", nullable: true })
+  @JoinColumn({ name: "hotelId" })
+  hotel: Hotel | null;
+
+  @Column({ nullable: true })
+  hotelId: string | null;
+
+  /** Optional — conversation is about a specific event center */
+  @ManyToOne(() => EventCenter, { onDelete: "SET NULL", nullable: true })
+  @JoinColumn({ name: "eventCenterId" })
+  eventCenter: EventCenter | null;
+
+  @Column({ nullable: true })
+  eventCenterId: string | null;
 
   @OneToMany(() => Message, (m) => m.conversation)
   messages: Message[];

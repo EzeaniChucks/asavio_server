@@ -11,6 +11,8 @@ import {
 import { User } from "./User";
 import { Property } from "./Property";
 import { Vehicle } from "./Vehicle";
+import { Hotel } from "./Hotel";
+import { EventCenter } from "./EventCenter";
 
 @Entity("reviews")
 export class Review {
@@ -46,6 +48,20 @@ export class Review {
 
   @Column({ nullable: true })
   vehicleId: string;
+
+  @ManyToOne(() => Hotel, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "hotelId" })
+  hotel: Hotel | null;
+
+  @Column({ nullable: true })
+  hotelId: string | null;
+
+  @ManyToOne(() => EventCenter, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "eventCenterId" })
+  eventCenter: EventCenter | null;
+
+  @Column({ nullable: true })
+  eventCenterId: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

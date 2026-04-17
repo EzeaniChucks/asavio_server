@@ -15,6 +15,15 @@ import { RevokedToken } from "../entities/RevokedToken";
 import { AdminAuditLog } from "../entities/AdminAuditLog";
 import { Subscription } from "../entities/Subscription";
 import { SupportTicket } from "../entities/SupportTicket";
+import { Hotel } from "../entities/Hotel";
+import { RoomType } from "../entities/RoomType";
+import { HotelImage } from "../entities/HotelImage";
+import { RoomTypeImage } from "../entities/RoomTypeImage";
+import { EventCenter } from "../entities/EventCenter";
+import { EventSpace } from "../entities/EventSpace";
+import { EventBooking } from "../entities/EventBooking";
+import { EventCenterImage } from "../entities/EventCenterImage";
+import { EventSpaceImage } from "../entities/EventSpaceImage";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -32,6 +41,6 @@ export const AppDataSource = new DataSource({
   // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
   synchronize: false, // please leave this as false, even in production
   // logging: process.env.NODE_ENV === "development",
-  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification, SavedItem, RevokedToken, AdminAuditLog, Subscription, SupportTicket],
+  entities: [User, Property, Booking, Vehicle, Review, Image, PlatformSettings, Conversation, Message, Notification, SavedItem, RevokedToken, AdminAuditLog, Subscription, SupportTicket, Hotel, RoomType, HotelImage, RoomTypeImage, EventCenter, EventSpace, EventBooking, EventCenterImage, EventSpaceImage],
   migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });

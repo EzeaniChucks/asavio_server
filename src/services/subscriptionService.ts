@@ -606,7 +606,7 @@ class SubscriptionService {
 
   // ── Check limits ──────────────────────────────────────────────────────────
 
-  async checkListingLimit(hostId: string, type: "property" | "vehicle"): Promise<void> {
+  async checkListingLimit(hostId: string, type: "property" | "vehicle" | "hotel" | "event_center"): Promise<void> {
     const host = await this.userRepo.findOne({ where: { id: hostId } });
     if (!host) throw new AppError("Host not found", 404);
 
@@ -635,15 +635,22 @@ class SubscriptionService {
 
     const tierConfig = await settingsService.getActiveTierConfig();
     const config = tierConfig[effectiveTier];
-    const limit = type === "property" ? config.maxProperties : config.maxVehicles;
+    const limit =
+      type === "property" ? config.maxProperties
+      : type === "vehicle" ? config.maxVehicles
+      : type === "hotel" ? config.maxHotels
+      : config.maxEventCenters;
     if (limit === Infinity) return;
 
-    const count: { count: string }[] = await AppDataSource.query(
+    const query =
       type === "property"
         ? `SELECT COUNT(*) FROM properties WHERE "hostId" = $1 AND status != 'rejected'`
-        : `SELECT COUNT(*) FROM vehicles WHERE "hostId" = $1`,
-      [hostId]
-    );
+      : type === "vehicle"
+        ? `SELECT COUNT(*) FROM vehicles WHERE "hostId" = $1`
+      : type === "hotel"
+        ? `SELECT COUNT(*) FROM hotels WHERE "hostId" = $1 AND status != 'rejected'`
+        : `SELECT COUNT(*) FROM event_centers WHERE "hostId" = $1 AND status != 'rejected'`;
+    const count: { count: string }[] = await AppDataSource.query(query, [hostId]);
 
     if (Number(count[0].count) >= limit) {
       throw new AppError(

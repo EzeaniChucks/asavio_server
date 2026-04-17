@@ -19,6 +19,16 @@ export const reviewController = {
     res.json({ status: "success", data: { reviews } });
   }),
 
+  getHotelReviews: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const reviews = await reviewService.getHotelReviews(req.params.hotelId as string);
+    res.json({ status: "success", data: { reviews } });
+  }),
+
+  getEventCenterReviews: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const reviews = await reviewService.getEventCenterReviews(req.params.eventCenterId as string);
+    res.json({ status: "success", data: { reviews } });
+  }),
+
   getAllReviews: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const page = req.query.page ? Number(req.query.page) : 1;
     const limit = req.query.limit ? Number(req.query.limit) : 20;

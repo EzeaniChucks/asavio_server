@@ -15,6 +15,8 @@ const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const Property_1 = require("./Property");
 const Vehicle_1 = require("./Vehicle");
+const Hotel_1 = require("./Hotel");
+const RoomType_1 = require("./RoomType");
 let Booking = class Booking {
 };
 exports.Booking = Booking;
@@ -52,6 +54,28 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Object)
 ], Booking.prototype, "vehicleId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Hotel_1.Hotel, { onDelete: "CASCADE", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "hotelId" }),
+    __metadata("design:type", Object)
+], Booking.prototype, "hotel", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "hotelId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => RoomType_1.RoomType, { onDelete: "CASCADE", nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "roomTypeId" }),
+    __metadata("design:type", Object)
+], Booking.prototype, "roomType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], Booking.prototype, "roomTypeId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "smallint", default: 1 }),
+    __metadata("design:type", Number)
+], Booking.prototype, "quantity", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "date" }),
     __metadata("design:type", Date)

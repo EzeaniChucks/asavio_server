@@ -6,6 +6,8 @@ export declare const chatService: {
         hostId: string;
         propertyId?: string | null;
         vehicleId?: string | null;
+        hotelId?: string | null;
+        eventCenterId?: string | null;
     }): Promise<Conversation>;
     getConversationsForUser(userId: string): Promise<Conversation[]>;
     getConversationById(id: string, userId: string): Promise<Conversation>;

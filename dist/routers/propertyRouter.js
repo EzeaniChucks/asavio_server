@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const propertyController_1 = require("../controllers/propertyController");
 const auth_1 = require("../middleware/auth");
+const requireKyc_1 = require("../middleware/requireKyc");
 const upload_1 = require("../middleware/upload");
 const requireTier_1 = require("../middleware/requireTier");
 const validation_1 = require("../middleware/validation");
@@ -22,7 +23,7 @@ router.get("/mine", auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), pro
 router
     .route("/")
     .get(propertyController_1.propertyController.getAllProperties)
-    .post(auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), upload_1.upload.array("images", 10), (0, validation_1.validate)(propertyValidation_1.propertyValidation.create), propertyController_1.propertyController.createProperty);
+    .post(auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), requireKyc_1.requireKyc, upload_1.upload.array("images", 10), (0, validation_1.validate)(propertyValidation_1.propertyValidation.create), propertyController_1.propertyController.createProperty);
 // Must be before /:id to avoid Express matching "booked-dates" as the id param
 router.get("/:id/booked-dates", propertyController_1.propertyController.getBookedDates);
 router.patch("/:id/blocked-dates", auth_1.protect, (0, auth_1.restrictTo)("host", "admin"), propertyController_1.propertyController.updateBlockedDates);

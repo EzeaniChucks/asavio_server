@@ -3,6 +3,9 @@ import { RefundEstimate } from "../constants/cancellationPolicies";
 interface CreateBookingInput {
     propertyId?: string;
     vehicleId?: string;
+    hotelId?: string;
+    roomTypeId?: string;
+    quantity?: number;
     checkIn: string;
     checkOut: string;
     guests: number;
@@ -16,15 +19,28 @@ export declare class BookingService {
     private bookingRepo;
     private propertyRepo;
     private vehicleRepo;
+    private hotelRepo;
+    private roomTypeRepo;
     private nightsBetween;
     /** Returns true when there is a conflicting active booking for the given property or vehicle */
     private hasConflict;
+    /**
+     * For hotel bookings: returns the number of rooms of a given type already booked
+     * that overlap the requested date range. Used to confirm room-type capacity.
+     */
+    private countBookedRoomsOfType;
     /** Returns true if the date range overlaps any host-blocked range on the property */
     private isBlocked;
     createBooking(userId: string, input: CreateBookingInput): Promise<Booking>;
     getBookingById(id: string, requesterId: string, requesterRole?: string): Promise<Booking>;
     getUserBookings(userId: string): Promise<Booking[]>;
     getHostBookings(hostId: string): Promise<Booking[]>;
+    /** Booked date ranges for a specific room type (for calendar display) */
+    getHotelRoomBookedDates(roomTypeId: string): Promise<{
+        checkIn: string;
+        checkOut: string;
+        quantity: number;
+    }[]>;
     updateBookingStatus(id: string, status: BookingStatus, requesterId: string, requesterRole: string, cancellationReason?: string): Promise<Booking | null>;
     /**
      * Returns a refund estimate for a booking without modifying anything.

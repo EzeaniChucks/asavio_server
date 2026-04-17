@@ -15,9 +15,31 @@ exports.bookingValidation = {
             .trim()
             .isUUID()
             .withMessage("Invalid vehicle ID"),
+        (0, express_validator_1.body)("hotelId")
+            .optional()
+            .trim()
+            .isUUID()
+            .withMessage("Invalid hotel ID"),
+        (0, express_validator_1.body)("roomTypeId")
+            .optional()
+            .trim()
+            .isUUID()
+            .withMessage("Invalid room type ID"),
+        (0, express_validator_1.body)("quantity")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Quantity must be 1–50"),
         (0, express_validator_1.body)().custom((_, { req }) => {
-            if (!req.body.propertyId && !req.body.vehicleId) {
-                throw new Error("Either propertyId or vehicleId is required");
+            const { propertyId, vehicleId, hotelId, roomTypeId } = req.body;
+            const provided = [propertyId, vehicleId, hotelId].filter(Boolean).length;
+            if (provided === 0) {
+                throw new Error("Either propertyId, vehicleId, or hotelId is required");
+            }
+            if (provided > 1) {
+                throw new Error("Provide only one of propertyId, vehicleId, or hotelId");
+            }
+            if (hotelId && !roomTypeId) {
+                throw new Error("roomTypeId is required for hotel bookings");
             }
             return true;
         }),

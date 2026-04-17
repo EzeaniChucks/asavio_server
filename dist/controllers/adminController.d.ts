@@ -26,6 +26,14 @@ export declare const adminController: {
     updateSettings: (req: Request, res: Response, next: NextFunction) => void;
     getHostProperties: (req: Request, res: Response, next: NextFunction) => void;
     getHostVehicles: (req: Request, res: Response, next: NextFunction) => void;
+    getHotels: (req: Request, res: Response, next: NextFunction) => void;
+    updateHotel: (req: Request, res: Response, next: NextFunction) => void;
+    deleteHotel: (req: Request, res: Response, next: NextFunction) => void;
+    getHostHotels: (req: Request, res: Response, next: NextFunction) => void;
+    getHostEventCenters: (req: Request, res: Response, next: NextFunction) => void;
+    getEventCenters: (req: Request, res: Response, next: NextFunction) => void;
+    updateEventCenter: (req: Request, res: Response, next: NextFunction) => void;
+    deleteEventCenter: (req: Request, res: Response, next: NextFunction) => void;
     setHostCommissionRate: (req: Request, res: Response, next: NextFunction) => void;
     listAdmins: (req: Request, res: Response, next: NextFunction) => void;
     createAdmin: (req: Request, res: Response, next: NextFunction) => void;

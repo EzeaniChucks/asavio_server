@@ -2,6 +2,8 @@ export declare const ADMIN_PERMISSIONS: {
     readonly MANAGE_USERS: "manage_users";
     readonly MANAGE_PROPERTIES: "manage_properties";
     readonly MANAGE_VEHICLES: "manage_vehicles";
+    readonly MANAGE_HOTELS: "manage_hotels";
+    readonly MANAGE_EVENT_CENTERS: "manage_event_centers";
     readonly MANAGE_BOOKINGS: "manage_bookings";
     readonly MANAGE_PAYOUTS: "manage_payouts";
     readonly MANAGE_REVIEWS: "manage_reviews";

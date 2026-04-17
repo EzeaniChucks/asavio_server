@@ -545,12 +545,20 @@ class SubscriptionService {
         }
         const tierConfig = await settingsService_1.settingsService.getActiveTierConfig();
         const config = tierConfig[effectiveTier];
-        const limit = type === "property" ? config.maxProperties : config.maxVehicles;
+        const limit = type === "property" ? config.maxProperties
+            : type === "vehicle" ? config.maxVehicles
+                : type === "hotel" ? config.maxHotels
+                    : config.maxEventCenters;
         if (limit === Infinity)
             return;
-        const count = await database_1.AppDataSource.query(type === "property"
+        const query = type === "property"
             ? `SELECT COUNT(*) FROM properties WHERE "hostId" = $1 AND status != 'rejected'`
-            : `SELECT COUNT(*) FROM vehicles WHERE "hostId" = $1`, [hostId]);
+            : type === "vehicle"
+                ? `SELECT COUNT(*) FROM vehicles WHERE "hostId" = $1`
+                : type === "hotel"
+                    ? `SELECT COUNT(*) FROM hotels WHERE "hostId" = $1 AND status != 'rejected'`
+                    : `SELECT COUNT(*) FROM event_centers WHERE "hostId" = $1 AND status != 'rejected'`;
+        const count = await database_1.AppDataSource.query(query, [hostId]);
         if (Number(count[0].count) >= limit) {
             throw new AppError_1.AppError(`Your ${config.label} plan allows up to ${limit} active ${type} listing${limit === 1 ? "" : "s"}. ` +
                 `Upgrade your plan to add more.`, 403);

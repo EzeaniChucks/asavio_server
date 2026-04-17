@@ -1,6 +1,8 @@
 import { User } from "./User";
 import { Property } from "./Property";
 import { Vehicle } from "./Vehicle";
+import { Hotel } from "./Hotel";
+import { EventCenter } from "./EventCenter";
 import { Message } from "./Message";
 export declare class Conversation {
     id: string;
@@ -14,6 +16,12 @@ export declare class Conversation {
     /** Optional — conversation is about a specific vehicle */
     vehicle: Vehicle | null;
     vehicleId: string | null;
+    /** Optional — conversation is about a specific hotel */
+    hotel: Hotel | null;
+    hotelId: string | null;
+    /** Optional — conversation is about a specific event center */
+    eventCenter: EventCenter | null;
+    eventCenterId: string | null;
     messages: Message[];
     /** Updated whenever a new message is sent — drives conversation list ordering */
     lastMessageAt: Date | null;

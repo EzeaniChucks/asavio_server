@@ -12,8 +12,14 @@ class SavedItemService {
   }
 
   /** Toggle save. Returns { saved: true } if added, { saved: false } if removed. */
-  async toggle(userId: string, propertyId?: string, vehicleId?: string) {
-    const where = propertyId ? { userId, propertyId } : { userId, vehicleId };
+  async toggle(userId: string, propertyId?: string, vehicleId?: string, hotelId?: string, eventCenterId?: string) {
+    const where = propertyId
+      ? { userId, propertyId }
+      : vehicleId
+      ? { userId, vehicleId }
+      : hotelId
+      ? { userId, hotelId }
+      : { userId, eventCenterId };
     const existing = await this.repo.findOne({ where: where as any });
 
     if (existing) {
@@ -25,6 +31,8 @@ class SavedItemService {
       userId,
       propertyId: propertyId ?? null,
       vehicleId: vehicleId ?? null,
+      hotelId: hotelId ?? null,
+      eventCenterId: eventCenterId ?? null,
     });
     await this.repo.save(item);
     return { saved: true };
@@ -47,17 +55,19 @@ class SavedItemService {
     return { items: filtered, total, page, limit: take };
   }
 
-  /** Returns the set of saved propertyIds and vehicleIds for a user — for bulk "is saved?" checks. */
-  async getSavedIds(userId: string): Promise<{ propertyIds: string[]; vehicleIds: string[] }> {
+  /** Returns the set of saved IDs for a user — for bulk "is saved?" checks. */
+  async getSavedIds(userId: string): Promise<{ propertyIds: string[]; vehicleIds: string[]; hotelIds: string[]; eventCenterIds: string[] }> {
     const items = await this.repo.find({
       where: { userId },
-      select: ["propertyId", "vehicleId"],
+      select: ["propertyId", "vehicleId", "hotelId", "eventCenterId"],
       take: MAX_SAVED_IDS,
       order: { createdAt: "DESC" },
     });
     return {
-      propertyIds: items.filter((i) => i.propertyId).map((i) => i.propertyId!),
-      vehicleIds: items.filter((i) => i.vehicleId).map((i) => i.vehicleId!),
+      propertyIds:    items.filter((i) => i.propertyId).map((i) => i.propertyId!),
+      vehicleIds:     items.filter((i) => i.vehicleId).map((i) => i.vehicleId!),
+      hotelIds:       items.filter((i) => i.hotelId).map((i) => i.hotelId!),
+      eventCenterIds: items.filter((i) => i.eventCenterId).map((i) => i.eventCenterId!),
     };
   }
 }

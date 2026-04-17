@@ -22,6 +22,15 @@ const Vehicle_1 = require("../entities/Vehicle");
 const Booking_1 = require("../entities/Booking");
 const Conversation_1 = require("../entities/Conversation");
 const Message_1 = require("../entities/Message");
+const Hotel_1 = require("../entities/Hotel");
+const RoomType_1 = require("../entities/RoomType");
+const HotelImage_1 = require("../entities/HotelImage");
+const RoomTypeImage_1 = require("../entities/RoomTypeImage");
+const EventCenter_1 = require("../entities/EventCenter");
+const EventSpace_1 = require("../entities/EventSpace");
+const EventBooking_1 = require("../entities/EventBooking");
+const EventCenterImage_1 = require("../entities/EventCenterImage");
+const EventSpaceImage_1 = require("../entities/EventSpaceImage");
 dotenv_1.default.config();
 // ─── helpers ─────────────────────────────────────────────────────────────────
 /** Random integer in [min, max] */
@@ -73,7 +82,7 @@ const ds = new typeorm_1.DataSource({
         `postgres://${process.env.DB_USERNAME || "postgres"}:${process.env.DB_PASSWORD || "password"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_DATABASE || "asavio"}`,
     synchronize: false,
     logging: false,
-    entities: [User_1.User, Property_1.Property, Image_1.Image, Vehicle_1.Vehicle, Booking_1.Booking, Review_1.Review, Conversation_1.Conversation, Message_1.Message],
+    entities: [User_1.User, Property_1.Property, Image_1.Image, Vehicle_1.Vehicle, Booking_1.Booking, Review_1.Review, Conversation_1.Conversation, Message_1.Message, Hotel_1.Hotel, RoomType_1.RoomType, HotelImage_1.HotelImage, RoomTypeImage_1.RoomTypeImage, EventCenter_1.EventCenter, EventSpace_1.EventSpace, EventBooking_1.EventBooking, EventCenterImage_1.EventCenterImage, EventSpaceImage_1.EventSpaceImage],
 });
 // ─── main ─────────────────────────────────────────────────────────────────────
 async function main() {

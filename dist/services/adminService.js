@@ -6,6 +6,8 @@ const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const Property_1 = require("../entities/Property");
 const Vehicle_1 = require("../entities/Vehicle");
+const Hotel_1 = require("../entities/Hotel");
+const EventCenter_1 = require("../entities/EventCenter");
 const Booking_1 = require("../entities/Booking");
 const Review_1 = require("../entities/Review");
 const AppError_1 = require("../utils/AppError");
@@ -241,6 +243,137 @@ class AdminService {
         if (!vehicle)
             throw new AppError_1.AppError("Vehicle not found", 404);
         await repo.remove(vehicle);
+    }
+    // ── Hotels ───────────────────────────────────────────────────
+    async getHotels(opts) {
+        const { page = 1, search, status } = opts;
+        const limit = Math.min(opts.limit ?? 20, 100);
+        const qb = database_1.AppDataSource.getRepository(Hotel_1.Hotel)
+            .createQueryBuilder("h")
+            .leftJoinAndSelect("h.host", "host")
+            .leftJoinAndSelect("h.images", "images")
+            .leftJoinAndSelect("h.roomTypes", "roomTypes")
+            .orderBy("h.createdAt", "DESC");
+        if (status)
+            qb.andWhere("h.status = :hstatus", { hstatus: status });
+        if (opts.isAvailable !== undefined) {
+            qb.andWhere("h.isAvailable = :isAvail", { isAvail: opts.isAvailable });
+        }
+        if (search) {
+            qb.andWhere("(LOWER(h.name) LIKE :q OR LOWER(host.firstName) LIKE :q OR LOWER(host.lastName) LIKE :q OR LOWER(h.location->>'city') LIKE :q)", { q: `%${search.toLowerCase()}%` });
+        }
+        const total = await qb.getCount();
+        const hotels = await qb.skip((page - 1) * limit).take(limit).getMany();
+        return { hotels, total };
+    }
+    async updateHotel(id, updates) {
+        const repo = database_1.AppDataSource.getRepository(Hotel_1.Hotel);
+        const hotel = await repo.findOne({ where: { id }, relations: ["host"] });
+        if (!hotel)
+            throw new AppError_1.AppError("Hotel not found", 404);
+        const prevStatus = hotel.status;
+        Object.assign(hotel, updates);
+        // When approving, flip isAvailable true by default (matches property/vehicle behavior)
+        if (updates.status === "approved" && prevStatus !== "approved") {
+            hotel.isAvailable = true;
+        }
+        const saved = await repo.save(hotel);
+        const newStatus = updates.status;
+        if (newStatus && newStatus !== prevStatus && hotel.host && (newStatus === "approved" || newStatus === "rejected")) {
+            emailService_1.emailService
+                .sendListingStatusUpdate({
+                to: hotel.host.email,
+                hostName: hotel.host.firstName,
+                propertyTitle: hotel.name,
+                status: newStatus,
+                rejectionReason: updates.rejectionReason,
+                propertyId: id,
+            })
+                .catch(console.error);
+        }
+        return saved;
+    }
+    async deleteHotel(id) {
+        const repo = database_1.AppDataSource.getRepository(Hotel_1.Hotel);
+        const hotel = await repo.findOne({ where: { id } });
+        if (!hotel)
+            throw new AppError_1.AppError("Hotel not found", 404);
+        await repo.remove(hotel);
+    }
+    async getHostHotels(hostId) {
+        const user = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: hostId } });
+        if (!user)
+            throw new AppError_1.AppError("User not found", 404);
+        const hotels = await database_1.AppDataSource.getRepository(Hotel_1.Hotel).find({
+            where: { hostId },
+            relations: ["images", "roomTypes"],
+            order: { createdAt: "DESC" },
+        });
+        return { hotels };
+    }
+    // ── Event Centers ────────────────────────────────────────────
+    async getEventCenters(opts) {
+        const { page = 1, search, status } = opts;
+        const limit = Math.min(opts.limit ?? 20, 100);
+        const qb = database_1.AppDataSource.getRepository(EventCenter_1.EventCenter)
+            .createQueryBuilder("ec")
+            .leftJoinAndSelect("ec.host", "host")
+            .leftJoinAndSelect("ec.images", "images")
+            .leftJoinAndSelect("ec.spaces", "spaces")
+            .orderBy("ec.createdAt", "DESC");
+        if (status)
+            qb.andWhere("ec.status = :ecstatus", { ecstatus: status });
+        if (opts.isAvailable !== undefined)
+            qb.andWhere("ec.isAvailable = :avail", { avail: opts.isAvailable });
+        if (search) {
+            qb.andWhere("(LOWER(ec.name) LIKE :q OR LOWER(host.firstName) LIKE :q OR LOWER(host.lastName) LIKE :q OR LOWER(ec.location->>'city') LIKE :q)", { q: `%${search.toLowerCase()}%` });
+        }
+        const total = await qb.getCount();
+        const eventCenters = await qb.skip((page - 1) * limit).take(limit).getMany();
+        return { eventCenters, total };
+    }
+    async updateEventCenter(id, updates) {
+        const repo = database_1.AppDataSource.getRepository(EventCenter_1.EventCenter);
+        const ec = await repo.findOne({ where: { id }, relations: ["host"] });
+        if (!ec)
+            throw new AppError_1.AppError("Event center not found", 404);
+        const prevStatus = ec.status;
+        Object.assign(ec, updates);
+        if (updates.status === "approved" && prevStatus !== "approved")
+            ec.isAvailable = true;
+        const saved = await repo.save(ec);
+        const newStatus = updates.status;
+        if (newStatus && newStatus !== prevStatus && ec.host && (newStatus === "approved" || newStatus === "rejected")) {
+            emailService_1.emailService
+                .sendListingStatusUpdate({
+                to: ec.host.email,
+                hostName: ec.host.firstName,
+                propertyTitle: ec.name,
+                status: newStatus,
+                rejectionReason: updates.rejectionReason,
+                propertyId: id,
+            })
+                .catch(console.error);
+        }
+        return saved;
+    }
+    async deleteEventCenter(id) {
+        const repo = database_1.AppDataSource.getRepository(EventCenter_1.EventCenter);
+        const ec = await repo.findOne({ where: { id } });
+        if (!ec)
+            throw new AppError_1.AppError("Event center not found", 404);
+        await repo.remove(ec);
+    }
+    async getHostEventCenters(hostId) {
+        const user = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: hostId } });
+        if (!user)
+            throw new AppError_1.AppError("User not found", 404);
+        const eventCenters = await database_1.AppDataSource.getRepository(EventCenter_1.EventCenter).find({
+            where: { hostId },
+            relations: ["images", "spaces"],
+            order: { createdAt: "DESC" },
+        });
+        return { eventCenters };
     }
     // ── Bookings ─────────────────────────────────────────────────
     async getBookings(opts) {

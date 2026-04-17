@@ -21,6 +21,15 @@ const RevokedToken_1 = require("../entities/RevokedToken");
 const AdminAuditLog_1 = require("../entities/AdminAuditLog");
 const Subscription_1 = require("../entities/Subscription");
 const SupportTicket_1 = require("../entities/SupportTicket");
+const Hotel_1 = require("../entities/Hotel");
+const RoomType_1 = require("../entities/RoomType");
+const HotelImage_1 = require("../entities/HotelImage");
+const RoomTypeImage_1 = require("../entities/RoomTypeImage");
+const EventCenter_1 = require("../entities/EventCenter");
+const EventSpace_1 = require("../entities/EventSpace");
+const EventBooking_1 = require("../entities/EventBooking");
+const EventCenterImage_1 = require("../entities/EventCenterImage");
+const EventSpaceImage_1 = require("../entities/EventSpaceImage");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.AppDataSource = new typeorm_1.DataSource({
@@ -35,7 +44,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     // synchronize: process.env.NODE_ENV !== "production", // auto-create tables in dev
     synchronize: false, // please leave this as false, even in production
     // logging: process.env.NODE_ENV === "development",
-    entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image, PlatformSettings_1.PlatformSettings, Conversation_1.Conversation, Message_1.Message, Notification_1.Notification, SavedItem_1.SavedItem, RevokedToken_1.RevokedToken, AdminAuditLog_1.AdminAuditLog, Subscription_1.Subscription, SupportTicket_1.SupportTicket],
+    entities: [User_1.User, Property_1.Property, Booking_1.Booking, Vehicle_1.Vehicle, Review_1.Review, Image_1.Image, PlatformSettings_1.PlatformSettings, Conversation_1.Conversation, Message_1.Message, Notification_1.Notification, SavedItem_1.SavedItem, RevokedToken_1.RevokedToken, AdminAuditLog_1.AdminAuditLog, Subscription_1.Subscription, SupportTicket_1.SupportTicket, Hotel_1.Hotel, RoomType_1.RoomType, HotelImage_1.HotelImage, RoomTypeImage_1.RoomTypeImage, EventCenter_1.EventCenter, EventSpace_1.EventSpace, EventBooking_1.EventBooking, EventCenterImage_1.EventCenterImage, EventSpaceImage_1.EventSpaceImage],
     migrations: [__dirname + "/../migrations/*{.ts,.js}"],
 });
 //# sourceMappingURL=database.js.map

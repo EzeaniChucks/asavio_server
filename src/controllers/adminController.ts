@@ -232,6 +232,74 @@ export const adminController = {
     res.json({ status: "success", data: result });
   }),
 
+  // ── Hotels (moderation) ───────────────────────────────────────
+
+  getHotels: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { page, limit, search, status, isAvailable } = req.query;
+    const result = await adminService.getHotels({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+      search: search as string,
+      status: status as string,
+      isAvailable: isAvailable !== undefined ? isAvailable === "true" : undefined,
+    });
+    res.json({ status: "success", data: result });
+  }),
+
+  updateHotel: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const hotel = await adminService.updateHotel(req.params.id as string, req.body);
+    const action = req.body.status === "approved" ? "approve_hotel"
+      : req.body.status === "rejected" ? "reject_hotel"
+      : "update_hotel";
+    audit(req, action, "hotel", req.params.id, req.body);
+    res.json({ status: "success", data: { hotel } });
+  }),
+
+  deleteHotel: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    await adminService.deleteHotel(req.params.id as string);
+    audit(req, "delete_hotel", "hotel", req.params.id);
+    res.status(204).send();
+  }),
+
+  getHostHotels: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const result = await adminService.getHostHotels(req.params.id as string);
+    res.json({ status: "success", data: result });
+  }),
+
+  getHostEventCenters: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const result = await adminService.getHostEventCenters(req.params.id as string);
+    res.json({ status: "success", data: result });
+  }),
+
+  // ── Event Centers (moderation) ────────────────────────────────
+
+  getEventCenters: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { page, limit, search, status, isAvailable } = req.query;
+    const result = await adminService.getEventCenters({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+      search: search as string,
+      status: status as string,
+      isAvailable: isAvailable !== undefined ? isAvailable === "true" : undefined,
+    });
+    res.json({ status: "success", data: result });
+  }),
+
+  updateEventCenter: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const ec = await adminService.updateEventCenter(req.params.id as string, req.body);
+    const action = req.body.status === "approved" ? "approve_event_center"
+      : req.body.status === "rejected" ? "reject_event_center"
+      : "update_event_center";
+    audit(req, action, "event_center", req.params.id, req.body);
+    res.json({ status: "success", data: { eventCenter: ec } });
+  }),
+
+  deleteEventCenter: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    await adminService.deleteEventCenter(req.params.id as string);
+    audit(req, "delete_event_center", "event_center", req.params.id);
+    res.status(204).send();
+  }),
+
   // ── Per-host commission override ──────────────────────────────
 
   setHostCommissionRate: catchAsync(async (req: Request, res: Response, _next: NextFunction) => {

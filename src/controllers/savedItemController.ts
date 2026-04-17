@@ -6,8 +6,8 @@ import { savedItemService } from "../services/savedItemService";
 export const savedItemController = {
   toggle: catchAsync(async (req: Request, res: Response) => {
     const userId = (req as any).user.id as string;
-    const { propertyId, vehicleId } = req.body;
-    const result = await savedItemService.toggle(userId, propertyId, vehicleId);
+    const { propertyId, vehicleId, hotelId, eventCenterId } = req.body;
+    const result = await savedItemService.toggle(userId, propertyId, vehicleId, hotelId, eventCenterId);
     res.json({ status: "success", data: result });
   }),
 

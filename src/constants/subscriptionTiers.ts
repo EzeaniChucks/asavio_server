@@ -10,6 +10,14 @@ export interface TierConfig {
   maxProperties: number;
   /** Max active vehicle listings (Infinity = unlimited) */
   maxVehicles: number;
+  /** Max active hotel listings (Infinity = unlimited) */
+  maxHotels: number;
+  /** Max room types a single hotel can have (Infinity = unlimited) */
+  maxRoomTypes: number;
+  /** Max active event center listings */
+  maxEventCenters: number;
+  /** Max spaces per event center */
+  maxEventSpaces: number;
   /** Max photos per listing */
   maxPhotos: number;
   /** Whether the feature video upload is available */
@@ -35,6 +43,10 @@ export const TIER_CONFIG: Record<SubscriptionTier, TierConfig> = {
     label: "Starter",
     maxProperties: 3,
     maxVehicles: 2,
+    maxHotels: 1,
+    maxRoomTypes: 3,
+    maxEventCenters: 1,
+    maxEventSpaces: 3,
     maxPhotos: 20,
     featureVideo: false,
     videoMaxSeconds: 0,
@@ -49,6 +61,10 @@ export const TIER_CONFIG: Record<SubscriptionTier, TierConfig> = {
     label: "Pro",
     maxProperties: 10,
     maxVehicles: 6,
+    maxHotels: 5,
+    maxRoomTypes: 10,
+    maxEventCenters: 5,
+    maxEventSpaces: 10,
     maxPhotos: 30,
     featureVideo: true,
     videoMaxSeconds: 60,
@@ -63,6 +79,10 @@ export const TIER_CONFIG: Record<SubscriptionTier, TierConfig> = {
     label: "Elite",
     maxProperties: Infinity,
     maxVehicles: Infinity,
+    maxHotels: Infinity,
+    maxRoomTypes: Infinity,
+    maxEventCenters: Infinity,
+    maxEventSpaces: Infinity,
     maxPhotos: 50,
     featureVideo: true,
     videoMaxSeconds: 90,

@@ -10,6 +10,8 @@ const router = (0, express_1.Router)();
 // Public
 router.get("/property/:propertyId", reviewController_1.reviewController.getPropertyReviews);
 router.get("/vehicle/:vehicleId", reviewController_1.reviewController.getVehicleReviews);
+router.get("/hotel/:hotelId", reviewController_1.reviewController.getHotelReviews);
+router.get("/event-center/:eventCenterId", reviewController_1.reviewController.getEventCenterReviews);
 // Protected
 router.use(auth_1.protect);
 router.post("/", (0, validation_1.validate)(reviewValidation_1.reviewValidation.create), reviewController_1.reviewController.createReview);

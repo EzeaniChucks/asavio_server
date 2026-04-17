@@ -6,6 +6,8 @@ const database_1 = require("../config/database");
 const Booking_1 = require("../entities/Booking");
 const Property_1 = require("../entities/Property");
 const Vehicle_1 = require("../entities/Vehicle");
+const Hotel_1 = require("../entities/Hotel");
+const RoomType_1 = require("../entities/RoomType");
 const User_1 = require("../entities/User");
 const AppError_1 = require("../utils/AppError");
 const emailService_1 = require("./emailService");
@@ -18,6 +20,8 @@ class BookingService {
         this.bookingRepo = database_1.AppDataSource.getRepository(Booking_1.Booking);
         this.propertyRepo = database_1.AppDataSource.getRepository(Property_1.Property);
         this.vehicleRepo = database_1.AppDataSource.getRepository(Vehicle_1.Vehicle);
+        this.hotelRepo = database_1.AppDataSource.getRepository(Hotel_1.Hotel);
+        this.roomTypeRepo = database_1.AppDataSource.getRepository(RoomType_1.RoomType);
     }
     // ── Helpers ──────────────────────────────────────────────────────────────
     nightsBetween(checkIn, checkOut) {
@@ -40,6 +44,23 @@ class BookingService {
         const count = await qb.getCount();
         return count > 0;
     }
+    /**
+     * For hotel bookings: returns the number of rooms of a given type already booked
+     * that overlap the requested date range. Used to confirm room-type capacity.
+     */
+    async countBookedRoomsOfType(roomTypeId, checkIn, checkOut) {
+        const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+        const bookings = await this.bookingRepo
+            .createQueryBuilder("b")
+            .select(["b.quantity"])
+            .where("b.roomTypeId = :roomTypeId", { roomTypeId })
+            .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+            .andWhere("(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)", { cutoff })
+            .andWhere("b.checkIn < :checkOut", { checkOut })
+            .andWhere("b.checkOut > :checkIn", { checkIn })
+            .getMany();
+        return bookings.reduce((sum, b) => sum + (b.quantity ?? 1), 0);
+    }
     /** Returns true if the date range overlaps any host-blocked range on the property */
     isBlocked(checkIn, checkOut, blockedDates) {
         if (!blockedDates?.length)
@@ -53,11 +74,14 @@ class BookingService {
     }
     // ── Create ────────────────────────────────────────────────────────────────
     async createBooking(userId, input) {
-        const { propertyId, vehicleId, checkIn: checkInStr, checkOut: checkOutStr, guests, purpose, specialRequests, withDriver, travelScope, destination } = input;
-        if (!propertyId && !vehicleId)
-            throw new AppError_1.AppError("Either propertyId or vehicleId is required", 400);
-        if (propertyId && vehicleId)
-            throw new AppError_1.AppError("Provide only one of propertyId or vehicleId", 400);
+        const { propertyId, vehicleId, hotelId, roomTypeId, quantity: qtyInput, checkIn: checkInStr, checkOut: checkOutStr, guests, purpose, specialRequests, withDriver, travelScope, destination, } = input;
+        const provided = [propertyId, vehicleId, hotelId].filter(Boolean).length;
+        if (provided === 0)
+            throw new AppError_1.AppError("Either propertyId, vehicleId, or hotelId is required", 400);
+        if (provided > 1)
+            throw new AppError_1.AppError("Provide only one of propertyId, vehicleId, or hotelId", 400);
+        if (hotelId && !roomTypeId)
+            throw new AppError_1.AppError("roomTypeId is required for hotel bookings", 400);
         const checkIn = new Date(checkInStr);
         const checkOut = new Date(checkOutStr);
         if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
@@ -129,6 +153,74 @@ class BookingService {
                     type: "booking_request",
                     title: "New booking request",
                     body: `${guestName} has requested to book "${property.title}" — awaiting payment.`,
+                    data: { url: `/dashboard/host`, urlLabel: "View bookings" },
+                }).catch(console.error);
+            }
+            return full;
+        }
+        // ── Hotel booking ────────────────────────────────────────────────────────
+        if (hotelId) {
+            const hotel = await this.hotelRepo.findOne({ where: { id: hotelId } });
+            if (!hotel)
+                throw new AppError_1.AppError("Hotel not found", 404);
+            if (!hotel.isAvailable)
+                throw new AppError_1.AppError("This hotel is not available for booking", 400);
+            const roomType = await this.roomTypeRepo.findOne({ where: { id: roomTypeId, hotelId } });
+            if (!roomType)
+                throw new AppError_1.AppError("Room type not found for this hotel", 404);
+            const quantity = Math.max(1, Number(qtyInput ?? 1));
+            if (!Number.isFinite(quantity) || quantity < 1) {
+                throw new AppError_1.AppError("Quantity must be a positive integer", 400);
+            }
+            if (guests > roomType.maxGuests * quantity) {
+                throw new AppError_1.AppError(`Each ${roomType.name} fits up to ${roomType.maxGuests} guests. Book more rooms for larger groups.`, 400);
+            }
+            // Check remaining inventory for the date range
+            const alreadyBooked = await this.countBookedRoomsOfType(roomType.id, checkIn, checkOut);
+            const available = roomType.totalUnits - alreadyBooked;
+            if (available < quantity) {
+                throw new AppError_1.AppError(available > 0
+                    ? `Only ${available} ${roomType.name} room${available === 1 ? "" : "s"} left for those dates — reduce quantity or pick different dates.`
+                    : `No ${roomType.name} rooms available for those dates.`, 409);
+            }
+            const nightlyRate = Number(roomType.pricePerNight);
+            const totalPrice = nightlyRate * nights * quantity;
+            const host = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: hotel.hostId } });
+            const commissionRate = host
+                ? await settingsService_1.settingsService.getEffectiveRateForHost(host)
+                : await settingsService_1.settingsService.getEffectiveRate(null);
+            const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
+            const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
+            const booking = this.bookingRepo.create({
+                userId,
+                propertyId: null, vehicleId: null,
+                hotelId, roomTypeId: roomType.id, quantity,
+                checkIn, checkOut, guests, totalPrice,
+                platformCommission, hostPayout,
+                appliedCommissionRate: commissionRate,
+                specialRequests, paymentMethod: "paystack",
+                status: "awaiting_payment",
+            });
+            const saved = await this.bookingRepo.save(booking);
+            const full = await this.getBookingById(saved.id, userId);
+            const guest = await database_1.AppDataSource.getRepository(User_1.User).findOne({ where: { id: userId } });
+            if (host) {
+                const guestName = guest ? `${guest.firstName} ${guest.lastName}` : "A guest";
+                const summary = `${quantity} × ${roomType.name}`;
+                emailService_1.emailService.sendHostNewBooking({
+                    to: host.email, hostName: host.firstName,
+                    guestName,
+                    propertyTitle: `${hotel.name} — ${summary}`,
+                    checkIn: checkIn.toLocaleDateString("en-GB"),
+                    checkOut: checkOut.toLocaleDateString("en-GB"),
+                    guests, nights, totalPrice, platformCommission, hostPayout, commissionRate,
+                    bookingId: saved.id,
+                }).catch(console.error);
+                notificationService_1.notificationService.send({
+                    userId: host.id,
+                    type: "booking_request",
+                    title: "New hotel booking request",
+                    body: `${guestName} requested ${summary} at "${hotel.name}" — awaiting payment.`,
                     data: { url: `/dashboard/host`, urlLabel: "View bookings" },
                 }).catch(console.error);
             }
@@ -206,13 +298,15 @@ class BookingService {
     async getBookingById(id, requesterId, requesterRole = "user") {
         const booking = await this.bookingRepo.findOne({
             where: { id },
-            relations: ["property", "property.images", "vehicle", "user"],
+            relations: ["property", "property.images", "vehicle", "hotel", "hotel.images", "roomType", "roomType.images", "user"],
         });
         if (!booking)
             throw new AppError_1.AppError("Booking not found", 404);
-        // Only the guest, the property/vehicle host, or an admin may view
+        // Only the guest, the property/vehicle/hotel host, or an admin may view
         const isGuest = booking.userId === requesterId;
-        const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+        const isHost = booking.property?.hostId === requesterId ||
+            booking.vehicle?.hostId === requesterId ||
+            booking.hotel?.hostId === requesterId;
         const isAdmin = requesterRole === "admin";
         if (!isGuest && !isHost && !isAdmin) {
             throw new AppError_1.AppError("You do not have access to this booking", 403);
@@ -222,24 +316,49 @@ class BookingService {
     async getUserBookings(userId) {
         return this.bookingRepo.find({
             where: { userId },
-            relations: ["property", "property.images", "vehicle"],
+            relations: ["property", "property.images", "vehicle", "hotel", "hotel.images", "roomType"],
             order: { createdAt: "DESC" },
         });
     }
     async getHostBookings(hostId) {
         return this.bookingRepo
             .createQueryBuilder("booking")
-            .innerJoinAndSelect("booking.property", "property")
-            .leftJoinAndSelect("property.images", "images")
+            .leftJoinAndSelect("booking.property", "property")
+            .leftJoinAndSelect("property.images", "propertyImages")
+            .leftJoinAndSelect("booking.vehicle", "vehicle")
+            .leftJoinAndSelect("booking.hotel", "hotel")
+            .leftJoinAndSelect("hotel.images", "hotelImages")
+            .leftJoinAndSelect("booking.roomType", "roomType")
             .innerJoinAndSelect("booking.user", "user")
             .where("property.hostId = :hostId", { hostId })
+            .orWhere("vehicle.hostId = :hostId", { hostId })
+            .orWhere("hotel.hostId = :hostId", { hostId })
             .orderBy("booking.createdAt", "DESC")
             .getMany();
+    }
+    // ── Hotel-specific helpers ───────────────────────────────────────────────
+    /** Booked date ranges for a specific room type (for calendar display) */
+    async getHotelRoomBookedDates(roomTypeId) {
+        const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+        const bookings = await this.bookingRepo
+            .createQueryBuilder("b")
+            .select(["b.checkIn", "b.checkOut", "b.quantity"])
+            .where("b.roomTypeId = :roomTypeId", { roomTypeId })
+            .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+            .andWhere("(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)", { cutoff })
+            .getMany();
+        return bookings.map((b) => ({
+            checkIn: String(b.checkIn).split("T")[0],
+            checkOut: String(b.checkOut).split("T")[0],
+            quantity: b.quantity ?? 1,
+        }));
     }
     // ── Update ────────────────────────────────────────────────────────────────
     async updateBookingStatus(id, status, requesterId, requesterRole, cancellationReason) {
         const booking = await this.getBookingById(id, requesterId, requesterRole);
-        const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+        const isHost = booking.property?.hostId === requesterId ||
+            booking.vehicle?.hostId === requesterId ||
+            booking.hotel?.hostId === requesterId;
         const isAdmin = requesterRole === "admin";
         const isGuest = booking.userId === requesterId;
         if (status === "confirmed" || status === "completed") {
@@ -262,8 +381,10 @@ class BookingService {
         if (status === "cancelled") {
             const cancelledBy = isAdmin ? "admin" : isHost ? "host" : "guest";
             const listingTitle = booking.property?.title ??
+                booking.hotel?.name ??
                 (booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "your booking");
             const policy = booking.property?.cancellationPolicy ??
+                booking.hotel?.cancellationPolicy ??
                 booking.vehicle?.cancellationPolicy ??
                 "flexible";
             let refundEstimate = {
@@ -371,11 +492,15 @@ class BookingService {
     async getCancellationEstimate(id, requesterId, requesterRole) {
         const booking = await this.getBookingById(id, requesterId, requesterRole);
         const isAdmin = requesterRole === "admin";
-        const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+        const isHost = booking.property?.hostId === requesterId ||
+            booking.vehicle?.hostId === requesterId ||
+            booking.hotel?.hostId === requesterId;
         const cancelledBy = isAdmin ? "admin" : isHost ? "host" : "guest";
         const listingTitle = booking.property?.title ??
+            booking.hotel?.name ??
             (booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "your booking");
         const policy = booking.property?.cancellationPolicy ??
+            booking.hotel?.cancellationPolicy ??
             booking.vehicle?.cancellationPolicy ??
             "flexible";
         if (booking.paymentStatus !== "paid") {

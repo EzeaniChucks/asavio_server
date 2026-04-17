@@ -15,9 +15,11 @@ const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const Property_1 = require("./Property");
 const Vehicle_1 = require("./Vehicle");
+const Hotel_1 = require("./Hotel");
+const EventCenter_1 = require("./EventCenter");
 /**
  * One row per saved listing per user.
- * Either propertyId OR vehicleId is set — never both.
+ * Exactly one of propertyId, vehicleId, or hotelId is set.
  */
 let SavedItem = class SavedItem {
 };
@@ -39,6 +41,14 @@ __decorate([
     __metadata("design:type", Object)
 ], SavedItem.prototype, "vehicleId", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], SavedItem.prototype, "hotelId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], SavedItem.prototype, "eventCenterId", void 0);
+__decorate([
     (0, typeorm_1.ManyToOne)(() => User_1.User, { onDelete: "CASCADE" }),
     (0, typeorm_1.JoinColumn)({ name: "userId" }),
     __metadata("design:type", User_1.User)
@@ -54,12 +64,24 @@ __decorate([
     __metadata("design:type", Vehicle_1.Vehicle)
 ], SavedItem.prototype, "vehicle", void 0);
 __decorate([
+    (0, typeorm_1.ManyToOne)(() => Hotel_1.Hotel, { onDelete: "CASCADE", nullable: true, eager: false }),
+    (0, typeorm_1.JoinColumn)({ name: "hotelId" }),
+    __metadata("design:type", Object)
+], SavedItem.prototype, "hotel", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => EventCenter_1.EventCenter, { onDelete: "CASCADE", nullable: true, eager: false }),
+    (0, typeorm_1.JoinColumn)({ name: "eventCenterId" }),
+    __metadata("design:type", Object)
+], SavedItem.prototype, "eventCenter", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], SavedItem.prototype, "createdAt", void 0);
 exports.SavedItem = SavedItem = __decorate([
     (0, typeorm_1.Entity)("saved_items"),
     (0, typeorm_1.Unique)(["userId", "propertyId"]),
-    (0, typeorm_1.Unique)(["userId", "vehicleId"])
+    (0, typeorm_1.Unique)(["userId", "vehicleId"]),
+    (0, typeorm_1.Unique)(["userId", "hotelId"]),
+    (0, typeorm_1.Unique)(["userId", "eventCenterId"])
 ], SavedItem);
 //# sourceMappingURL=SavedItem.js.map

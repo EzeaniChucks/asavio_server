@@ -2,7 +2,7 @@ import { PlatformSettings } from "../entities/PlatformSettings";
 import { User } from "../entities/User";
 import { TierConfig, SubscriptionTier } from "../constants/subscriptionTiers";
 /** Fields admin is allowed to override per tier */
-export type TierConfigUpdates = Partial<Pick<TierConfig, "priceMonthly" | "priceAnnual" | "maxProperties" | "maxVehicles" | "maxPhotos" | "commissionRate">>;
+export type TierConfigUpdates = Partial<Pick<TierConfig, "priceMonthly" | "priceAnnual" | "maxProperties" | "maxVehicles" | "maxHotels" | "maxRoomTypes" | "maxEventCenters" | "maxEventSpaces" | "maxPhotos" | "commissionRate">>;
 declare class SettingsService {
     private get repo();
     private _tierConfigCache;

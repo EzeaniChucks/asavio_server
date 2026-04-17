@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { propertyController } from "../controllers/propertyController";
 import { protect, restrictTo } from "../middleware/auth";
+import { requireKyc } from "../middleware/requireKyc";
 import { upload, uploadVideo } from "../middleware/upload";
 import { requireTier } from "../middleware/requireTier";
 import { validate } from "../middleware/validation";
@@ -35,6 +36,7 @@ router
   .post(
     protect,
     restrictTo("host", "admin"),
+    requireKyc,
     upload.array("images", 10),
     validate(propertyValidation.create),
     propertyController.createProperty

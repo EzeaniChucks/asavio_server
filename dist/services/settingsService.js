@@ -84,6 +84,10 @@ class SettingsService {
                 ...(overrides.pro ?? {}),
                 maxProperties: resolveMax(overrides.pro?.maxProperties, subscriptionTiers_1.TIER_CONFIG.pro.maxProperties),
                 maxVehicles: resolveMax(overrides.pro?.maxVehicles, subscriptionTiers_1.TIER_CONFIG.pro.maxVehicles),
+                maxHotels: resolveMax(overrides.pro?.maxHotels, subscriptionTiers_1.TIER_CONFIG.pro.maxHotels),
+                maxRoomTypes: resolveMax(overrides.pro?.maxRoomTypes, subscriptionTiers_1.TIER_CONFIG.pro.maxRoomTypes),
+                maxEventCenters: resolveMax(overrides.pro?.maxEventCenters, subscriptionTiers_1.TIER_CONFIG.pro.maxEventCenters),
+                maxEventSpaces: resolveMax(overrides.pro?.maxEventSpaces, subscriptionTiers_1.TIER_CONFIG.pro.maxEventSpaces),
             },
             elite: {
                 ...subscriptionTiers_1.TIER_CONFIG.elite,
@@ -91,6 +95,10 @@ class SettingsService {
                 // Elite defaults to Infinity — keep as Infinity unless explicitly overridden to a number
                 maxProperties: resolveMax(overrides.elite?.maxProperties, subscriptionTiers_1.TIER_CONFIG.elite.maxProperties),
                 maxVehicles: resolveMax(overrides.elite?.maxVehicles, subscriptionTiers_1.TIER_CONFIG.elite.maxVehicles),
+                maxHotels: resolveMax(overrides.elite?.maxHotels, subscriptionTiers_1.TIER_CONFIG.elite.maxHotels),
+                maxRoomTypes: resolveMax(overrides.elite?.maxRoomTypes, subscriptionTiers_1.TIER_CONFIG.elite.maxRoomTypes),
+                maxEventCenters: resolveMax(overrides.elite?.maxEventCenters, subscriptionTiers_1.TIER_CONFIG.elite.maxEventCenters),
+                maxEventSpaces: resolveMax(overrides.elite?.maxEventSpaces, subscriptionTiers_1.TIER_CONFIG.elite.maxEventSpaces),
             },
         };
         this._tierConfigCache = merged;

@@ -6,8 +6,8 @@ const savedItemService_1 = require("../services/savedItemService");
 exports.savedItemController = {
     toggle: (0, catchAsync_1.catchAsync)(async (req, res) => {
         const userId = req.user.id;
-        const { propertyId, vehicleId } = req.body;
-        const result = await savedItemService_1.savedItemService.toggle(userId, propertyId, vehicleId);
+        const { propertyId, vehicleId, hotelId, eventCenterId } = req.body;
+        const result = await savedItemService_1.savedItemService.toggle(userId, propertyId, vehicleId, hotelId, eventCenterId);
         res.json({ status: "success", data: result });
     }),
     getSavedProperties: (0, catchAsync_1.catchAsync)(async (req, res) => {

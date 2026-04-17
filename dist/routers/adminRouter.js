@@ -19,6 +19,8 @@ router.patch("/users/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISS
 router.delete("/users/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.deleteUser);
 router.get("/users/:id/properties", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.getHostProperties);
 router.get("/users/:id/vehicles", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.getHostVehicles);
+router.get("/users/:id/hotels", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.getHostHotels);
+router.get("/users/:id/event-centers", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_USERS), adminController_1.adminController.getHostEventCenters);
 router.patch("/users/:id/commission", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_PAYOUTS), (0, validation_1.validate)(adminValidation_1.adminValidation.setHostCommission), adminController_1.adminController.setHostCommissionRate);
 // Properties
 router.get("/properties", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_PROPERTIES), adminController_1.adminController.getProperties);
@@ -28,6 +30,14 @@ router.delete("/properties/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_P
 router.get("/vehicles", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_VEHICLES), adminController_1.adminController.getVehicles);
 router.patch("/vehicles/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_VEHICLES), adminController_1.adminController.updateVehicle);
 router.delete("/vehicles/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_VEHICLES), adminController_1.adminController.deleteVehicle);
+// Hotels
+router.get("/hotels", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_HOTELS), adminController_1.adminController.getHotels);
+router.patch("/hotels/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_HOTELS), adminController_1.adminController.updateHotel);
+router.delete("/hotels/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_HOTELS), adminController_1.adminController.deleteHotel);
+// Event Centers
+router.get("/event-centers", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_EVENT_CENTERS), adminController_1.adminController.getEventCenters);
+router.patch("/event-centers/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_EVENT_CENTERS), adminController_1.adminController.updateEventCenter);
+router.delete("/event-centers/:id", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_EVENT_CENTERS), adminController_1.adminController.deleteEventCenter);
 // Bookings
 router.get("/bookings", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_BOOKINGS), adminController_1.adminController.getBookings);
 router.patch("/bookings/:id/status", (0, auth_1.hasPermission)(permissions_1.ADMIN_PERMISSIONS.MANAGE_BOOKINGS), adminController_1.adminController.updateBookingStatus);

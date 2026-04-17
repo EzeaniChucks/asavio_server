@@ -16,7 +16,7 @@ const SINGLETON_ID = 1;
 /** Fields admin is allowed to override per tier */
 export type TierConfigUpdates = Partial<Pick<
   TierConfig,
-  "priceMonthly" | "priceAnnual" | "maxProperties" | "maxVehicles" | "maxPhotos" | "commissionRate"
+  "priceMonthly" | "priceAnnual" | "maxProperties" | "maxVehicles" | "maxHotels" | "maxRoomTypes" | "maxEventCenters" | "maxEventSpaces" | "maxPhotos" | "commissionRate"
 >>;
 
 class SettingsService {
@@ -73,13 +73,21 @@ class SettingsService {
         ...(overrides.pro ?? {}),
         maxProperties: resolveMax(overrides.pro?.maxProperties, TIER_CONFIG.pro.maxProperties),
         maxVehicles:   resolveMax(overrides.pro?.maxVehicles,   TIER_CONFIG.pro.maxVehicles),
+        maxHotels:        resolveMax(overrides.pro?.maxHotels,        TIER_CONFIG.pro.maxHotels),
+        maxRoomTypes:     resolveMax(overrides.pro?.maxRoomTypes,     TIER_CONFIG.pro.maxRoomTypes),
+        maxEventCenters:  resolveMax(overrides.pro?.maxEventCenters,  TIER_CONFIG.pro.maxEventCenters),
+        maxEventSpaces:   resolveMax(overrides.pro?.maxEventSpaces,   TIER_CONFIG.pro.maxEventSpaces),
       },
       elite: {
         ...TIER_CONFIG.elite,
         ...(overrides.elite ?? {}),
         // Elite defaults to Infinity — keep as Infinity unless explicitly overridden to a number
-        maxProperties: resolveMax(overrides.elite?.maxProperties, TIER_CONFIG.elite.maxProperties),
-        maxVehicles:   resolveMax(overrides.elite?.maxVehicles,   TIER_CONFIG.elite.maxVehicles),
+        maxProperties:    resolveMax(overrides.elite?.maxProperties,    TIER_CONFIG.elite.maxProperties),
+        maxVehicles:      resolveMax(overrides.elite?.maxVehicles,      TIER_CONFIG.elite.maxVehicles),
+        maxHotels:        resolveMax(overrides.elite?.maxHotels,        TIER_CONFIG.elite.maxHotels),
+        maxRoomTypes:     resolveMax(overrides.elite?.maxRoomTypes,     TIER_CONFIG.elite.maxRoomTypes),
+        maxEventCenters:  resolveMax(overrides.elite?.maxEventCenters,  TIER_CONFIG.elite.maxEventCenters),
+        maxEventSpaces:   resolveMax(overrides.elite?.maxEventSpaces,   TIER_CONFIG.elite.maxEventSpaces),
       },
     };
 

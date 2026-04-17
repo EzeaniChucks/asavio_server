@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { vehicleController } from "../controllers/vehicleController";
 import { protect, restrictTo } from "../middleware/auth";
+import { requireKyc } from "../middleware/requireKyc";
 import { validate } from "../middleware/validation";
 import { vehicleValidation } from "../validations/vehicleValidation";
 import { upload, uploadVideo } from "../middleware/upload";
@@ -25,6 +26,7 @@ router.get("/host/my", restrictTo("host", "admin"), vehicleController.getMyVehic
 router.post(
   "/",
   restrictTo("host", "admin"),
+  requireKyc,
   upload.array("images", 10),
   validate(vehicleValidation.create),
   vehicleController.createVehicle

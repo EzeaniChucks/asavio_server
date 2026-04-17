@@ -1,6 +1,8 @@
 import { User } from "../entities/User";
 import { Property } from "../entities/Property";
 import { Vehicle } from "../entities/Vehicle";
+import { Hotel } from "../entities/Hotel";
+import { EventCenter } from "../entities/EventCenter";
 import { Booking } from "../entities/Booking";
 import { Review } from "../entities/Review";
 declare class AdminService {
@@ -244,6 +246,36 @@ declare class AdminService {
     }>;
     updateVehicle(id: string, updates: Record<string, any>): Promise<Vehicle>;
     deleteVehicle(id: string): Promise<void>;
+    getHotels(opts: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        status?: string;
+        isAvailable?: boolean;
+    }): Promise<{
+        hotels: Hotel[];
+        total: number;
+    }>;
+    updateHotel(id: string, updates: Record<string, any>): Promise<Hotel>;
+    deleteHotel(id: string): Promise<void>;
+    getHostHotels(hostId: string): Promise<{
+        hotels: Hotel[];
+    }>;
+    getEventCenters(opts: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        status?: string;
+        isAvailable?: boolean;
+    }): Promise<{
+        eventCenters: EventCenter[];
+        total: number;
+    }>;
+    updateEventCenter(id: string, updates: Record<string, any>): Promise<EventCenter>;
+    deleteEventCenter(id: string): Promise<void>;
+    getHostEventCenters(hostId: string): Promise<{
+        eventCenters: EventCenter[];
+    }>;
     getBookings(opts: {
         page?: number;
         limit?: number;

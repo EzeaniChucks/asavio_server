@@ -10,7 +10,7 @@ const convRepo = () => database_1.AppDataSource.getRepository(Conversation_1.Con
 const msgRepo = () => database_1.AppDataSource.getRepository(Message_1.Message);
 exports.chatService = {
     async getOrCreateConversation(opts) {
-        const { guestId, hostId, propertyId, vehicleId } = opts;
+        const { guestId, hostId, propertyId, vehicleId, hotelId, eventCenterId } = opts;
         const qb = convRepo()
             .createQueryBuilder("conv")
             .where("conv.guestId = :guestId", { guestId })
@@ -19,6 +19,10 @@ exports.chatService = {
             qb.andWhere("conv.propertyId = :propertyId", { propertyId });
         else if (vehicleId)
             qb.andWhere("conv.vehicleId = :vehicleId", { vehicleId });
+        else if (hotelId)
+            qb.andWhere("conv.hotelId = :hotelId", { hotelId });
+        else if (eventCenterId)
+            qb.andWhere("conv.eventCenterId = :eventCenterId", { eventCenterId });
         const existing = await qb.getOne();
         if (existing)
             return existing;
@@ -27,6 +31,8 @@ exports.chatService = {
             hostId,
             propertyId: propertyId ?? null,
             vehicleId: vehicleId ?? null,
+            hotelId: hotelId ?? null,
+            eventCenterId: eventCenterId ?? null,
         });
         return convRepo().save(conv);
     },
@@ -38,6 +44,8 @@ exports.chatService = {
             .leftJoinAndSelect("conv.host", "host")
             .leftJoinAndSelect("conv.property", "property")
             .leftJoinAndSelect("conv.vehicle", "vehicle")
+            .leftJoinAndSelect("conv.hotel", "hotel")
+            .leftJoinAndSelect("conv.eventCenter", "eventCenter")
             .orderBy("conv.lastMessageAt", "DESC", "NULLS LAST")
             .getMany();
     },

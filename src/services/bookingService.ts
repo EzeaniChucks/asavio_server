@@ -3,6 +3,8 @@ import { AppDataSource } from "../config/database";
 import { Booking, BookingStatus } from "../entities/Booking";
 import { Property } from "../entities/Property";
 import { Vehicle } from "../entities/Vehicle";
+import { Hotel } from "../entities/Hotel";
+import { RoomType } from "../entities/RoomType";
 import { User } from "../entities/User";
 import { AppError } from "../utils/AppError";
 import { emailService } from "./emailService";
@@ -14,9 +16,12 @@ import { calculateRefund, RefundEstimate } from "../constants/cancellationPolici
 import { In } from "typeorm";
 
 interface CreateBookingInput {
-  // Exactly one of propertyId or vehicleId must be provided
+  // Exactly one of propertyId, vehicleId, or hotelId must be provided
   propertyId?: string;
   vehicleId?: string;
+  hotelId?: string;             // hotel bookings only (paired with roomTypeId)
+  roomTypeId?: string;          // hotel bookings only
+  quantity?: number;            // hotel bookings: number of rooms to book (defaults to 1)
   checkIn: string;
   checkOut: string;
   guests: number;
@@ -31,6 +36,8 @@ export class BookingService {
   private bookingRepo = AppDataSource.getRepository(Booking);
   private propertyRepo = AppDataSource.getRepository(Property);
   private vehicleRepo = AppDataSource.getRepository(Vehicle);
+  private hotelRepo = AppDataSource.getRepository(Hotel);
+  private roomTypeRepo = AppDataSource.getRepository(RoomType);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -64,6 +71,32 @@ export class BookingService {
     return count > 0;
   }
 
+  /**
+   * For hotel bookings: returns the number of rooms of a given type already booked
+   * that overlap the requested date range. Used to confirm room-type capacity.
+   */
+  private async countBookedRoomsOfType(
+    roomTypeId: string,
+    checkIn: Date,
+    checkOut: Date
+  ): Promise<number> {
+    const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+    const bookings = await this.bookingRepo
+      .createQueryBuilder("b")
+      .select(["b.quantity"])
+      .where("b.roomTypeId = :roomTypeId", { roomTypeId })
+      .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+      .andWhere(
+        "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)",
+        { cutoff }
+      )
+      .andWhere("b.checkIn < :checkOut", { checkOut })
+      .andWhere("b.checkOut > :checkIn", { checkIn })
+      .getMany();
+
+    return bookings.reduce((sum, b) => sum + (b.quantity ?? 1), 0);
+  }
+
   /** Returns true if the date range overlaps any host-blocked range on the property */
   private isBlocked(
     checkIn: Date,
@@ -82,10 +115,16 @@ export class BookingService {
   // ── Create ────────────────────────────────────────────────────────────────
 
   async createBooking(userId: string, input: CreateBookingInput) {
-    const { propertyId, vehicleId, checkIn: checkInStr, checkOut: checkOutStr, guests, purpose, specialRequests, withDriver, travelScope, destination } = input;
+    const {
+      propertyId, vehicleId, hotelId, roomTypeId, quantity: qtyInput,
+      checkIn: checkInStr, checkOut: checkOutStr, guests,
+      purpose, specialRequests, withDriver, travelScope, destination,
+    } = input;
 
-    if (!propertyId && !vehicleId) throw new AppError("Either propertyId or vehicleId is required", 400);
-    if (propertyId && vehicleId) throw new AppError("Provide only one of propertyId or vehicleId", 400);
+    const provided = [propertyId, vehicleId, hotelId].filter(Boolean).length;
+    if (provided === 0) throw new AppError("Either propertyId, vehicleId, or hotelId is required", 400);
+    if (provided > 1) throw new AppError("Provide only one of propertyId, vehicleId, or hotelId", 400);
+    if (hotelId && !roomTypeId) throw new AppError("roomTypeId is required for hotel bookings", 400);
 
     const checkIn = new Date(checkInStr);
     const checkOut = new Date(checkOutStr);
@@ -160,6 +199,86 @@ export class BookingService {
           type: "booking_request",
           title: "New booking request",
           body: `${guestName} has requested to book "${property.title}" — awaiting payment.`,
+          data: { url: `/dashboard/host`, urlLabel: "View bookings" },
+        }).catch(console.error);
+      }
+      return full;
+    }
+
+    // ── Hotel booking ────────────────────────────────────────────────────────
+    if (hotelId) {
+      const hotel = await this.hotelRepo.findOne({ where: { id: hotelId } });
+      if (!hotel) throw new AppError("Hotel not found", 404);
+      if (!hotel.isAvailable) throw new AppError("This hotel is not available for booking", 400);
+
+      const roomType = await this.roomTypeRepo.findOne({ where: { id: roomTypeId!, hotelId } });
+      if (!roomType) throw new AppError("Room type not found for this hotel", 404);
+
+      const quantity = Math.max(1, Number(qtyInput ?? 1));
+      if (!Number.isFinite(quantity) || quantity < 1) {
+        throw new AppError("Quantity must be a positive integer", 400);
+      }
+      if (guests > roomType.maxGuests * quantity) {
+        throw new AppError(
+          `Each ${roomType.name} fits up to ${roomType.maxGuests} guests. Book more rooms for larger groups.`,
+          400
+        );
+      }
+
+      // Check remaining inventory for the date range
+      const alreadyBooked = await this.countBookedRoomsOfType(roomType.id, checkIn, checkOut);
+      const available = roomType.totalUnits - alreadyBooked;
+      if (available < quantity) {
+        throw new AppError(
+          available > 0
+            ? `Only ${available} ${roomType.name} room${available === 1 ? "" : "s"} left for those dates — reduce quantity or pick different dates.`
+            : `No ${roomType.name} rooms available for those dates.`,
+          409
+        );
+      }
+
+      const nightlyRate = Number(roomType.pricePerNight);
+      const totalPrice = nightlyRate * nights * quantity;
+
+      const host = await AppDataSource.getRepository(User).findOne({ where: { id: hotel.hostId } });
+      const commissionRate = host
+        ? await settingsService.getEffectiveRateForHost(host)
+        : await settingsService.getEffectiveRate(null);
+      const platformCommission = Math.round(totalPrice * commissionRate * 100) / 100;
+      const hostPayout = Math.round((totalPrice - platformCommission) * 100) / 100;
+
+      const booking = this.bookingRepo.create({
+        userId,
+        propertyId: null, vehicleId: null,
+        hotelId, roomTypeId: roomType.id, quantity,
+        checkIn, checkOut, guests, totalPrice,
+        platformCommission, hostPayout,
+        appliedCommissionRate: commissionRate,
+        specialRequests, paymentMethod: "paystack",
+        status: "awaiting_payment",
+      });
+      const saved = await this.bookingRepo.save(booking) as unknown as Booking;
+      const full = await this.getBookingById(saved.id, userId);
+
+      const guest = await AppDataSource.getRepository(User).findOne({ where: { id: userId } });
+      if (host) {
+        const guestName = guest ? `${guest.firstName} ${guest.lastName}` : "A guest";
+        const summary = `${quantity} × ${roomType.name}`;
+        emailService.sendHostNewBooking({
+          to: host.email, hostName: host.firstName,
+          guestName,
+          propertyTitle: `${hotel.name} — ${summary}`,
+          checkIn: checkIn.toLocaleDateString("en-GB"),
+          checkOut: checkOut.toLocaleDateString("en-GB"),
+          guests, nights, totalPrice, platformCommission, hostPayout, commissionRate,
+          bookingId: saved.id,
+        }).catch(console.error);
+
+        notificationService.send({
+          userId: host.id,
+          type: "booking_request",
+          title: "New hotel booking request",
+          body: `${guestName} requested ${summary} at "${hotel.name}" — awaiting payment.`,
           data: { url: `/dashboard/host`, urlLabel: "View bookings" },
         }).catch(console.error);
       }
@@ -244,14 +363,17 @@ export class BookingService {
   async getBookingById(id: string, requesterId: string, requesterRole = "user") {
     const booking = await this.bookingRepo.findOne({
       where: { id },
-      relations: ["property", "property.images", "vehicle", "user"],
+      relations: ["property", "property.images", "vehicle", "hotel", "hotel.images", "roomType", "roomType.images", "user"],
     });
 
     if (!booking) throw new AppError("Booking not found", 404);
 
-    // Only the guest, the property/vehicle host, or an admin may view
+    // Only the guest, the property/vehicle/hotel host, or an admin may view
     const isGuest = booking.userId === requesterId;
-    const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+    const isHost =
+      booking.property?.hostId === requesterId ||
+      booking.vehicle?.hostId === requesterId ||
+      booking.hotel?.hostId === requesterId;
     const isAdmin = requesterRole === "admin";
 
     if (!isGuest && !isHost && !isAdmin) {
@@ -264,7 +386,7 @@ export class BookingService {
   async getUserBookings(userId: string) {
     return this.bookingRepo.find({
       where: { userId },
-      relations: ["property", "property.images", "vehicle"],
+      relations: ["property", "property.images", "vehicle", "hotel", "hotel.images", "roomType"],
       order: { createdAt: "DESC" },
     });
   }
@@ -272,12 +394,42 @@ export class BookingService {
   async getHostBookings(hostId: string) {
     return this.bookingRepo
       .createQueryBuilder("booking")
-      .innerJoinAndSelect("booking.property", "property")
-      .leftJoinAndSelect("property.images", "images")
+      .leftJoinAndSelect("booking.property", "property")
+      .leftJoinAndSelect("property.images", "propertyImages")
+      .leftJoinAndSelect("booking.vehicle", "vehicle")
+      .leftJoinAndSelect("booking.hotel", "hotel")
+      .leftJoinAndSelect("hotel.images", "hotelImages")
+      .leftJoinAndSelect("booking.roomType", "roomType")
       .innerJoinAndSelect("booking.user", "user")
       .where("property.hostId = :hostId", { hostId })
+      .orWhere("vehicle.hostId = :hostId", { hostId })
+      .orWhere("hotel.hostId = :hostId", { hostId })
       .orderBy("booking.createdAt", "DESC")
       .getMany();
+  }
+
+  // ── Hotel-specific helpers ───────────────────────────────────────────────
+
+  /** Booked date ranges for a specific room type (for calendar display) */
+  async getHotelRoomBookedDates(
+    roomTypeId: string
+  ): Promise<{ checkIn: string; checkOut: string; quantity: number }[]> {
+    const cutoff = new Date(Date.now() - 45 * 60 * 1000);
+    const bookings = await this.bookingRepo
+      .createQueryBuilder("b")
+      .select(["b.checkIn", "b.checkOut", "b.quantity"])
+      .where("b.roomTypeId = :roomTypeId", { roomTypeId })
+      .andWhere("b.status IN (:...statuses)", { statuses: ["awaiting_payment", "confirmed"] })
+      .andWhere(
+        "(b.status = 'confirmed' OR b.paymentStatus = 'paid' OR b.paystackReference IS NOT NULL OR b.createdAt > :cutoff)",
+        { cutoff }
+      )
+      .getMany();
+    return bookings.map((b) => ({
+      checkIn: String(b.checkIn).split("T")[0],
+      checkOut: String(b.checkOut).split("T")[0],
+      quantity: b.quantity ?? 1,
+    }));
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
@@ -291,7 +443,10 @@ export class BookingService {
   ) {
     const booking = await this.getBookingById(id, requesterId, requesterRole);
 
-    const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+    const isHost =
+      booking.property?.hostId === requesterId ||
+      booking.vehicle?.hostId === requesterId ||
+      booking.hotel?.hostId === requesterId;
     const isAdmin = requesterRole === "admin";
     const isGuest = booking.userId === requesterId;
 
@@ -318,10 +473,12 @@ export class BookingService {
       const cancelledBy: "guest" | "host" | "admin" = isAdmin ? "admin" : isHost ? "host" : "guest";
       const listingTitle =
         booking.property?.title ??
+        booking.hotel?.name ??
         (booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "your booking");
 
       const policy =
         (booking.property as any)?.cancellationPolicy ??
+        (booking.hotel as any)?.cancellationPolicy ??
         (booking.vehicle as any)?.cancellationPolicy ??
         "flexible";
 
@@ -446,15 +603,20 @@ export class BookingService {
     const booking = await this.getBookingById(id, requesterId, requesterRole);
 
     const isAdmin = requesterRole === "admin";
-    const isHost = booking.property?.hostId === requesterId || booking.vehicle?.hostId === requesterId;
+    const isHost =
+      booking.property?.hostId === requesterId ||
+      booking.vehicle?.hostId === requesterId ||
+      booking.hotel?.hostId === requesterId;
     const cancelledBy: "guest" | "host" | "admin" = isAdmin ? "admin" : isHost ? "host" : "guest";
 
     const listingTitle =
       booking.property?.title ??
+      booking.hotel?.name ??
       (booking.vehicle ? `${booking.vehicle.year} ${booking.vehicle.make} ${booking.vehicle.model}` : "your booking");
 
     const policy =
       (booking.property as any)?.cancellationPolicy ??
+      (booking.hotel as any)?.cancellationPolicy ??
       (booking.vehicle as any)?.cancellationPolicy ??
       "flexible";
 

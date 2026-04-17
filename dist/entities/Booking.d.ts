@@ -1,6 +1,8 @@
 import { User } from "./User";
 import { Property } from "./Property";
 import { Vehicle } from "./Vehicle";
+import { Hotel } from "./Hotel";
+import { RoomType } from "./RoomType";
 export type BookingStatus = "awaiting_payment" | "confirmed" | "cancelled" | "completed";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type HostPayoutStatus = "pending" | "processing" | "transferred" | "failed";
@@ -12,6 +14,12 @@ export declare class Booking {
     propertyId: string | null;
     vehicle: Vehicle | null;
     vehicleId: string | null;
+    hotel: Hotel | null;
+    hotelId: string | null;
+    roomType: RoomType | null;
+    roomTypeId: string | null;
+    /** Number of rooms of the chosen room type (defaults to 1 for non-hotel bookings) */
+    quantity: number;
     checkIn: Date;
     checkOut: Date;
     guests: number;

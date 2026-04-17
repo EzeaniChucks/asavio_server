@@ -24,6 +24,9 @@ import subscriptionRouter from "./routers/subscriptionRouter";
 import hostProfileRouter from "./routers/hostProfileRouter";
 import userRouter from "./routers/userRouter";
 import supportRouter from "./routers/supportRouter";
+import hotelRouter from "./routers/hotelRouter";
+import eventCenterRouter from "./routers/eventCenterRouter";
+import eventBookingRouter from "./routers/eventBookingRouter";
 import { errorHandler } from "./middleware/errorHandler";
 import dotenv from "dotenv";
 
@@ -113,6 +116,9 @@ app.use("/api/subscriptions", subscriptionRouter);
 app.use("/api/hosts", hostProfileRouter);
 app.use("/api/users", userRouter);
 app.use("/api/support", supportRouter);
+app.use("/api/hotels", hotelRouter);
+app.use("/api/event-centers", eventCenterRouter);
+app.use("/api/event-bookings", eventBookingRouter);
 
 // Health check
 app.get("/health", (_req, res) => {

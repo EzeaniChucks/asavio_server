@@ -9,6 +9,15 @@ import { Image } from "../entities/Image";
 import { Vehicle } from "../entities/Vehicle";
 import { Booking } from "../entities/Booking";
 import { Review } from "../entities/Review";
+import { Hotel } from "../entities/Hotel";
+import { RoomType } from "../entities/RoomType";
+import { HotelImage } from "../entities/HotelImage";
+import { RoomTypeImage } from "../entities/RoomTypeImage";
+import { EventCenter } from "../entities/EventCenter";
+import { EventSpace } from "../entities/EventSpace";
+import { EventBooking } from "../entities/EventBooking";
+import { EventCenterImage } from "../entities/EventCenterImage";
+import { EventSpaceImage } from "../entities/EventSpaceImage";
 
 dotenv.config();
 
@@ -20,7 +29,7 @@ const SeedDataSource = new DataSource({
     `postgres://${process.env.DB_USERNAME || "postgres"}:${process.env.DB_PASSWORD || "password"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_DATABASE || "asavio"}`,
   synchronize: true,
   logging: false,
-  entities: [User, Property, Image, Vehicle, Booking, Review],
+  entities: [User, Property, Image, Vehicle, Booking, Review, Hotel, RoomType, HotelImage, RoomTypeImage, EventCenter, EventSpace, EventBooking, EventCenterImage, EventSpaceImage],
 });
 
 // ── Unsplash image collections ────────────────────────────────────────────────
