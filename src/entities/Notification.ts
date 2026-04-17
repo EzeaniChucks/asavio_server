@@ -21,6 +21,7 @@ export type NotificationType =
   | "kyc_submitted"
   | "listing_approved"
   | "listing_rejected"
+  | "listing_edited"
   | "listing_submitted"
   | "payout_transferred"
   | "payout_failed"
@@ -55,6 +56,7 @@ export class Notification {
       "kyc_submitted",
       "listing_approved",
       "listing_rejected",
+      "listing_edited",
       "listing_submitted",
       "payout_transferred",
       "payout_failed",

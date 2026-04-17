@@ -44,6 +44,7 @@ __decorate([
             "kyc_submitted",
             "listing_approved",
             "listing_rejected",
+            "listing_edited",
             "listing_submitted",
             "payout_transferred",
             "payout_failed",

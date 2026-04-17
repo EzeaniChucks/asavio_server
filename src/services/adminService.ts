@@ -12,6 +12,32 @@ import { emailService } from "./emailService";
 import { notificationService } from "./notificationService";
 import { paymentService } from "./paymentService";
 
+/**
+ * Compares two objects, returning the list of field names that differ.
+ * Only checks top-level scalar fields — skips relations, nested objects, etc.
+ * Used to build a human-readable "what changed" summary for host notifications.
+ */
+function getChangedFields(
+  before: Record<string, any>,
+  updates: Record<string, any>,
+  ignore = new Set(["status", "rejectionReason", "isAvailable", "verifiedStarRating"])
+): string[] {
+  const changed: string[] = [];
+  for (const key of Object.keys(updates)) {
+    if (ignore.has(key)) continue;
+    if (updates[key] === undefined) continue;
+    const oldVal = JSON.stringify(before[key] ?? null);
+    const newVal = JSON.stringify(updates[key] ?? null);
+    if (oldVal !== newVal) changed.push(key);
+  }
+  return changed;
+}
+
+/** Prettify camelCase field names for display — "pricePerNight" → "price per night" */
+function prettifyField(field: string): string {
+  return field.replace(/([A-Z])/g, " $1").toLowerCase().trim();
+}
+
 class AdminService {
   // ── Stats ────────────────────────────────────────────────────
 
@@ -219,6 +245,19 @@ class AdminService {
       }).catch(console.error);
     }
 
+    // Notify host when admin edits content fields (not just status changes)
+    const editedFields = getChangedFields(property, updates);
+    if (editedFields.length > 0 && property.host && !newStatus) {
+      const fieldList = editedFields.map(prettifyField).join(", ");
+      notificationService.send({
+        userId: property.host.id,
+        type: "listing_edited",
+        title: "Listing updated by admin",
+        body: `An admin updated your listing "${property.title}". Fields changed: ${fieldList}.`,
+        data: { url: `/properties/${property.id}`, urlLabel: "View listing" },
+      }).catch(console.error);
+    }
+
     return saved;
   }
 
@@ -283,6 +322,19 @@ class AdminService {
           vehicleId: id,
         })
         .catch(console.error);
+    }
+
+    const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+    const editedFields = getChangedFields(vehicle, updates);
+    if (editedFields.length > 0 && vehicle.host && !newStatus) {
+      const fieldList = editedFields.map(prettifyField).join(", ");
+      notificationService.send({
+        userId: vehicle.host.id,
+        type: "listing_edited",
+        title: "Vehicle listing updated by admin",
+        body: `An admin updated your vehicle "${vehicleTitle}". Fields changed: ${fieldList}.`,
+        data: { url: `/vehicles/${id}`, urlLabel: "View listing" },
+      }).catch(console.error);
     }
 
     return saved;
@@ -355,6 +407,18 @@ class AdminService {
         .catch(console.error);
     }
 
+    const editedFields = getChangedFields(hotel, updates);
+    if (editedFields.length > 0 && hotel.host && !newStatus) {
+      const fieldList = editedFields.map(prettifyField).join(", ");
+      notificationService.send({
+        userId: hotel.host.id,
+        type: "listing_edited",
+        title: "Hotel listing updated by admin",
+        body: `An admin updated your hotel "${hotel.name}". Fields changed: ${fieldList}.`,
+        data: { url: `/hotels/${id}`, urlLabel: "View listing" },
+      }).catch(console.error);
+    }
+
     return saved;
   }
 
@@ -424,6 +488,19 @@ class AdminService {
         })
         .catch(console.error);
     }
+
+    const editedFields = getChangedFields(ec, updates);
+    if (editedFields.length > 0 && ec.host && !newStatus) {
+      const fieldList = editedFields.map(prettifyField).join(", ");
+      notificationService.send({
+        userId: ec.host.id,
+        type: "listing_edited",
+        title: "Event venue updated by admin",
+        body: `An admin updated your venue "${ec.name}". Fields changed: ${fieldList}.`,
+        data: { url: `/events/${id}`, urlLabel: "View listing" },
+      }).catch(console.error);
+    }
+
     return saved;
   }
 
